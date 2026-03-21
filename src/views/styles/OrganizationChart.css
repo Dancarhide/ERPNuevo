@@ -1,0 +1,145 @@
+/* STRATIA Premium Org Chart - React Flow Edition */
+
+.org-chart-container {
+    padding: 1.5rem 2.5rem;
+    height: calc(100vh - 65px);
+    overflow: hidden;
+    background-color: var(--color-bg-light);
+    font-family: 'Outfit', sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.org-header {
+    margin-bottom: 1.5rem;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--color-secondary);
+    padding-bottom: 1.5rem;
+}
+
+.header-text h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin: 0;
+    letter-spacing: -0.04em;
+}
+
+.view-selector {
+    display: flex;
+    background: var(--color-secondary);
+    padding: 5px;
+    border-radius: 14px;
+}
+
+.btn-mode {
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-text-muted);
+}
+
+.btn-mode.active {
+    background: white;
+    color: var(--color-accent);
+    box-shadow: 0 4px 12px rgba(167, 49, 58, 0.12);
+}
+
+.org-content {
+    flex-grow: 1;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--color-secondary);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+/* Node Styling */
+.custom-node {
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid var(--color-border);
+    min-width: 180px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.custom-node:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: var(--color-accent);
+}
+
+.node-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 750;
+    color: var(--color-primary);
+}
+
+/* Boss/Directorate Node */
+.node-directorate {
+    border: 2px solid var(--color-accent);
+    background: #fff;
+}
+
+.node-directorate .node-title {
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Area Node */
+.node-area {
+    background: var(--color-bg-light);
+    border: 1.5px solid var(--color-primary);
+}
+
+/* Employee Node */
+.node-employee {
+    padding: 8px 16px;
+    min-width: 150px;
+}
+
+.node-puesto {
+    display: block;
+    color: var(--color-accent);
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.node-name {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+/* Handles */
+.react-flow__handle {
+    width: 6px;
+    height: 6px;
+    background: var(--color-border);
+}
+
+.react-flow__handle-top { top: -3px; }
+.react-flow__handle-bottom { bottom: -3px; }
+
+/* Connection Lines */
+.react-flow__edge-path {
+    stroke: var(--color-border);
+    stroke-width: 2;
+}

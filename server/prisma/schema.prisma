@@ -1,0 +1,335 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model areas {
+  idarea                               Int         @id @default(autoincrement())
+  nombre_area                          String?     @db.VarChar(50)
+  jefe_area                            Int?
+  empleados_areas_jefe_areaToempleados empleados?  @relation("areas_jefe_areaToempleados", fields: [jefe_area], references: [idempleado], onUpdate: NoAction, map: "fk_areas_jefe")
+  empleados_empleados_idareaToareas    empleados[] @relation("empleados_idareaToareas")
+  roles                                roles[]
+  vacantes                             vacantes[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model auditoria_usuarios {
+  id                    Int        @id @default(autoincrement())
+  idempleado            Int?
+  modificacion_empleado DateTime?  @db.Timestamp(6)
+  accion                String?
+  motivo                String?
+  empleados             empleados? @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model conversacion_participantes {
+  id              Int             @id @default(autoincrement())
+  conversacion_id Int?
+  empleado_id     Int?
+  fecha_union     DateTime?       @default(now()) @db.Timestamp(6)
+  conversaciones  conversaciones? @relation(fields: [conversacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  empleados       empleados?      @relation(fields: [empleado_id], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([conversacion_id, empleado_id])
+  @@index([empleado_id], map: "idx_participantes_empleado")
+}
+
+model conversaciones {
+  id                         Int                          @id @default(autoincrement())
+  nombre                     String?                      @db.VarChar(255)
+  tipo                       String?                      @default("privada") @db.VarChar(50)
+  creado_por                 Int?
+  fecha_creacion             DateTime?                    @default(now()) @db.Timestamp(6)
+  conversacion_participantes conversacion_participantes[]
+  empleados                  empleados?                   @relation(fields: [creado_por], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
+  mensajes                   mensajes[]
+}
+
+model credenciales {
+  idcredencial  Int       @id @default(autoincrement())
+  idempleado    Int
+  username      String    @unique @db.VarChar(50)
+  user_password String
+  empleados     empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction, map: "fk_empleado_cred")
+
+  @@index([idempleado], map: "ix_cred_idempleado")
+}
+
+model dias_festivos {
+  id     Int      @id @default(autoincrement())
+  fecha  DateTime @db.Date
+  nombre String   @db.VarChar(255)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model empleados {
+  idempleado                                               Int                          @id @default(autoincrement())
+  nombre_completo_empleado                                 String                       @db.VarChar(255)
+  curp                                                     String?                      @db.VarChar(18)
+  rfc                                                      String?                      @db.VarChar(13)
+  email_empleado                                           String?                      @db.VarChar(50)
+  telefono_empleado                                        String?                      @db.VarChar(12)
+  fecha_ingreso                                            DateTime?                    @default(dbgenerated("CURRENT_DATE")) @db.Date
+  direccion_empleado                                       String?                      @db.VarChar(255)
+  idrol                                                    Int?
+  idarea                                                   Int?
+  estatus_empleado                                         String?                      @default("Activo") @db.VarChar(15)
+  dias_vacaciones_disponibles                              Int?                         @default(12)
+  sueldo                                                   Decimal?                     @default(0.00) @db.Decimal(10, 2)
+  puesto                                                   String?                      @db.VarChar(255)
+  foto                                                     String?
+  sueldo_fiscal                                            Decimal?                     @default(0.00) @db.Decimal(10, 2)
+  areas_areas_jefe_areaToempleados                         areas[]                      @relation("areas_jefe_areaToempleados")
+  auditoria_usuarios                                       auditoria_usuarios[]
+  conversacion_participantes                               conversacion_participantes[]
+  conversaciones                                           conversaciones[]
+  credenciales                                             credenciales[]
+  areas_empleados_idareaToareas                            areas?                       @relation("empleados_idareaToareas", fields: [idarea], references: [idarea], onDelete: NoAction, onUpdate: NoAction, map: "fk_area")
+  roles                                                    roles?                       @relation(fields: [idrol], references: [idrol], onDelete: NoAction, onUpdate: NoAction, map: "fk_roles")
+  empleados_familiar                                       empleados_familiar[]
+  empleados_salud                                          empleados_salud[]
+  incidencias_incidencias_id_empleado_reportadoToempleados incidencias[]                @relation("incidencias_id_empleado_reportadoToempleados")
+  incidencias_incidencias_id_reportanteToempleados         incidencias[]                @relation("incidencias_id_reportanteToempleados")
+  mensajes                                                 mensajes[]
+  nominas                                                  nominas[]
+  respuestas_evaluacion                                    respuestas_evaluacion[]
+  tareas_creadas                                           tareas[]                     @relation("tareas_creadas")
+  tareas_asignadas                                         tareas[]                     @relation("tareas_asignadas")
+  vacaciones                                               vacaciones[]
+
+  @@index([idarea], map: "ix_empleados_idarea")
+  @@index([idrol], map: "ix_empleados_idrol")
+}
+
+model empleados_familiar {
+  idfamiliar               Int       @id @default(autoincrement())
+  idempleado               Int
+  nombre_completo_familiar String?   @db.VarChar(255)
+  telefono_familiar        String?   @db.VarChar(12)
+  email_familiar           String?   @db.VarChar(50)
+  direccion_familiar       String?   @db.VarChar(255)
+  parentesco_familiar      String?   @db.VarChar(30)
+  empleados                empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([idempleado], map: "ix_familiar_idempleado")
+}
+
+model empleados_salud {
+  idempleadosalud Int       @id @default(autoincrement())
+  idempleado      Int
+  discapacidad    Boolean?  @default(false)
+  desc_disc       String?
+  condicion       Boolean?  @default(false)
+  desc_cond       String?
+  tipo_sangre     String?   @db.VarChar(10)
+  nss             String?   @db.VarChar(11)
+  empleados       empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([idempleado], map: "ix_salud_idempleado")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model evaluaciones {
+  idquestion            Int                     @id @default(autoincrement())
+  create_time           DateTime?               @db.Date
+  pregunta              String?
+  modification_time     DateTime?               @db.Date
+  evaluation_type       String?
+  respuestas_evaluacion respuestas_evaluacion[]
+}
+
+model field_permissions {
+  id           Int      @id @default(autoincrement())
+  role_id      Int?
+  resource_key String   @db.VarChar(50)
+  field_key    String   @db.VarChar(50)
+  is_hidden    Boolean? @default(true)
+  roles        roles?   @relation(fields: [role_id], references: [idrol], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([role_id, resource_key, field_key])
+}
+
+model incidencias {
+  idincidencia                                           Int        @id @default(autoincrement())
+  id_empleado_reportado                                  Int
+  id_reportante                                          Int?
+  titulo                                                 String?    @db.VarChar(150)
+  descripcion                                            String?
+  tipo                                                   String?    @db.VarChar(50)
+  gravedad                                               String?    @db.VarChar(20)
+  estatus                                                String?    @default("Pendiente") @db.VarChar(20)
+  fecha_incidencia                                       DateTime?  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  fecha_registro                                         DateTime?  @default(now()) @db.Timestamp(6)
+  evidencia_url                                          String?
+  empleados_incidencias_id_empleado_reportadoToempleados empleados  @relation("incidencias_id_empleado_reportadoToempleados", fields: [id_empleado_reportado], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
+  empleados_incidencias_id_reportanteToempleados         empleados? @relation("incidencias_id_reportanteToempleados", fields: [id_reportante], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model mensajes {
+  id              Int             @id @default(autoincrement())
+  conversacion_id Int?
+  emisor_id       Int?
+  contenido       String
+  fecha_envio     DateTime?       @default(now()) @db.Timestamp(6)
+  leido           Boolean?        @default(false)
+  conversaciones  conversaciones? @relation(fields: [conversacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  empleados       empleados?      @relation(fields: [emisor_id], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([conversacion_id], map: "idx_mensajes_conversacion")
+  @@index([fecha_envio], map: "idx_mensajes_fecha")
+}
+
+model permissions {
+  id               Int                @id @default(autoincrement())
+  resource_id      Int?
+  action           String             @db.VarChar(50)
+  slug             String             @unique @db.VarChar(100)
+  name             String             @db.VarChar(100)
+  resources        resources?         @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  role_permissions role_permissions[]
+}
+
+model resources {
+  id          Int           @id @default(autoincrement())
+  key         String        @unique @db.VarChar(50)
+  name        String        @db.VarChar(100)
+  permissions permissions[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model respuestas_evaluacion {
+  id_respuesta    Int          @id @default(autoincrement())
+  id_pregunta     Int
+  id_empleado     Int
+  respuesta       String?
+  fecha_respuesta DateTime     @db.Date
+  empleados       empleados    @relation(fields: [id_empleado], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
+  evaluaciones    evaluaciones @relation(fields: [id_pregunta], references: [idquestion], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model role_permissions {
+  role_id       Int
+  permission_id Int
+  scope         String?     @default("global") @db.VarChar(20)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles         roles       @relation(fields: [role_id], references: [idrol], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([role_id, permission_id])
+}
+
+model roles {
+  idrol             Int                 @id @default(autoincrement())
+  nombre_rol        String?             @db.VarChar(50)
+  desc_rol          String?
+  is_system         Boolean?            @default(false)
+  description       String?
+  hierarchy_level   Int?                @default(10)
+  idarea            Int?
+  empleados         empleados[]
+  field_permissions field_permissions[]
+  role_permissions  role_permissions[]
+  areas             areas?              @relation(fields: [idarea], references: [idarea], onDelete: NoAction, onUpdate: NoAction)
+  vacantes          vacantes[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model vacaciones {
+  idvacacion       Int       @id @default(autoincrement())
+  idempleado       Int
+  fecha_inicio     DateTime  @db.Date
+  fecha_fin        DateTime  @db.Date
+  estatus_vacacion String?   @default("Pendiente") @db.VarChar(20)
+  tipo_solicitud   String?   @default("Vacaciones") @db.VarChar(50)
+  motivo           String?
+  motivo_rechazo   String?
+  empleados        empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction, map: "fk_empleado_vac")
+
+  @@index([idempleado], map: "ix_vac_idempleado")
+}
+
+model tareas {
+  idtarea           Int        @id @default(autoincrement())
+  idempleado        Int
+  titulo            String?    @db.VarChar(255)
+  descripcion       String?
+  prioridad         String?    @default("Media") @db.VarChar(20)
+  fecha_vencimiento DateTime?  @db.Date
+  completada        Boolean?   @default(false)
+  fecha_creacion    DateTime?  @default(now()) @db.Timestamp(6)
+  asignado_por      Int?
+  assigned_by       empleados? @relation("tareas_creadas", fields: [asignado_por], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
+  empleados         empleados  @relation("tareas_asignadas", fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model nominas {
+  idnomina                    Int               @id @default(autoincrement())
+  idempleado                  Int
+  fecha_emision               DateTime?         @default(now()) @db.Timestamp(6)
+  fecha_inicio                DateTime          @db.Date
+  fecha_fin                   DateTime          @db.Date
+  sueldo_base                 Decimal           @db.Decimal(10, 2)
+  bonos                       Decimal?          @default(0.00) @db.Decimal(10, 2)
+  deducciones                 Decimal?          @default(0.00) @db.Decimal(10, 2)
+  total_pagado                Decimal           @db.Decimal(10, 2)
+  metodo_pago                 String?           @db.VarChar(50)
+  estado                      String?           @default("Pagado") @db.VarChar(20)
+  monto_reportado_fiscal      Decimal?          @default(0.00) @db.Decimal(10, 2)
+  monto_variacion_complemento Decimal?          @default(0.00) @db.Decimal(10, 2)
+  dias_trabajados             Int?              @default(15)
+  detalles_nomina             detalles_nomina[]
+  empleados                   empleados         @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([idempleado], map: "ix_nominas_idempleado")
+}
+
+model conceptos_nomina {
+  idconcepto      Int               @id @default(autoincrement())
+  clave           String            @unique @db.VarChar(20)
+  nombre_concepto String            @db.VarChar(100)
+  tipo            String            @db.VarChar(20)
+  monto_defecto   Decimal?          @default(0.00) @db.Decimal(10, 2)
+  activo          Boolean?          @default(true)
+  detalles_nomina detalles_nomina[]
+}
+
+model detalles_nomina {
+  iddetalle        Int              @id @default(autoincrement())
+  idnomina         Int
+  idconcepto       Int
+  monto_aplicado   Decimal          @db.Decimal(10, 2)
+  conceptos_nomina conceptos_nomina @relation(fields: [idconcepto], references: [idconcepto], onDelete: NoAction, onUpdate: NoAction)
+  nominas          nominas          @relation(fields: [idnomina], references: [idnomina], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([idnomina], map: "ix_detalles_idnomina")
+  @@index([idconcepto], map: "ix_detalles_idconcepto")
+}
+
+model cyi_progreso {
+  id         Int      @id @default(autoincrement())
+  etapa_id   String   @unique
+  status     String   @default("pending")
+  items      Json
+  notas      String?  @db.Text
+  updated_at DateTime @default(now()) @updatedAt
+}
+
+model vacantes {
+  idvacante          Int       @id @default(autoincrement())
+  titulo             String    @db.VarChar(100)
+  idarea             Int?
+  idrol              Int?
+  cantidad_solicitada Int
+  cantidad_contratada Int       @default(0)
+  descripcion        String?   @db.Text
+  estatus            String    @default("Abierta")
+  fecha_creacion     DateTime  @default(now()) @db.Timestamp(6)
+  areas              areas?    @relation(fields: [idarea], references: [idarea])
+  roles              roles?    @relation(fields: [idrol], references: [idrol])
+}

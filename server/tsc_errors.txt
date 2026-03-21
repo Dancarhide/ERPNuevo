@@ -1,0 +1,32 @@
+﻿src/Controllers/chatController.ts(164,33): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/Controllers/chatController.ts(167,33): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/models/empleadosSaludFamiliar.ts(28,5): error TS2322: Type '{ idempleado: number; idempleadosalud: number; discapacidad: boolean | null; desc_disc: string | null; condicion: boolean | null; desc_cond: string | null; tipo_sangre: string | null; nss: string | null; } | null' is not assignable to type 'EmpleadoSalud | null'.
+  Type '{ idempleado: number; idempleadosalud: number; discapacidad: boolean | null; desc_disc: string | null; condicion: boolean | null; desc_cond: string | null; tipo_sangre: string | null; nss: string | null; }' is not assignable to type 'EmpleadoSalud'.
+    Types of property 'discapacidad' are incompatible.
+      Type 'boolean | null' is not assignable to type 'boolean'.
+        Type 'null' is not assignable to type 'boolean'.
+src/models/empleadosSaludFamiliar.ts(35,5): error TS2322: Type '{ idempleado: number; idfamiliar: number; nombre_completo_familiar: string | null; telefono_familiar: string | null; email_familiar: string | null; direccion_familiar: string | null; parentesco_familiar: string | null; } | null' is not assignable to type 'EmpleadoFamiliar | null'.
+  Type '{ idempleado: number; idfamiliar: number; nombre_completo_familiar: string | null; telefono_familiar: string | null; email_familiar: string | null; direccion_familiar: string | null; parentesco_familiar: string | null; }' is not assignable to type 'EmpleadoFamiliar'.
+    Types of property 'nombre_completo_familiar' are incompatible.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/models/empleadosSaludFamiliar.ts(50,5): error TS2322: Type '{ idempleado: number; idempleadosalud: number; discapacidad: boolean | null; desc_disc: string | null; condicion: boolean | null; desc_cond: string | null; tipo_sangre: string | null; nss: string | null; }' is not assignable to type 'EmpleadoSalud'.
+  Types of property 'discapacidad' are incompatible.
+    Type 'boolean | null' is not assignable to type 'boolean'.
+      Type 'null' is not assignable to type 'boolean'.
+src/models/empleadosSaludFamiliar.ts(64,5): error TS2322: Type '{ idempleado: number; idfamiliar: number; nombre_completo_familiar: string | null; telefono_familiar: string | null; email_familiar: string | null; direccion_familiar: string | null; parentesco_familiar: string | null; }' is not assignable to type 'EmpleadoFamiliar'.
+  Types of property 'nombre_completo_familiar' are incompatible.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+src/models/empleadosSaludFamiliar.ts(91,5): error TS2322: Type '{ idempleado: number; idempleadosalud: number; discapacidad: boolean | null; desc_disc: string | null; condicion: boolean | null; desc_cond: string | null; tipo_sangre: string | null; nss: string | null; } | null' is not assignable to type 'EmpleadoSalud | null'.
+  Type '{ idempleado: number; idempleadosalud: number; discapacidad: boolean | null; desc_disc: string | null; condicion: boolean | null; desc_cond: string | null; tipo_sangre: string | null; nss: string | null; }' is not assignable to type 'EmpleadoSalud'.
+    Types of property 'discapacidad' are incompatible.
+      Type 'boolean | null' is not assignable to type 'boolean'.
+        Type 'null' is not assignable to type 'boolean'.
+src/models/empleadosSaludFamiliar.ts(103,5): error TS2322: Type '{ idempleado: number; idfamiliar: number; nombre_completo_familiar: string | null; telefono_familiar: string | null; email_familiar: string | null; direccion_familiar: string | null; parentesco_familiar: string | null; } | null' is not assignable to type 'EmpleadoFamiliar | null'.
+  Type '{ idempleado: number; idfamiliar: number; nombre_completo_familiar: string | null; telefono_familiar: string | null; email_familiar: string | null; direccion_familiar: string | null; parentesco_familiar: string | null; }' is not assignable to type 'EmpleadoFamiliar'.
+    Types of property 'nombre_completo_familiar' are incompatible.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.

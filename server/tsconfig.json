@@ -1,0 +1,36 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "lib": [
+            "ES2020"
+        ],
+        "module": "CommonJS",
+        "moduleResolution": "Node",
+        "rootDir": "src",
+        "outDir": "dist",
+        "strict": true,
+        "skipLibCheck": true,
+        "types": [
+            "node",
+            "jest"
+        ],
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "sourceMap": true,
+        "resolveJsonModule": true,
+        "typeRoots": [
+            "./src/types",
+            "./node_modules/@types"
+        ]
+    },
+    "exclude": [
+        "check_areas.ts",
+        "prisma.config.ts",
+        "jest.config.js",
+        "src/**/__tests__/**",
+        "src/**/__mocks__/**"
+    ],
+    "include": [
+        "src/**/*"
+    ]
+}
