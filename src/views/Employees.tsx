@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaUserPlus, FaSearch, FaEnvelope, FaPhone, FaUsers, FaCheckCircle, FaPlane, FaExclamationTriangle, FaTh, FaList, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaUserPlus, FaSearch, FaEnvelope, FaPhone, FaUsers, FaCheckCircle, FaPlane, FaExclamationTriangle, FaTh, FaList, FaEdit, FaTrash, FaEye, FaDownload } from 'react-icons/fa';
 import './styles/Dashboard.css'; 
 import './styles/EmployeesLegacy.css'; 
 import './styles/Employees.css';
@@ -26,6 +26,7 @@ const Employees: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [modalMode, setModalMode] = useState<'view' | 'edit'>('edit');
   const [selectedEmpleado, setSelectedEmpleado] = useState<any>(null);
 
   // Simulando obtención del rol del usuario
@@ -67,14 +68,54 @@ const Employees: React.FC = () => {
 
   const handleEditClick = (emp: Empleado) => {
     setSelectedEmpleado(emp);
+    setModalMode('edit');
+    setIsEditModalOpen(true);
+  };
+
+  const handleViewClick = (emp: Empleado) => {
+    setSelectedEmpleado(emp);
+    setModalMode('view');
     setIsEditModalOpen(true);
   };
 
   const handleCreateClick = () => {
     setSelectedEmpleado(null); // Explicit null means new employee
+    setModalMode('edit');
     setIsEditModalOpen(true);
   };
 
+
+  const handleExportCSV = () => {
+    if (empleados.length === 0) return;
+    
+    // Headers
+    const headers = ["ID", "Nombre Completo", "Puesto", "Email", "Telefono", "Estatus", "Rol", "Area"];
+    const rows = empleados.map(emp => [
+      emp.idempleado,
+      emp.nombre_completo_empleado,
+      emp.puesto || "",
+      emp.email_empleado || "",
+      emp.telefono_empleado || "",
+      emp.estatus_empleado || "",
+      emp.roles?.nombre_rol || "",
+      emp.areas_empleados_idareaToareas?.nombre_area || ""
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Reporte_Empleados_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleSaveEmployee = async (updatedEmp: any) => {
     try {
@@ -139,11 +180,16 @@ const Employees: React.FC = () => {
           <h1>Directorio de Empleados</h1>
           <p>Gestión de capital humano y accesos corporativos</p>
         </div>
-        {canRegister && (
-          <button className="btn-primary" onClick={handleCreateClick}>
-            <FaUserPlus /> Nuevo Empleado
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn-modern outline" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1.5px solid #e2e8f0', color: '#64748b' }}>
+            <FaDownload /> Descargar CSV
           </button>
-        )}
+          {canRegister && (
+            <button className="btn-primary" onClick={handleCreateClick}>
+              <FaUserPlus /> Nuevo Empleado
+            </button>
+          )}
+        </div>
 
       </div>
 
@@ -243,7 +289,6 @@ const Employees: React.FC = () => {
                           </div>
                           <div className="employee-info-text">
                             <span className="emp-name">{emp.nombre_completo_empleado}</span>
-                            <span className="emp-email">ID: #{emp.idempleado.toString().padStart(4, '0')}</span>
                           </div>
                         </div>
                       </td>
@@ -269,17 +314,27 @@ const Employees: React.FC = () => {
                         </span>
                       </td>
                       <td data-label="Acciones">
-                         {canRegister && (
-                            <div style={{display: 'flex', gap: '8px'}}>
+                         <div style={{display: 'flex', gap: '8px'}}>
+                            <button 
+                              onClick={() => handleViewClick(emp)}
+                              title="Ver Información"
+                              style={{background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', padding: '6px 10px', color: '#3b82f6', cursor: 'pointer', display: 'flex', alignItems: 'center'}}
+                            >
+                              <FaEye />
+                            </button>
+                            {canRegister && (
+                              <>
                                <button 
                                  onClick={() => handleEditClick(emp)}
-                                 style={{background: 'transparent', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '6px 10px', color: 'var(--color-text-main)', cursor: 'pointer'}}
+                                 title="Editar"
+                                 style={{background: 'rgba(167, 49, 58, 0.1)', border: '1px solid rgba(167, 49, 58, 0.3)', borderRadius: '6px', padding: '6px 10px', color: '#A7313A', cursor: 'pointer', display: 'flex', alignItems: 'center'}}
                                >
                                  <FaEdit />
                                </button>
-                               <button style={{background: 'transparent', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', cursor: 'pointer'}}><FaTrash /></button>
-                            </div>
-                         )}
+                               <button title="Dar de Baja" style={{background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center'}}><FaTrash /></button>
+                              </>
+                            )}
+                         </div>
                       </td>
                     </tr>
                   ))}
@@ -318,12 +373,19 @@ const Employees: React.FC = () => {
                   
                   {canRegister && (
                     <div className="card-actions">
-                      <button className="edit-btn" onClick={() => handleEditClick(emp)}>
-                        <FaEdit /> 
+                      <button className="view-btn" onClick={() => handleViewClick(emp)} title="Ver Expediente" style={{ flex: 1, backgroundColor: '#eff6ff', border: '1px solid #dbeafe', color: '#1e40af' }}>
+                        <FaEye /> 
                       </button>
-                      <button className="delete-btn">
-                        <FaTrash />
-                      </button>
+                      {canRegister && (
+                        <>
+                          <button className="edit-btn" onClick={() => handleEditClick(emp)} title="Editar Colaborador" style={{ flex: 1 }}>
+                            <FaEdit /> 
+                          </button>
+                          <button className="delete-btn" title="Dar de Baja" style={{ flex: 1, color: '#ef4444' }}>
+                            <FaTrash />
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -338,6 +400,7 @@ const Employees: React.FC = () => {
         onClose={() => setIsEditModalOpen(false)} 
         onSave={handleSaveEmployee}
         empleado={selectedEmpleado}
+        initialMode={modalMode}
       />
     </div>
   );

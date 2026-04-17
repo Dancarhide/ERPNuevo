@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSignOutAlt, FaChevronDown, FaUserCircle, FaBars, FaCommentAlt, FaClipboardList } from 'react-icons/fa';
-import logo from '../../assets/Logo.jpeg';
+import logo from '../../assets/Logo.png';
 import './styles/Layout.css';
 import ChatDrawer from './ChatDrawer';
 import ToDoDrawer from './ToDoDrawer';
+import NotificationDrawer from './NotificationDrawer';
+import { FaSignOutAlt, FaChevronDown, FaUserCircle, FaBars, FaCommentAlt, FaClipboardList, FaCog, FaBell } from 'react-icons/fa';
 
 interface NavbarProps {
     toggleSidebar: () => void;
@@ -15,7 +16,26 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isTodoOpen, setIsTodoOpen] = useState(false);
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Fetch unread count
+    useEffect(() => {
+        const fetchUnread = async () => {
+            try {
+                const host = window.location.hostname;
+                const response = await fetch(`http://${host}:4000/api/notificaciones`);
+                const data = await response.json();
+                setUnreadCount(data.filter((n: any) => !n.leida).length);
+            } catch (error) {
+                console.error('Error fetching unread count:', error);
+            }
+        };
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 30000); // Check every 30s
+        return () => clearInterval(interval);
+    }, []);
     
     // Attempt to get user from local/session storage to display name/role dynamically
     const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -68,6 +88,11 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                         <FaClipboardList />
                     </button>
                     
+                    <button className="logout-btn" onClick={() => setIsNotifOpen(true)} title="Notificaciones">
+                        <FaBell />
+                        {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+                    </button>
+
                     <button className="logout-btn" onClick={() => setIsChatOpen(true)} title="Mensajería">
                         <FaCommentAlt />
                     </button>
@@ -90,6 +115,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                                 <button className="dropdown-item" onClick={navigateToProfile}>
                                     <FaUserCircle /> Mi Perfil
                                 </button>
+                                
+                                {userData?.rol === 'Admin' && (
+                                    <button className="dropdown-item" onClick={() => { setDropdownOpen(false); navigate('/roles'); }}>
+                                        <FaCog /> Configuración
+                                    </button>
+                                )}
+
+                                <div className="dropdown-divider"></div>
+
                                 <button className="dropdown-item danger" onClick={handleLogout}>
                                     <FaSignOutAlt /> Cerrar Sesión
                                 </button>
@@ -101,6 +135,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             
             <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
             <ToDoDrawer isOpen={isTodoOpen} onClose={() => setIsTodoOpen(false)} />
+            <NotificationDrawer isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
         </>
     );
 };

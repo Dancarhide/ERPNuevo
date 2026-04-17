@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma';
+import { recountPuesto } from '../Services/puestoService';
 
 export const getEmpleados = async (req: Request, res: Response) => {
     try {
@@ -7,6 +8,8 @@ export const getEmpleados = async (req: Request, res: Response) => {
             include: {
                 roles: true,
                 areas_empleados_idareaToareas: true,
+                empleados_familiar: true,
+                empleados_salud: true
             },
             orderBy: {
                 idempleado: 'asc'
@@ -19,8 +22,35 @@ export const getEmpleados = async (req: Request, res: Response) => {
     }
 };
 
+export const getEmpleadoById = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const empleado = await prisma.empleados.findUnique({
+            where: { idempleado: parseInt(id as string) },
+            include: {
+                empleados_familiar: true,
+                empleados_salud: true
+            }
+        });
+
+        if (!empleado) {
+            return res.status(404).json({ error: 'Empleado no encontrado' });
+        }
+
+        const formatted = {
+            ...empleado,
+            familiar: empleado.empleados_familiar[0] || null,
+            salud: empleado.empleados_salud[0] || null
+        };
+
+        res.status(200).json(formatted);
+    } catch (error) {
+        console.error('Error al obtener empleado:', error);
+        res.status(500).json({ error: 'Error del servidor' });
+    }
+};
+
 export const updateEmpleado = async (req: Request, res: Response) => {
-    console.log('Update Empleado hit with ID:', req.params.id);
     const { id } = req.params;
     const { 
         nombre_completo_empleado, 
@@ -30,11 +60,22 @@ export const updateEmpleado = async (req: Request, res: Response) => {
         telefono_empleado, 
         direccion_empleado, 
         estatus_empleado, 
-        puesto 
+        puesto,
+        idpuesto,
+        idrol,
+        idarea,
+        sueldo,
+        sueldo_fiscal,
+        infonavit_mensual,
+        vales_despensa_pct,
+        fondo_ahorro_pct,
+        fecha_ingreso,
+        familiar,
+        salud
     } = req.body;
 
     try {
-        const updated = await prisma.empleados.update({
+        const updated = await (prisma.empleados as any).update({
             where: { idempleado: parseInt(id as string) },
             data: {
                 nombre_completo_empleado,
@@ -44,9 +85,38 @@ export const updateEmpleado = async (req: Request, res: Response) => {
                 telefono_empleado,
                 direccion_empleado,
                 estatus_empleado,
-                puesto
+                puesto,
+                idpuesto: idpuesto ? parseInt(idpuesto) : undefined,
+                idrol: idrol ? parseInt(idrol) : undefined,
+                idarea: idarea ? parseInt(idarea) : undefined,
+                sueldo,
+                sueldo_fiscal,
+                infonavit_mensual,
+                vales_despensa_pct,
+                fondo_ahorro_pct,
+                fecha_ingreso: fecha_ingreso ? new Date(fecha_ingreso) : undefined,
+                empleados_familiar: familiar ? {
+                    deleteMany: {},
+                    create: {
+                        nombre_completo_familiar: familiar.nombre,
+                        telefono_familiar: familiar.telefono,
+                        parentesco_familiar: familiar.parentesco,
+                    }
+                } : undefined,
+                empleados_salud: salud ? {
+                    deleteMany: {},
+                    create: {
+                        nss: salud.nss,
+                        tipo_sangre: salud.tipo_sangre,
+                        discapacidad: salud.discapacidad === 'true' || salud.discapacidad === true
+                    }
+                } : undefined
             }
         });
+
+        if (updated.idpuesto) {
+            await recountPuesto(updated.idpuesto);
+        }
         res.status(200).json(updated);
     } catch (error) {
         console.error('Error al actualizar empleado:', error);
@@ -64,14 +134,23 @@ export const createEmpleado = async (req: Request, res: Response) => {
         direccion_empleado, 
         estatus_empleado, 
         puesto,
+        idpuesto,
         idrol,
         idarea,
-        idvacante
+        idvacante,
+        sueldo,
+        sueldo_fiscal,
+        infonavit_mensual,
+        vales_despensa_pct,
+        fondo_ahorro_pct,
+        fecha_ingreso,
+        familiar,
+        salud
     } = req.body;
 
     try {
-        const result = await prisma.$transaction(async (tx) => {
-            const nuevoEmpleado = await tx.empleados.create({
+        const nuevoEmpleado = await prisma.$transaction(async (tx) => {
+            const emp = await (tx.empleados as any).create({
                 data: {
                     nombre_completo_empleado,
                     curp,
@@ -81,49 +160,68 @@ export const createEmpleado = async (req: Request, res: Response) => {
                     direccion_empleado,
                     estatus_empleado: estatus_empleado || 'Activo',
                     puesto,
+                    idpuesto: idpuesto ? parseInt(idpuesto) : null,
                     idrol: idrol ? parseInt(idrol) : null,
                     idarea: idarea ? parseInt(idarea) : null,
-                    dias_vacaciones_disponibles: 12
+                    idvacante: idvacante ? parseInt(idvacante) : null,
+                    sueldo,
+                    sueldo_fiscal,
+                    infonavit_mensual,
+                    vales_despensa_pct,
+                    fondo_ahorro_pct,
+                    fecha_ingreso: fecha_ingreso ? new Date(fecha_ingreso) : new Date(),
+                    dias_vacaciones_disponibles: 12,
+                    empleados_familiar: familiar ? {
+                        create: {
+                            nombre_completo_familiar: familiar.nombre,
+                            telefono_familiar: familiar.telefono,
+                            parentesco_familiar: familiar.parentesco,
+                        }
+                    } : undefined,
+                    empleados_salud: salud ? {
+                        create: {
+                            nss: salud.nss,
+                            tipo_sangre: salud.tipo_sangre,
+                            discapacidad: salud.discapacidad === 'true' || salud.discapacidad === true
+                        }
+                    } : undefined
                 }
             });
 
-            // Crear credenciales por defecto (username es el email o parte del nombre)
-            const username = email_empleado ? email_empleado.split('@')[0] : nombre_completo_empleado.split(' ')[0].toLowerCase() + nuevoEmpleado.idempleado;
-            
+            const username = email_empleado ? email_empleado.split('@')[0] : nombre_completo_empleado.split(' ')[0].toLowerCase() + emp.idempleado;
             await tx.credenciales.create({
                 data: {
-                    idempleado: nuevoEmpleado.idempleado,
+                    idempleado: emp.idempleado,
                     username,
-                    user_password: '$2b$10$BYdSFdIjkNzlc3JE983QS.ho41mdZPqLXk.FN8XvmOilfLVa.hfYq' // "12345" por defecto
+                    user_password: '$2b$10$BYdSFdIjkNzlc3JE983QS.ho41mdZPqLXk.FN8XvmOilfLVa.hfYq'
                 }
             });
 
-            // Si hay una vacante vinculada, incrementar contador
             if (idvacante) {
                 const vacanteId = parseInt(idvacante);
                 const vacante = await (tx as any).vacantes.findUnique({ where: { idvacante: vacanteId } });
-                
                 if (vacante) {
                     const nuevaCantidad = (vacante.cantidad_contratada || 0) + 1;
-                    const nuevoEstatus = nuevaCantidad >= vacante.cantidad_solicitada ? 'Cubierta' : 'Abierta';
-                    
                     await (tx as any).vacantes.update({
                         where: { idvacante: vacanteId },
                         data: {
                             cantidad_contratada: nuevaCantidad,
-                            estatus: nuevoEstatus
+                            estatus: nuevaCantidad >= vacante.cantidad_solicitada ? 'Cubierta' : 'Abierta'
                         }
                     });
                 }
             }
 
-            return nuevoEmpleado;
+            return emp;
         });
 
-        res.status(201).json(result);
+        if (nuevoEmpleado.idpuesto) {
+            await recountPuesto(nuevoEmpleado.idpuesto);
+        }
+
+        res.status(201).json(nuevoEmpleado);
     } catch (error) {
         console.error('Error al crear empleado:', error);
         res.status(500).json({ error: 'Error al crear empleado' });
     }
 };
-

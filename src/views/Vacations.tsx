@@ -16,9 +16,11 @@ const Vacations: React.FC = () => {
     const [vacaciones, setVacaciones] = useState<Vacacion[]>([]);
     const [allVacaciones, setAllVacaciones] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [eventos, setEventos] = useState<any[]>([]);
     const [stats, setStats] = useState({ available: 0, pending: 0, taken: 0 });
     
-    // Modal state
+    // Calendar State
+    const [currentMonth, setCurrentMonth] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -48,8 +50,18 @@ const Vacations: React.FC = () => {
 
     useEffect(() => {
         fetchData();
+        fetchEventos();
         if (isAdmin) fetchAllVacations();
     }, [isAdmin]);
+
+    const fetchEventos = async () => {
+        try {
+            const res = await client.get('/eventos');
+            setEventos(res.data);
+        } catch (error) {
+            console.error('Error fetching eventos:', error);
+        }
+    };
 
 
     // Bloquear scroll de fondo cuando el modal está activo
@@ -182,8 +194,8 @@ const Vacations: React.FC = () => {
         <div className="vacations-container">
             <header className="vacations-header">
                 <div className="header-text">
-                    <h1>Mis Vacaciones</h1>
-                    <p>Gestión de días de descanso y ausencias oficiales.</p>
+                    <h1>Vacaciones Calendario</h1>
+                    <p>Calendario integral de descansos y eventos corporativos.</p>
                 </div>
                 <button className="btn-primary-strat" onClick={() => setIsModalOpen(true)}>
                     <FaPlus /> Nueva Solicitud
@@ -214,6 +226,150 @@ const Vacations: React.FC = () => {
                     <div className="kpi-icon"><FaCheckCircle /></div>
                 </div>
             </div>
+
+            {/* Calendar Section */}
+            <div className="admin-card" style={{ background: 'white', padding: '30px', borderRadius: '24px', boxShadow: '0 8px 30px rgba(0,0,0,0.06)', marginBottom: '30px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ padding: '12px', background: 'rgba(167, 49, 58, 0.1)', borderRadius: '14px' }}>
+                            <FaCalendarAlt style={{ color: 'var(--color-accent)', fontSize: '1.4rem' }} />
+                        </div>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Estatus de la Empresa</h3>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#858789' }}>Visualización mensual de asistencia y eventos.</p>
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                        {/* Legend */}
+                        <div style={{ display: 'flex', gap: '15px', marginRight: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#10b981' }}></div> Vacaciones
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#A7313A' }}></div> Eventos
+                            </div>
+                        </div>
+
+                        <div className="calendar-nav" style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', padding: '5px', borderRadius: '12px' }}>
+                            <button 
+                                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} 
+                                style={{ padding: '8px 12px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+                            >
+                                <span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}>➤</span>
+                            </button>
+                            <span style={{ fontWeight: 800, minWidth: '160px', textAlign: 'center', fontSize: '0.9rem', color: '#1e293b' }}>
+                                {currentMonth.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' }).toUpperCase()}
+                            </span>
+                            <button 
+                                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} 
+                                style={{ padding: '8px 12px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+                            >
+                                ➤
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="calendar-grid-strat" style={{ border: 'none', gap: '8px', background: '#f8fafc', padding: '8px', borderRadius: '20px' }}>
+                    {['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'].map(d => (
+                        <div key={d} style={{ textAlign: 'center', fontWeight: 700, padding: '10px', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            {d.substring(0, 3)}
+                        </div>
+                    ))}
+                    
+                    {(() => {
+                        const days = [];
+                        const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+                        const totalDays = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+                        
+                        for(let i=0; i<firstDay; i++) days.push(<div key={`empty-${i}`} className="cal-day empty" style={{ background: 'transparent' }}></div>);
+                        
+                        for(let d=1; d<=totalDays; d++) {
+                            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
+                            const localDateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+                            
+                            const dayEvents = eventos.filter(e => {
+                                const start = new Date(e.fecha_inicio).toISOString().split('T')[0];
+                                const end = new Date(e.fecha_fin).toISOString().split('T')[0];
+                                return localDateStr >= start && localDateStr <= end;
+                            });
+
+                            const myVacs = vacaciones.filter(v => {
+                                if (v.estatus_vacacion !== 'Aprobado') return false;
+                                const start = new Date(v.fecha_inicio).toISOString().split('T')[0];
+                                const end = new Date(v.fecha_fin).toISOString().split('T')[0];
+                                return localDateStr >= start && localDateStr <= end;
+                            });
+
+                            const isToday = new Date().toISOString().split('T')[0] === localDateStr;
+
+                            days.push(
+                                <div key={d} className={`cal-day ${isToday ? 'today' : ''}`} style={{ 
+                                    minHeight: '110px', 
+                                    padding: '12px', 
+                                    borderRadius: '16px',
+                                    background: isToday ? 'white' : 'white',
+                                    border: isToday ? '2px solid #A7313A' : '1px solid #eef2f6',
+                                    boxShadow: isToday ? '0 10px 20px rgba(167, 49, 58, 0.1)' : 'none',
+                                    transition: 'transform 0.2s, box-shadow 0.2s',
+                                    cursor: 'default'
+                                }}>
+                                    <div style={{ 
+                                        fontWeight: 800, 
+                                        marginBottom: '8px', 
+                                        fontSize: '1rem', 
+                                        color: isToday ? '#A7313A' : '#1e293b',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        {d}
+                                        {isToday && <span style={{ fontSize: '0.6rem', background: '#A7313A', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>HOY</span>}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        {myVacs.map((v, idx) => (
+                                            <div key={idx} style={{ 
+                                                background: 'linear-gradient(90deg, #10b981, #059669)', 
+                                                color: 'white', 
+                                                fontSize: '9px', 
+                                                padding: '4px 8px', 
+                                                borderRadius: '6px',
+                                                fontWeight: 700,
+                                                boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
+                                            }}>
+                                                VACACIONES
+                                            </div>
+                                        ))}
+                                        {dayEvents.map((e, idx) => (
+                                            <div key={idx} title={`${e.titulo}${e.hora_inicio ? ` (${e.hora_inicio})` : ''}`} style={{ 
+                                                background: e.color || '#A7313A', 
+                                                color: 'white', 
+                                                fontSize: '9px', 
+                                                padding: '4px 8px', 
+                                                borderRadius: '6px', 
+                                                fontWeight: 600,
+                                                overflow: 'hidden', 
+                                                textOverflow: 'ellipsis', 
+                                                whiteSpace: 'nowrap',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}>
+                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.titulo}</span>
+                                                {e.hora_inicio && <span style={{ fontSize: '7px', opacity: 0.9, marginLeft: '4px', flexShrink: 0 }}>{e.hora_inicio}</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return days;
+                    })()}
+                </div>
+            </div>
+
 
             <div className="employees-table-container">
                 <div style={{ padding: '20px', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-main)', fontSize: '1.25rem', fontWeight: 700 }}>
@@ -439,9 +595,21 @@ const Vacations: React.FC = () => {
                     </div>
                 </div>
             )}
+            <style>{`
+                .calendar-grid-strat {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+                    border: 1px solid #f1f5f9;
+                    border-radius: 12px;
+                    overflow: hidden;
+                }
+                .cal-day.empty { background: #f8fafc; }
+                .cal-day.today { border: 2px solid rgba(167, 49, 58, 0.2) !important; }
+                .cal-day:hover { background: #f8fafc; }
+                .btn-corp-text:hover { color: #A7313A; }
+            `}</style>
         </div>
     );
 };
-
 
 export default Vacations;

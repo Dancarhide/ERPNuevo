@@ -147,51 +147,87 @@
     color: var(--color-accent);
 }
 
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--color-bg-light);
+    margin: 8px 0;
+}
+
 .dropdown-item.danger {
     color: var(--color-error);
-    border-top: 1px solid var(--color-bg-light);
     margin-top: 5px;
-    padding-top: 15px;
 }
 
 .dropdown-item.danger:hover {
     background-color: rgba(167, 49, 58, 0.05);
+    color: var(--color-error);
 }
 
 .user-info {
     display: flex;
     flex-direction: column;
     text-align: right;
+    margin-right: 5px;
 }
 
 .user-name {
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--color-text-main);
+    line-height: 1.2;
 }
 
 .user-role {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--color-text-muted);
+    font-weight: 500;
 }
 
 .logout-btn {
-    background: none;
-    border: none;
-    color: var(--color-secondary);
-    font-size: 1.25rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
-    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
 }
 
 .logout-btn:hover {
     color: var(--color-accent);
-    background-color: rgba(167, 49, 58, 0.05);
+    background-color: #fff;
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 12px rgba(167, 49, 58, 0.12);
+    transform: translateY(-1px);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--color-accent);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logout-btn {
+    position: relative;
+    /* ... rest of existing logout-btn props ... */
 }
 
 /* Sidebar specific */
@@ -549,4 +585,100 @@
     color: var(--color-text-main);
     align-self: flex-start;
     border-bottom-left-radius: 4px;
+}
+
+/* --- Notifications specific --- */
+.notification-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.notification-card.unread {
+    border-left: 4px solid var(--color-accent);
+    background-color: #f8fafc;
+}
+
+.notification-card.read {
+    opacity: 0.8;
+}
+
+.notification-icon-wrapper {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.notif-icon.bday { color: #f43f5e; background: #fff1f2; }
+.notif-icon.payroll { color: #10b981; background: #ecfdf5; }
+.notif-icon.cyi { color: #3b82f6; background: #eff6ff; }
+.notif-icon.info { color: #64748b; background: #f1f5f9; }
+
+.notification-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.notification-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b;
+}
+
+.notification-message {
+    font-size: 0.875rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.notification-link {
+    font-size: 0.8rem;
+    color: var(--color-accent);
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 4px;
+}
+
+.notification-link:hover {
+    text-decoration: underline;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.mark-read-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.mark-read-btn:hover {
+    color: var(--color-accent);
+    background-color: #f1f5f9;
 }

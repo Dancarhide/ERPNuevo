@@ -1,35 +1,111 @@
-import React from 'react';
-import { FaEnvelope, FaIdCard, FaPhone, FaMapMarkerAlt, FaBriefcase, FaEdit } from 'react-icons/fa';
-import './styles/Dashboard.css';
+import { FaUserEdit, FaIdBadge, FaBalanceScale, FaUserShield, FaStethoscope } from 'react-icons/fa';
+import './styles/Profile.css';
 import EditEmployeeModal from '../components/common/EditEmployeeModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const Profile: React.FC = () => {
-  // Simulating getting user data from storage
   const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
   const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
-  const userData = sessionData?.user || sessionData;
-  
-  // Using actual data structure from Prisma/Backend
-  const userName = (userData?.nombre || '').trim() || 'Usuario Desconocido';
-  const userRole = (userData?.rol || '').trim() || 'Sin Rol Asignado';
-  const userEmail = (userData?.email || '').trim() || 'No especificado';
-  const userPhone = (userData?.telefono || '').trim() || 'No especificado';
-  const userAddress = (userData?.direccion || '').trim() || 'No especificada';
-  const userCurp = (userData?.curp || '').trim() || 'No especificada';
-  const userRfc = (userData?.rfc || '').trim() || 'No especificado';
-  const idEmpleado = userData?.idempleado || 0;
+  const initialUserData = sessionData?.user || sessionData;
+  const idEmpleado = initialUserData?.idempleado || 0;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(userData);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [idEmpleado]);
+
+  const fetchUserData = async () => {
+    console.log('Fetching user data for ID:', idEmpleado);
+    if (!idEmpleado) {
+        console.warn('No idEmpleado found in session');
+        setLoading(false);
+        // Fallback to what we have in session if possible
+        if (initialUserData) {
+            // Map legacy fields if necessary
+            const mappedUser = {
+                ...initialUserData,
+                nombre_completo_empleado: initialUserData.nombre_completo_empleado || initialUserData.nombre || 'Usuario',
+                email_empleado: initialUserData.email_empleado || initialUserData.email,
+                telefono_empleado: initialUserData.telefono_empleado || initialUserData.telefono,
+                direccion_empleado: initialUserData.direccion_empleado || initialUserData.direccion
+            };
+            setCurrentUser(mappedUser);
+        }
+        return;
+    }
+
+    try {
+        const host = window.location.hostname;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
+        const token = sessionData?.token;
+
+        const response = await fetch(`http://${host}:4000/api/empleados/${idEmpleado}`, {
+            signal: controller.signal,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Profile data fetched successfully:', data);
+            setCurrentUser(data);
+        } else {
+            console.error('Profile fetch failed with status:', response.status);
+            if (initialUserData) {
+                const mappedUser = {
+                    ...initialUserData,
+                    nombre_completo_empleado: initialUserData.nombre_completo_empleado || initialUserData.nombre || 'Usuario',
+                    email_empleado: initialUserData.email_empleado || initialUserData.email,
+                    telefono_empleado: initialUserData.telefono_empleado || initialUserData.telefono,
+                    direccion_empleado: initialUserData.direccion_empleado || initialUserData.direccion
+                };
+                setCurrentUser(mappedUser);
+            }
+        }
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.warn('Profile fetch timed out');
+        } else {
+            console.error('Error fetching profile:', error);
+        }
+        
+        if (initialUserData) {
+             const mappedUser = {
+                ...initialUserData,
+                nombre_completo_empleado: initialUserData.nombre_completo_empleado || initialUserData.nombre || 'Usuario',
+                email_empleado: initialUserData.email_empleado || initialUserData.email,
+                telefono_empleado: initialUserData.telefono_empleado || initialUserData.telefono,
+                direccion_empleado: initialUserData.direccion_empleado || initialUserData.direccion
+            };
+            setCurrentUser(mappedUser);
+        }
+    } finally {
+        setLoading(false);
+    }
+  };
 
   const handleUpdateProfile = async (updatedEmp: any) => {
     try {
       const host = window.location.hostname;
+      const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
+      const token = sessionData?.token;
+
       const response = await fetch(`http://${host}:4000/api/empleados/${idEmpleado}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updatedEmp),
       });
@@ -71,136 +147,126 @@ const Profile: React.FC = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const initials = getInitials(userName);
+  const initials = currentUser ? getInitials(currentUser.nombre_completo_empleado) : '??';
+
+  if (loading) return (
+    <div className="profile-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="loader"></div>
+        <p style={{ marginTop: '20px', color: '#64748b' }}>Cargando expediente digital...</p>
+        <button 
+            onClick={() => setLoading(false)} 
+            style={{ marginTop: '20px', background: 'transparent', border: '1px solid #cbd5e1', padding: '5px 15px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.8rem' }}
+        >
+            Omitir espera y usar datos locales
+        </button>
+    </div>
+  );
+  if (!currentUser) return <div className="profile-dashboard-wrapper">No se encontró información del perfil.</div>;
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-            <h1>Mi Perfil</h1>
-            <p>Información detallada de tu cuenta y datos personales</p>
-        </div>
-        <button 
-            onClick={() => setIsEditModalOpen(true)}
-            style={{
-                backgroundColor: 'var(--color-accent)',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                boxShadow: '0 4px 10px rgba(167, 49, 58, 0.2)'
-            }}
-        >
-            <FaEdit /> Editar Mi Perfil
-        </button>
-      </div>
-
-      <div className="dashboard-content-grid profile-layout">
-        {/* Profile Card */}
-        <div className="dashboard-panel" style={{ textAlign: 'center' }}>
-            <div style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--color-accent)',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '3rem',
-                fontWeight: 'bold',
-                margin: '0 auto 20px auto',
-                boxShadow: '0 4px 10px rgba(167, 49, 58, 0.3)'
-            }}>
-                {initials}
+    <div className="profile-dashboard-wrapper">
+      <div className="profile-cv-paper step-content-fade">
+        <header className="cv-header">
+            <div className="cv-avatar">{initials}</div>
+            <div className="cv-name-block">
+                <h1>{currentUser.nombre_completo_empleado}</h1>
+                <p className="cv-title">{currentUser.puesto || 'Colaborador'}</p>
+                <div className="cv-contact-bar">
+                    <span>{currentUser.email_empleado || 'No registrado'}</span>
+                    <span className="dot">•</span>
+                    <span>{currentUser.telefono_empleado || 'No registrado'}</span>
+                    <span className="dot">•</span>
+                    <span>{currentUser.estatus_empleado || 'Activo'}</span>
+                </div>
             </div>
-            <h2 style={{ marginBottom: '5px', fontSize: '1.4rem' }}>{userName}</h2>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: '20px', fontWeight: '500' }}>{userRole}</p>
-            
-            <div style={{ display: 'inline-flex', padding: '5px 15px', backgroundColor: '#e2f5e9', color: '#1f854b', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>
-                Cuenta Activa
-            </div>
-        </div>
+            <button className="btn-cv-edit" onClick={() => setIsEditModalOpen(true)}>
+                <FaUserEdit /> Editar Expediente
+            </button>
+        </header>
 
-        {/* Details Panel */}
-        <div className="dashboard-panel">
-            <h2 style={{ borderBottom: '1px solid var(--color-bg-light)', paddingBottom: '15px' }}>Información de Contacto y Laboral</h2>
-            
-            <div className="profile-details-grid">
-                
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                    <div style={{ color: 'var(--color-accent)', fontSize: '1.2rem', marginTop: '3px' }}><FaEnvelope /></div>
-                    <div>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>Correo Electrónico</p>
-                        <p style={{ margin: 0, fontWeight: '500' }}>{userEmail}</p>
+        <div className="cv-body">
+            {/* Sección: Identidad */}
+            <section className="cv-section">
+                <h2 className="cv-section-title"><FaIdBadge /> Datos de Identidad</h2>
+                <div className="cv-data-row">
+                    <div className="cv-field">
+                        <span className="field-label">Dirección Completa</span>
+                        <span className="field-value">{currentUser.direccion_empleado || 'No registrada'}</span>
                     </div>
                 </div>
+            </section>
 
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                    <div style={{ color: 'var(--color-accent)', fontSize: '1.2rem', marginTop: '3px' }}><FaPhone /></div>
-                    <div>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>Teléfono</p>
-                        <p style={{ margin: 0, fontWeight: '500' }}>{userPhone}</p>
+            {/* Sección: Fiscal y Laboral */}
+            <section className="cv-section">
+                <h2 className="cv-section-title"><FaBalanceScale /> Información Fiscal y Laboral</h2>
+                <div className="cv-grid">
+                    <div className="cv-field">
+                        <span className="field-label">CURP</span>
+                        <span className="field-value">{currentUser.curp || 'N/A'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">RFC</span>
+                        <span className="field-value">{currentUser.rfc || 'N/A'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">Sueldo Bruto Mensual</span>
+                        <span className="field-value">${currentUser.sueldo?.toLocaleString() || '0'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">Sueldo Registrado (IMSS)</span>
+                        <span className="field-value">${currentUser.sueldo_fiscal?.toLocaleString() || '0'}</span>
                     </div>
                 </div>
+            </section>
 
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                    <div style={{ color: 'var(--color-accent)', fontSize: '1.2rem', marginTop: '3px' }}><FaIdCard /></div>
-                    <div>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>CURP</p>
-                        <p style={{ margin: 0, fontWeight: '500' }}>{userCurp}</p>
+            {/* Sección: Emergencias */}
+            <section className="cv-section">
+                <h2 className="cv-section-title"><FaUserShield /> Contacto de Emergencia</h2>
+                <div className="cv-grid">
+                    <div className="cv-field big">
+                        <span className="field-label">Nombre del Familiar</span>
+                        <span className="field-value">{currentUser.familiar?.nombre || 'No registrado'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">Parentesco</span>
+                        <span className="field-value">{currentUser.familiar?.parentesco || 'N/A'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">Teléfono</span>
+                        <span className="field-value">{currentUser.familiar?.telefono || 'N/A'}</span>
                     </div>
                 </div>
+            </section>
 
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                    <div style={{ color: 'var(--color-accent)', fontSize: '1.2rem', marginTop: '3px' }}><FaIdCard /></div>
-                    <div>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>RFC</p>
-                        <p style={{ margin: 0, fontWeight: '500' }}>{userRfc}</p>
+            {/* Sección: Salud */}
+            <section className="cv-section">
+                <h2 className="cv-section-title"><FaStethoscope /> Seguridad y Salud</h2>
+                <div className="cv-grid">
+                    <div className="cv-field">
+                        <span className="field-label">NSS (IMSS)</span>
+                        <span className="field-value">{currentUser.salud?.nss || 'Por asignar'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">Tipo de Sangre</span>
+                        <span className="field-value">{currentUser.salud?.tipo_sangre || 'N/A'}</span>
+                    </div>
+                    <div className="cv-field">
+                        <span className="field-label">Condiciones Especiales</span>
+                        <span className="field-value">{currentUser.salud?.discapacidad ? 'Discapacidad registrada' : 'Ninguna'}</span>
                     </div>
                 </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', gridColumn: '1 / -1' }}>
-                    <div style={{ color: 'var(--color-accent)', fontSize: '1.2rem', marginTop: '3px' }}><FaMapMarkerAlt /></div>
-                    <div>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>Dirección Registrada</p>
-                        <p style={{ margin: 0, fontWeight: '500' }}>{userAddress}</p>
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', gridColumn: '1 / -1' }}>
-                    <div style={{ color: 'var(--color-accent)', fontSize: '1.2rem', marginTop: '3px' }}><FaBriefcase /></div>
-                    <div>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>Rol en el Sistema</p>
-                        <p style={{ margin: 0, fontWeight: '500' }}>{userRole}</p>
-                    </div>
-                </div>
-
-            </div>
+            </section>
         </div>
       </div>
 
       <EditEmployeeModal 
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        onSave={handleUpdateProfile}
-        empleado={{
-            idempleado: idEmpleado,
-            nombre_completo_empleado: userName,
-            email_empleado: userEmail === 'No especificado' ? '' : userEmail,
-            telefono_empleado: userPhone === 'No especificado' ? '' : userPhone,
-            curp: userCurp === 'No especificada' ? '' : userCurp,
-            rfc: userRfc === 'No especificado' ? '' : userRfc,
-            direccion_empleado: userAddress === 'No especificada' ? '' : userAddress,
-            estatus_empleado: 'Activo',
-            puesto: userRole,
-            idrol: userData?.idrol || 6
+        onSave={(data) => {
+            handleUpdateProfile(data);
+            fetchUserData();
         }}
+        empleado={currentUser}
       />
     </div>
   );

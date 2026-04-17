@@ -1,0 +1,452 @@
+/* Professional Enterprise Payroll Design System - Harmonized with STRATIA */
+
+:root {
+  --payroll-primary: #1e293b;
+  --payroll-secondary: #64748b;
+  --payroll-accent: #A7313A;
+  --payroll-accent-light: #fef2f2;
+  --payroll-success: #10b981;
+  --payroll-success-bg: #ecfdf5;
+  --payroll-info: #3b82f6;
+  --payroll-info-bg: #eff6ff;
+  --payroll-warning: #f59e0b;
+  --payroll-warning-bg: #fffbeb;
+  --payroll-bg: #f8fafc;
+  --payroll-card-bg: rgba(255, 255, 255, 0.8);
+  --payroll-border: #e2e8f0;
+  --payroll-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --payroll-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --payroll-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --payroll-radius: 16px;
+  --payroll-radius-sm: 8px;
+}
+
+
+.payroll-dashboard {
+  padding: 2rem;
+  background-color: var(--payroll-bg-light);
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Harmonized background pattern */
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.02'%3E%3Ccircle cx='50' cy='50' r='14' fill='%23A7313A'/%3E%3Crect x='14' y='14' width='14' height='14' fill='%23A7313A'/%3E%3Crect x='72' y='14' width='14' height='14' fill='%23A7313A'/%3E%3Crect x='14' y='72' width='14' height='14' fill='%23A7313A'/%3E%3Crect x='72' y='72' width='14' height='14' fill='%23A7313A'/%3E%3Cpath d='M50 15v14.5M34.5 29.5h31M50 85V70.5M34.5 70.5h31M15 50h14.5M29.5 34.5v31M85 50H70.5M70.5 34.5v31' fill='none' stroke='%2344474A' stroke-width='3.5'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Header Refinement */
+.payroll-dashboard .dashboard-header h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--payroll-primary);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--payroll-primary) 0%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.payroll-dashboard .dashboard-header p {
+  color: var(--payroll-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+
+/* Strategic Summary Cards - Harmonized with Stats Grid */
+.payroll-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.payroll-summary-card {
+  background: var(--payroll-card-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--payroll-border);
+  border-radius: var(--payroll-radius);
+  padding: 1.5rem;
+  box-shadow: var(--payroll-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.payroll-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--payroll-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.payroll-summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--payroll-shadow-lg);
+  background: white;
+}
+
+.payroll-summary-card:hover::before {
+  opacity: 1;
+}
+
+
+.payroll-summary-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.7rem;
+  color: var(--payroll-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.payroll-summary-card p {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--payroll-primary);
+  letter-spacing: -0.02em;
+}
+
+
+/* Focus Toolbar Refinement */
+.payroll-focus-toolbar {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: var(--payroll-radius);
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--payroll-border);
+  box-shadow: var(--payroll-shadow);
+}
+
+/* Professional Data Grid */
+.payroll-table-container {
+  background: white;
+  border-radius: var(--payroll-radius);
+  box-shadow: var(--payroll-shadow);
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid var(--payroll-border);
+  margin-top: 1.5rem;
+  width: 100%;
+  position: relative;
+}
+
+.payroll-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1200px; /* Force minimum width to allow scrolling instead of cutting */
+}
+
+.payroll-table thead th {
+  background: #f8fafc;
+  padding: 1.25rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+  border-bottom: 2px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.payroll-table td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+  color: #334155;
+  transition: background-color 0.2s ease;
+  white-space: nowrap; /* Prevent text wrapping from breaking layout */
+}
+
+.payroll-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.payroll-table .sticky-col {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 25;
+  font-weight: 700;
+  box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+  border-right: 1px solid #f1f5f9;
+}
+
+
+
+/* Modern Inputs */
+.payroll-input-mini, 
+.payroll-input-currency {
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: #f8fafc;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  text-align: center;
+  font-weight: 600;
+  color: #334155;
+}
+
+.payroll-input-mini:focus, 
+.payroll-input-currency:focus {
+  border-color: var(--payroll-accent);
+  box-shadow: 0 0 0 4px rgba(167, 49, 58, 0.1);
+  background: white;
+  transform: scale(1.02);
+}
+
+.payroll-input-mini {
+  width: 50px;
+}
+
+.payroll-input-currency {
+  width: 100px;
+}
+
+
+/* Action Buttons - Harmonized with STRATIA */
+.btn-payroll {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-payroll-primary {
+  background: var(--payroll-accent);
+  color: white;
+  box-shadow: 0 4px 6px rgba(167, 49, 58, 0.2);
+}
+
+.btn-payroll-primary:hover {
+  background: var(--payroll-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(167, 49, 58, 0.3);
+}
+
+.btn-payroll-outline {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: var(--payroll-primary);
+  box-shadow: var(--payroll-shadow-sm);
+}
+
+.btn-payroll-outline:hover {
+
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: var(--payroll-shadow);
+}
+
+.btn-cash-mode {
+    border: 1px solid var(--payroll-accent);
+    color: var(--payroll-accent);
+    background: white;
+}
+
+.btn-cash-mode.active {
+    background: var(--payroll-accent);
+    color: white;
+    box-shadow: 0 4px 10px rgba(167, 49, 58, 0.2);
+}
+
+.btn-cash-mode:hover {
+    background: #fff1f2;
+    border-color: var(--payroll-accent-hover);
+}
+
+.btn-cash-mode.active:hover {
+    background: var(--payroll-accent-hover);
+    color: white;
+}
+
+.btn-fiscal-mode {
+    border: 1px solid var(--payroll-info);
+    color: var(--payroll-info);
+    background: white;
+}
+
+.btn-fiscal-mode.active {
+    background: var(--payroll-info);
+    color: white;
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2);
+}
+
+.btn-fiscal-mode:hover {
+    background: #f0f9ff;
+    border-color: #0ea5e9;
+}
+
+.btn-fiscal-mode.active:hover {
+    background: #0284c7;
+    color: white;
+}
+
+
+/* Custom Table Row Polish */
+.payroll-table tr {
+  transition: all 0.2s ease;
+}
+
+.row-has-errors {
+  background-color: #fffaf0;
+}
+
+.collaborator-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.collaborator-name {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+.collaborator-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+
+/* Banners */
+.payroll-audit-banner {
+  background: linear-gradient(to right, #fffdf2, #fffbeb);
+  border: 1px solid #fef3c7;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--payroll-radius);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--payroll-shadow-sm);
+  animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+
+/* Badges for Table Concepts */
+.concept-tag {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+}
+
+.concept-tag.fiscal {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.concept-tag.cash {
+    background-color: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #ffe4e6;
+}
+
+/* Responsividad mejorada */
+@media (max-width: 1200px) {
+  .payroll-dashboard {
+      padding: 1.5rem 1rem !important;
+  }
+  
+  .dashboard-header {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 20px;
+  }
+}
+
+
+/* Scrollbar refinement for table */
+.payroll-table-container::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.payroll-table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.payroll-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.payroll-table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+
+
+/* Dual Payroll Specific Visuals */
+.dual-payroll-badge {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    margin-right: 5px;
+}
+
+.badge-fiscal {
+    background-color: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid #BAE6FD;
+}
+
+.badge-real {
+    background-color: #F5F3FF;
+    color: #5B21B6;
+    border: 1px solid #DDD6FE;
+}
+
+.loan-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.loan-abono {
+    color: var(--payroll-accent);
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.loan-saldo {
+    color: var(--payroll-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
