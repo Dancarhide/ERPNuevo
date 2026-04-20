@@ -187,7 +187,7 @@ export const timbrarLote = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        const idsnominas = nominas.map(n => n.idnomina);
+        const idsnominas = nominas.map((n: any) => n.idnomina);
         
         // Use an internal function call approach or reuse the bulk logic
         // For simplicity and to avoid circular deps or complex refactoring, we use the bulk logic logic:

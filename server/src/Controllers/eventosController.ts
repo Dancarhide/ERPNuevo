@@ -17,7 +17,7 @@ export const getEventos = async (req: Request, res: Response): Promise<void> => 
         });
 
         // Filter events based on targeting
-        const filteredEventos = allEventos.filter(ev => {
+        const filteredEventos = allEventos.filter((ev: any) => {
             // Admin and RH see everything
             if (['Admin', 'RH'].includes(user.rol)) return true;
 

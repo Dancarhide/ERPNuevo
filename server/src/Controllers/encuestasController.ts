@@ -146,7 +146,7 @@ export const getAdminConfig = async (req: Request, res: Response): Promise<void>
             }
         });
         
-        const configMap = configs.reduce((acc, curr) => {
+        const configMap = configs.reduce((acc: Record<string, boolean>, curr: any) => {
             acc[curr.key] = curr.value === 'true';
             return acc;
         }, {} as Record<string, boolean>);
