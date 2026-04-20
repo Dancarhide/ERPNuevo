@@ -12,7 +12,7 @@ export const timbrarNomina = async (req: Request, res: Response): Promise<void> 
     const { idnomina } = req.params;
 
     try {
-        const idNomNum = parseInt(idnomina);
+        const idNomNum = parseInt(idnomina as string);
         if (isNaN(idNomNum)) {
             res.status(400).json({ error: 'ID de nómina inválido' });
             return;
@@ -178,7 +178,7 @@ export const timbrarLote = async (req: Request, res: Response): Promise<void> =>
 
     try {
         const nominas = await prisma.nominas.findMany({
-            where: { lote_id: loteId, uuid_sat: null },
+            where: { lote_id: loteId as string, uuid_sat: null },
             select: { idnomina: true }
         });
 

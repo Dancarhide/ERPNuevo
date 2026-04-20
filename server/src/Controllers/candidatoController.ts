@@ -138,7 +138,7 @@ export const createCandidato = async (req: Request, res: Response) => {
 
 export const deleteCandidato = async (req: Request, res: Response) => {
     try {
-        const id = parseInt(req.params.id, 10);
+        const id = parseInt(req.params.id as string, 10);
         if (!id) return res.status(400).json({ error: 'ID inválido' });
 
         await (prisma as any).cyi_progreso.deleteMany({ where: { idcandidato: id } });

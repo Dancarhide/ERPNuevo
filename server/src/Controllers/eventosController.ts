@@ -25,7 +25,7 @@ export const getEventos = async (req: Request, res: Response): Promise<void> => 
             if (ev.target_type === 'TODOS' || !ev.target_type) return true;
 
             // Department targeting
-            if (ev.target_type === 'DEPARTAMENTO' && ev.idarea_target === user.idarea) return true;
+            if (ev.target_type === 'DEPARTAMENTO' && ev.idarea_target === (user as any).idarea) return true;
 
             // Individual targeting
             if (ev.target_type === 'INDIVIDUALES' && Array.isArray(ev.empleados_target)) {
@@ -84,7 +84,7 @@ export const deleteEvento = async (req: Request, res: Response): Promise<void> =
     try {
         const { id } = req.params;
         await prisma.eventos_empresa.delete({
-            where: { id: parseInt(id) }
+            where: { id: parseInt(id as string) }
         });
         res.status(200).json({ message: 'Evento eliminado correctamente' });
     } catch (error: any) {

@@ -37,8 +37,8 @@ export const generateNominaPDF = async (payoutData: any, timbradoData: any): Pro
 
             // --- Concepts Table ---
             const tableTop = 230;
-            doc.text('Concepto', 50, tableTop, { bold: true });
-            doc.text('Percepciones', 300, tableTop, { align: 'right' });
+            doc.font('Helvetica-Bold').text('Concepto', 50, tableTop);
+            doc.font('Helvetica').text('Percepciones', 300, tableTop, { align: 'right' });
             doc.text('Deducciones', 450, tableTop, { align: 'right' });
             doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
 
@@ -65,8 +65,9 @@ export const generateNominaPDF = async (payoutData: any, timbradoData: any): Pro
             doc.moveTo(50, currentY + 10).lineTo(550, currentY + 10).stroke();
             currentY += 20;
 
-            doc.fontSize(11).text('TOTAL NETO:', 300, currentY, { bold: true });
-            doc.text(`$${payoutData.total_pagado}`, 450, currentY, { align: 'right', bold: true });
+            doc.font('Helvetica-Bold').fontSize(11).text('TOTAL NETO:', 300, currentY);
+            doc.text(`$${payoutData.total_pagado}`, 450, currentY, { align: 'right' });
+            doc.font('Helvetica'); // Reset font
 
             // --- SAT Metadata ---
             const satY = 550;
