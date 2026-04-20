@@ -52,14 +52,14 @@ export const getEmpleadoById = async (req: Request, res: Response) => {
 
 export const updateEmpleado = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { 
-        nombre_completo_empleado, 
-        curp, 
-        rfc, 
-        email_empleado, 
-        telefono_empleado, 
-        direccion_empleado, 
-        estatus_empleado, 
+    const {
+        nombre_completo_empleado,
+        curp,
+        rfc,
+        email_empleado,
+        telefono_empleado,
+        direccion_empleado,
+        estatus_empleado,
         puesto,
         idpuesto,
         idrol,
@@ -125,14 +125,14 @@ export const updateEmpleado = async (req: Request, res: Response) => {
 };
 
 export const createEmpleado = async (req: Request, res: Response) => {
-    const { 
-        nombre_completo_empleado, 
-        curp, 
-        rfc, 
-        email_empleado, 
-        telefono_empleado, 
-        direccion_empleado, 
-        estatus_empleado, 
+    const {
+        nombre_completo_empleado,
+        curp,
+        rfc,
+        email_empleado,
+        telefono_empleado,
+        direccion_empleado,
+        estatus_empleado,
         puesto,
         idpuesto,
         idrol,
