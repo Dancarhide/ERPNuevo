@@ -68,7 +68,7 @@ const PayrollHistory: React.FC = () => {
       const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
       const host = window.location.hostname;
       
-      const res = await fetch(`http://${host}:4000/api/nominas/historial`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/historial`, {
         headers: { 'Authorization': `Bearer ${sessionData?.token}` }
       });
       
@@ -440,8 +440,8 @@ const PayrollHistory: React.FC = () => {
                     <td style={{ textAlign: 'center' }}>
                         {n.uuid_sat ? (
                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                <a href={`http://${window.location.hostname}:4000${n.pdf_url}`} target="_blank" rel="noreferrer" title="Ver PDF" style={{ color: '#ef4444' }}><FaFilePdf /></a>
-                                <a href={`http://${window.location.hostname}:4000${n.xml_url}`} target="_blank" rel="noreferrer" title="Bajar XML" style={{ color: '#3b82f6' }}><FaFileCode /></a>
+                                <a href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}${n.pdf_url}`} target="_blank" rel="noreferrer" title="Ver PDF" style={{ color: '#ef4444' }}><FaFilePdf /></a>
+                                <a href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}${n.xml_url}`} target="_blank" rel="noreferrer" title="Bajar XML" style={{ color: '#3b82f6' }}><FaFileCode /></a>
                             </div>
                         ) : (
                             <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>-</span>

@@ -33,7 +33,7 @@ const PayrollConcepts: React.FC = () => {
 
   const fetchConceptos = async () => {
     try {
-      const res = await fetch(`http://${host}:4000/api/conceptos-nomina`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/conceptos-nomina`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -61,7 +61,7 @@ const PayrollConcepts: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = isEditing ? `http://${host}:4000/api/conceptos-nomina/${formData.idconcepto}` : `http://${host}:4000/api/conceptos-nomina`;
+      const url = isEditing ? `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/conceptos-nomina/${formData.idconcepto}` : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/conceptos-nomina`;
       const method = isEditing ? 'PUT' : 'POST';
       
       const payload = { ...formData, monto_defecto: parseFloat(String(formData.monto_defecto)) || 0 };
@@ -88,7 +88,7 @@ const PayrollConcepts: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('¿Eliminar este concepto? Ya no aparecerá para nuevas nóminas.')) return;
     try {
-      const res = await fetch(`http://${host}:4000/api/conceptos-nomina/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/conceptos-nomina/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

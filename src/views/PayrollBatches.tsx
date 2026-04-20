@@ -28,7 +28,7 @@ const PayrollBatches: React.FC = () => {
 
     const fetchLotes = async () => {
         try {
-            const res = await fetch(`http://${host}:4000/api/nominas/lotes`, {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/lotes`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -46,7 +46,7 @@ const PayrollBatches: React.FC = () => {
 
         setIsTimbrando(loteId);
         try {
-            const res = await fetch(`http://${host}:4000/api/nominas/lote/${loteId}/timbrar`, {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/lote/${loteId}/timbrar`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

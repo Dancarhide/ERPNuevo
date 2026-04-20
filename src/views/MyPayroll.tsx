@@ -46,7 +46,7 @@ const MyPayroll: React.FC = () => {
       const token = sessionData?.token;
       const host = window.location.hostname;
       
-      const res = await fetch(`http://${host}:4000/api/nominas/mis-nominas`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/mis-nominas`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

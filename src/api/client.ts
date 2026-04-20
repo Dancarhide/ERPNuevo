@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
 const client = axios.create({
-    baseURL: `http://${host}:4000/api`,
+    baseURL: `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api`,
 });
 
 client.interceptors.request.use((config) => {

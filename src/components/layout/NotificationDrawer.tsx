@@ -27,8 +27,8 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, onClose
         setLoading(true);
         try {
             const host = window.location.hostname;
-            await fetch(`http://${host}:4000/api/notificaciones/generate-alerts`, { method: 'POST' });
-            const response = await fetch(`http://${host}:4000/api/notificaciones`);
+            await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/notificaciones/generate-alerts`, { method: 'POST' });
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/notificaciones`);
             const data = await response.json();
             setNotifications(data);
         } catch (error) {
@@ -47,7 +47,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ isOpen, onClose
     const markAsRead = async (id: number) => {
         try {
             const host = window.location.hostname;
-            await fetch(`http://${host}:4000/api/notificaciones/${id}/read`, { method: 'PUT' });
+            await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/notificaciones/${id}/read`, { method: 'PUT' });
             setNotifications(notifications.map(n => n.idnotificacion === id ? { ...n, leida: true } : n));
         } catch (error) {
             console.error('Error marking notification as read:', error);

@@ -102,9 +102,9 @@ const PayrollAdmin: React.FC = () => {
     setIsLoading(true);
     try {
       const [empRes, conRes, areaRes] = await Promise.all([
-        fetch(`http://${host}:4000/api/nominas/empleados`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`http://${host}:4000/api/conceptos-nomina`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`http://${host}:4000/api/areas`, { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/empleados`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/conceptos-nomina`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/areas`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       
       if (empRes.ok && conRes.ok && areaRes.ok) {
@@ -438,7 +438,7 @@ const PayrollAdmin: React.FC = () => {
         }))
       };
 
-      const res = await fetch(`http://${host}:4000/api/nominas/bulk`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -496,7 +496,7 @@ const PayrollAdmin: React.FC = () => {
 
     setIsTimbrando(true);
     try {
-        const res = await fetch(`http://${host}:4000/api/nominas/timbrar-bulk`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/timbrar-bulk`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ idsnominas })
@@ -519,7 +519,7 @@ const PayrollAdmin: React.FC = () => {
     if (!idnomina) return;
     setIsTimbrando(true);
     try {
-        const res = await fetch(`http://${host}:4000/api/nominas/${idnomina}/timbrar`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/nominas/${idnomina}/timbrar`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -803,8 +803,8 @@ const PayrollAdmin: React.FC = () => {
                           <td style={{ textAlign: 'center' }}>
                               {nomina.uuid_sat ? (
                                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                      <a href={`http://${host}:4000${nomina.pdf_url}`} target="_blank" rel="noreferrer" title="Ver PDF" style={{ color: '#ef4444' }}><FaFilePdf /></a>
-                                      <a href={`http://${host}:4000${nomina.xml_url}`} target="_blank" rel="noreferrer" title="Bajar XML" style={{ color: '#3b82f6' }}><FaFileCode /></a>
+                                      <a href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}${nomina.pdf_url}`} target="_blank" rel="noreferrer" title="Ver PDF" style={{ color: '#ef4444' }}><FaFilePdf /></a>
+                                      <a href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}${nomina.xml_url}`} target="_blank" rel="noreferrer" title="Bajar XML" style={{ color: '#3b82f6' }}><FaFileCode /></a>
                                   </div>
                               ) : (nomina as any).idnomina ? (
                                   <button 

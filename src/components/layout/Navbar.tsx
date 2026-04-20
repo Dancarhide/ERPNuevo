@@ -25,7 +25,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         const fetchUnread = async () => {
             try {
                 const host = window.location.hostname;
-                const response = await fetch(`http://${host}:4000/api/notificaciones`);
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/notificaciones`);
                 const data = await response.json();
                 setUnreadCount(data.filter((n: any) => !n.leida).length);
             } catch (error) {

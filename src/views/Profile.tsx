@@ -46,7 +46,7 @@ const Profile: React.FC = () => {
         const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
         const token = sessionData?.token;
 
-        const response = await fetch(`http://${host}:4000/api/empleados/${idEmpleado}`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/empleados/${idEmpleado}`, {
             signal: controller.signal,
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -101,7 +101,7 @@ const Profile: React.FC = () => {
       const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
       const token = sessionData?.token;
 
-      const response = await fetch(`http://${host}:4000/api/empleados/${idEmpleado}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/empleados/${idEmpleado}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

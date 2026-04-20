@@ -49,7 +49,7 @@ const Employees: React.FC = () => {
     try {
       setLoading(true);
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:4000/api/empleados`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/empleados`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -122,8 +122,8 @@ const Employees: React.FC = () => {
       const host = window.location.hostname;
       const isNew = !updatedEmp.idempleado;
       const url = isNew 
-        ? `http://${host}:4000/api/empleados` 
-        : `http://${host}:4000/api/empleados/${updatedEmp.idempleado}`;
+        ? `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/empleados` 
+        : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/empleados/${updatedEmp.idempleado}`;
       
       const response = await fetch(url, {
         method: isNew ? 'POST' : 'PUT',

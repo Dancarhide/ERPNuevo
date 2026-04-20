@@ -108,7 +108,7 @@ const ClimateSurvey: React.FC = () => {
     React.useEffect(() => {
         const checkStatus = async () => {
             try {
-                const res = await fetch(`http://${host}:4000/api/encuestas/config`, {
+                const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/config`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -168,7 +168,7 @@ const ClimateSurvey: React.FC = () => {
             const userData = sessionData?.user || sessionData;
             const finalId = userData?.idempleado || userData?.id || sessionData?.idempleado;
 
-            const res = await fetch(`http://${host}:4000/api/encuestas/climate-survey`, {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/climate-survey`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

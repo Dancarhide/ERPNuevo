@@ -93,7 +93,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
           const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
           const token = userDataStr ? JSON.parse(userDataStr)?.token : null;
           const host = window.location.hostname;
-          const res = await fetch(`http://${host}:4000/api/roles`, { headers: { 'Authorization': `Bearer ${token}` } });
+          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/roles`, { headers: { 'Authorization': `Bearer ${token}` } });
           if (res.ok) setRoles(await res.json());
         } catch (e) { console.error(e); }
       };

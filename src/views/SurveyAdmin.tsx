@@ -46,9 +46,9 @@ const SurveyAdmin: React.FC = () => {
         setLoading(true);
         try {
             const [configRes, statsRes, expRes] = await Promise.all([
-                fetch(`http://${host}:4000/api/encuestas/config`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`http://${host}:4000/api/encuestas/admin/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`http://${host}:4000/api/encuestas/admin/expediente-stats`, { headers: { 'Authorization': `Bearer ${token}` } })
+                fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/config`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/admin/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/admin/expediente-stats`, { headers: { 'Authorization': `Bearer ${token}` } })
             ]);
 
             if (configRes.ok) {
@@ -78,7 +78,7 @@ const SurveyAdmin: React.FC = () => {
 
     const handleToggle = async (key: string, currentValue: boolean) => {
         try {
-            const res = await fetch(`http://${host}:4000/api/encuestas/admin/toggle`, {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/admin/toggle`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

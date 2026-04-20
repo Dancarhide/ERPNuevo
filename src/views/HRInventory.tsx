@@ -36,7 +36,7 @@ const HRInventory: React.FC = () => {
         const checkStatus = async () => {
             try {
                 const host = window.location.hostname;
-                const res = await fetch(`http://${host}:4000/api/encuestas/config`, {
+                const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/config`, {
                     headers: { 'Authorization': `Bearer ${userPayload?.token}` }
                 });
                 if (res.ok) {
@@ -74,7 +74,7 @@ const HRInventory: React.FC = () => {
             console.log('DEBUG - Enviando inventario para ID:', finalId, 'Data:', sessionData);
             const host = window.location.hostname;
 
-            const res = await fetch(`http://${host}:4000/api/encuestas/hr-inventory`, {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/encuestas/hr-inventory`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
