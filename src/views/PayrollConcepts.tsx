@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaTags, FaPlus, FaEdit, FaTrash, FaCheckCircle } from 'react-icons/fa';
+import { FaTags, FaPlus, FaEdit, FaTrash, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import './styles/Dashboard.css';
 
 interface ConceptoNomina {
@@ -9,6 +10,7 @@ interface ConceptoNomina {
   tipo: string;
   monto_defecto: number;
   activo: boolean;
+  es_fiscal: boolean;
 }
 
 const PayrollConcepts: React.FC = () => {
@@ -16,7 +18,7 @@ const PayrollConcepts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<Partial<ConceptoNomina>>({
-    clave: '', nombre_concepto: '', tipo: 'Percepcion', monto_defecto: 0
+    clave: '', nombre_concepto: '', tipo: 'Percepcion', monto_defecto: 0, es_fiscal: false
   });
   const [isEditing, setIsEditing] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -108,6 +110,9 @@ const PayrollConcepts: React.FC = () => {
             <FaTags style={{ color: 'var(--color-accent)' }}/> Configuración de Conceptos
           </h1>
           <p>Administra los Bonos, Deducciones, Faltas y Retardos que aplicarán en Nóminas.</p>
+          <Link to="/payroll-admin" style={{ display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', color: 'var(--color-primary)', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '10px' }}>
+            <FaArrowLeft /> Volver a Generación de Nóminas
+          </Link>
         </div>
         <button 
           onClick={() => handleOpenModal()}
@@ -134,6 +139,7 @@ const PayrollConcepts: React.FC = () => {
               <th style={{ padding: '12px 8px' }}>Nombre del Concepto</th>
               <th style={{ padding: '12px 8px' }}>Tipo</th>
               <th style={{ padding: '12px 8px' }}>Monto por Defecto ($)</th>
+              <th style={{ padding: '12px 8px' }}>Fiscal (Banco)</th>
               <th style={{ padding: '12px 8px', textAlign: 'right' }}>Acciones</th>
             </tr>
           </thead>
@@ -157,6 +163,9 @@ const PayrollConcepts: React.FC = () => {
                     </span>
                   </td>
                   <td style={{ padding: '12px 8px' }}>${parseFloat(String(c.monto_defecto)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                  <td style={{ padding: '12px 8px' }}>
+                    {c.es_fiscal ? <span style={{color: '#1f854b', fontWeight: 'bold'}}>Sí (Fiscal)</span> : <span style={{color: '#d9534f'}}>No (Efectivo)</span>}
+                  </td>
                   <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                     <button onClick={() => handleOpenModal(c)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', marginRight: '10px' }}><FaEdit size={18} /></button>
                     <button onClick={() => handleDelete(c.idconcepto)} style={{ background: 'none', border: 'none', color: '#d9534f', cursor: 'pointer' }}><FaTrash size={18} /></button>
@@ -191,6 +200,10 @@ const PayrollConcepts: React.FC = () => {
               <div>
                 <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Monto por Defecto ($)</label>
                 <input required type="number" step="0.01" value={formData.monto_defecto} onChange={e => setFormData({...formData, monto_defecto: parseFloat(e.target.value)})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input type="checkbox" id="es_fiscal" checked={formData.es_fiscal} onChange={e => setFormData({...formData, es_fiscal: e.target.checked})} />
+                <label htmlFor="es_fiscal" style={{ fontWeight: 'bold', cursor: 'pointer' }}>¿Es Concepto Fiscal? (Aparecerá en el depósito bancario)</label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: '10px 15px', borderRadius: '6px', border: '1px solid #ccc', background: 'white', cursor: 'pointer' }}>Cancelar</button>

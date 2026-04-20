@@ -22,7 +22,8 @@ export const createConcepto = async (req: Request, res: Response) => {
                 clave,
                 nombre_concepto,
                 tipo,
-                monto_defecto: monto_defecto || 0
+                monto_defecto: monto_defecto || 0,
+                es_fiscal: req.body.es_fiscal || false
             }
         });
         res.status(201).json(nuevo);
@@ -44,7 +45,8 @@ export const updateConcepto = async (req: Request, res: Response) => {
                 nombre_concepto,
                 tipo,
                 monto_defecto,
-                activo
+                activo,
+                es_fiscal: req.body.es_fiscal
             }
         });
         res.json(actualizado);

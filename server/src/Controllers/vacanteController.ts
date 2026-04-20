@@ -6,7 +6,8 @@ export const getVacantes = async (_req: Request, res: Response) => {
         const vacantes = await (prisma as any).vacantes.findMany({
             include: {
                 areas: true,
-                roles: true
+                roles: true,
+                puestos: true
             },
             orderBy: {
                 fecha_creacion: 'desc'
@@ -21,7 +22,7 @@ export const getVacantes = async (_req: Request, res: Response) => {
 
 export const createVacante = async (req: Request, res: Response) => {
     try {
-        const { titulo, idarea, idrol, cantidad_solicitada, descripcion } = req.body;
+        const { titulo, idarea, idrol, idpuesto, cantidad_solicitada, descripcion } = req.body;
 
         if (!titulo || !cantidad_solicitada) {
             return res.status(400).json({ error: 'Título y cantidad solicitada son requeridos' });
@@ -32,6 +33,7 @@ export const createVacante = async (req: Request, res: Response) => {
                 titulo,
                 idarea: idarea ? parseInt(idarea) : null,
                 idrol: idrol ? parseInt(idrol) : null,
+                idpuesto: idpuesto ? parseInt(idpuesto) : null,
                 cantidad_solicitada: parseInt(cantidad_solicitada),
                 descripcion,
                 estatus: 'Abierta',
@@ -45,6 +47,7 @@ export const createVacante = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Error al crear la vacante' });
     }
 };
+
 
 export const updateVacante = async (req: Request, res: Response) => {
     try {

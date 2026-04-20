@@ -109,7 +109,7 @@ export const updateVacacionStatus = async (req: Request, res: Response) => {
         const estatus_vacacion = req.body.estatus_vacacion as string;
         const motivo_rechazo = req.body.motivo_rechazo as string | undefined;
         
-        const vacId = parseInt(id);
+        const vacId = parseInt(id as string);
         if (isNaN(vacId)) {
             console.error(`ID de vacación inválido: ${id}`);
             return res.status(400).json({ error: 'ID de vacación inválido' });

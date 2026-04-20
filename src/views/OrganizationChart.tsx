@@ -76,7 +76,7 @@ const OrganizationChart: React.FC = () => {
 
     const fetchOrg = useCallback(async () => {
         try {
-            const res = await client.get('/api/organigrama');
+            const res = await client.get('/organigrama');
             const data: AreaOrg[] = res.data;
             
             const newNodes: Node[] = [];
@@ -93,7 +93,7 @@ const OrganizationChart: React.FC = () => {
             let areaX = 0;
             const areaSpacing = 250;
 
-            data.forEach((area, areaIdx) => {
+            data.forEach((area) => {
                 const areaId = `area-${area.id}`;
                 
                 // 2. Area Node
@@ -119,7 +119,7 @@ const OrganizationChart: React.FC = () => {
                 let empY = 280;
                 area.empleados
                     .filter(e => e.id !== area.jefe?.id)
-                    .forEach((emp, empIdx) => {
+                    .forEach((emp) => {
                         const empId = `emp-${emp.id}`;
                         newNodes.push({
                             id: empId,
@@ -150,7 +150,7 @@ const OrganizationChart: React.FC = () => {
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(setLoading => false);
+            setLoading(false);
         }
     }, [viewMode]);
 

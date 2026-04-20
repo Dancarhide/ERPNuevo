@@ -40,4 +40,49 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
+router.put('/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre_rol, desc_rol, idarea, hierarchy_level } = req.body;
+
+        const updated = await prisma.roles.update({
+            where: { idrol: parseInt(id as string) },
+            data: {
+                nombre_rol,
+                desc_rol,
+                idarea: idarea ? parseInt(idarea) : null,
+                hierarchy_level: hierarchy_level ? parseInt(hierarchy_level) : undefined
+            }
+        });
+        res.json(updated);
+    } catch (error) {
+        console.error('Error updating role:', error);
+        res.status(500).json({ error: 'Error al actualizar el rol' });
+    }
+});
+
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const rolId = parseInt(id as string);
+
+        // Safety check: don't delete if employees are assigned
+        const empleadosConRol = await prisma.empleados.count({
+            where: { idrol: rolId }
+        });
+
+        if (empleadosConRol > 0) {
+            return res.status(400).json({
+                error: `No se puede eliminar: ${empleadosConRol} empleado(s) tienen este rol asignado`
+            });
+        }
+
+        await prisma.roles.delete({ where: { idrol: rolId } });
+        res.status(204).send();
+    } catch (error) {
+        console.error('Error deleting role:', error);
+        res.status(500).json({ error: 'Error al eliminar el rol' });
+    }
+});
+
 export default router;

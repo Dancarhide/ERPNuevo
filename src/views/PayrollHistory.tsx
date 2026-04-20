@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaHistory, FaFilePdf, FaSearch, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaHistory, FaFilePdf, FaSearch, FaSpinner, FaArrowLeft, FaFileCode } from 'react-icons/fa';
+import { Link, useLocation } from 'react-router-dom';
 import './styles/Dashboard.css';
+import './styles/Payroll.css';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -17,6 +19,10 @@ interface NominaHistorial {
   monto_reportado_fiscal: string | number;
   monto_variacion_complemento: string | number;
   estado: string;
+  lote_id?: string;
+  uuid_sat?: string;
+  pdf_url?: string;
+  xml_url?: string;
   empleados: {
     nombre_completo_empleado: string;
     curp: string;
@@ -31,6 +37,7 @@ interface DetalleHistorial {
     nombre_concepto: string;
     clave: string;
     tipo: string;
+    es_fiscal: boolean;
   };
 }
 
@@ -39,6 +46,17 @@ const PayrollHistory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filterNombre, setFilterNombre] = useState('');
   const [filterMes, setFilterMes] = useState('');
+  const [filterLote, setFilterLote] = useState<string | null>(null);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const loteParam = params.get('lote');
+    if (loteParam) {
+        setFilterLote(loteParam);
+    }
+  }, [location]);
 
   useEffect(() => {
     fetchHistorial();
@@ -78,6 +96,7 @@ const PayrollHistory: React.FC = () => {
       const mesEmision = new Date(n.fecha_emision).toISOString().substring(0, 7); // YYYY-MM
       if (mesEmision !== filterMes) match = false;
     }
+    if (filterLote && n.lote_id !== filterLote) match = false;
     return match;
   });
 
@@ -144,64 +163,123 @@ const PayrollHistory: React.FC = () => {
     doc.save(`Reporte_Global_Nominas_${new Date().getTime()}.pdf`);
   };
 
-  const exportarRecibosLote = (tipo: 'Fiscal' | 'Real') => {
+  const exportarRecibosLote = (tipo: 'Fiscal' | 'Real' | 'Efectivo') => {
     if (filteredNominas.length === 0) return alert('No hay registros para exportar');
     
     const doc = new jsPDF();
     
     filteredNominas.forEach((nomina, index) => {
-      if (index > 0) doc.addPage(); // Añadir página nueva para el siguiente empleado
+      if (index > 0) doc.addPage();
       
-      // Header
-      doc.setFontSize(22);
-      doc.setTextColor(167, 49, 58); // var(--color-accent)
-      doc.text(tipo === 'Fiscal' ? 'Recibo de Nómina (Fiscal)' : 'Recibo de Pago (Complemento/Real)', 14, 22);
-
-      doc.setFontSize(10);
+      // --- Encabezado Corporativo ---
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      doc.setFontSize(18);
+      doc.setTextColor(44, 62, 80);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ERP NUEVO - SOLUCIONES EMPRESARIALES', 14, 15);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text(`Folio de Recibo: #${nomina.idnomina.toString().padStart(6, '0')}`, 14, 30);
-      doc.text(`Fecha de Emisión: ${formatearFecha(nomina.fecha_emision)}`, 14, 35);
+      doc.text('RFC: ENE240325A1B | Calle Principal #123, Ciudad de México', 14, 22);
+      doc.text('Registro Patronal IMSS: A12-34567-89-0', 14, 27);
       
-      // Employee Data
-      doc.setFontSize(12);
+      doc.setFontSize(14);
+      doc.setTextColor(167, 49, 58);
+      let titulo = 'RECIBO DE PAGO (NÓMINA REAL)';
+      if (tipo === 'Fiscal') titulo = 'COMPROBANTE DE PAGO (NÓMINA FISCAL)';
+      if (tipo === 'Efectivo') titulo = 'COMPROBANTE DE COMPLEMENTO (EFECTIVO)';
+      doc.text(titulo, 14, 35);
+      
+      // --- Datos del Empleado & Periodo ---
       doc.setTextColor(0, 0, 0);
-      doc.text('Datos del Empleado:', 14, 45);
       doc.setFontSize(10);
-      doc.text(`Nombre: ${nomina.empleados.nombre_completo_empleado}`, 14, 52);
-      doc.text(`CURP: ${nomina.empleados.curp || 'N/A'}`, 14, 57);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DATOS DEL EMPLEADO', 14, 50);
+      doc.line(14, 52, 100, 52);
       
-      doc.setFontSize(12);
-      doc.text('Periodo de Pago:', 120, 45);
-      doc.setFontSize(10);
-      doc.text(`Del: ${formatearFecha(nomina.fecha_inicio)}`, 120, 52);
-      doc.text(`Al: ${formatearFecha(nomina.fecha_fin)}`, 120, 57);
-      doc.text(`Estado: ${nomina.estado}`, 120, 62);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Nombre: ${nomina.empleados.nombre_completo_empleado}`, 14, 58);
+      doc.text(`RFC: ${nomina.empleados.rfc || 'N/A'}`, 14, 63);
+      doc.text(`CURP: ${nomina.empleados.curp || 'N/A'}`, 14, 68);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text('PERIODO DE PAGO', 120, 50);
+      doc.line(120, 52, 190, 52);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Del: ${formatearFecha(nomina.fecha_inicio)}`, 120, 58);
+      doc.text(`Al: ${formatearFecha(nomina.fecha_fin)}`, 120, 63);
+      doc.text(`Folio: #${nomina.idnomina.toString().padStart(6, '0')}`, 120, 68);
 
       const bodyRowsRecibo: any[] = [];
       let totalPagar = 0;
 
       if (tipo === 'Fiscal') {
-          const fiscal = parseFloat(String(nomina.monto_reportado_fiscal)) || 0;
-          bodyRowsRecibo.push(['Sueldo Base del Periodo (Fiscal)', formatearMoneda(fiscal), '']);
+          // Obtener el neto fiscal guardado (lo que se deposita al banco)
+          const fiscalNeto = parseFloat(nomina.monto_reportado_fiscal as any) || 0;
           
-          let totalDed = 0;
+          let totalDedFiscal = 0;
+          let totalPercepFiscal = 0;
+          const detallesFiscales: any[] = [];
+
           if (nomina.detalles_nomina && nomina.detalles_nomina.length > 0) {
             nomina.detalles_nomina.forEach(d => {
-              if (d.conceptos_nomina.tipo === 'Deduccion') {
+              // Solo procesar conceptos que tengan la marca 'es_fiscal' en el catálogo
+              if (d.conceptos_nomina && d.conceptos_nomina.es_fiscal) {
+                const montoConcepto = parseFloat(d.monto_aplicado as any) || 0;
                 const nombre = `${d.conceptos_nomina.clave} - ${d.conceptos_nomina.nombre_concepto}`;
-                bodyRowsRecibo.push([nombre, '', formatearMoneda(d.monto_aplicado)]);
-                totalDed += parseFloat(String(d.monto_aplicado)) || 0;
+                
+                if (d.conceptos_nomina.tipo === 'Percepcion') {
+                  totalPercepFiscal += montoConcepto;
+                  detallesFiscales.push([nombre, formatearMoneda(montoConcepto), '']);
+                } else {
+                  totalDedFiscal += montoConcepto;
+                  detallesFiscales.push([nombre, '', formatearMoneda(montoConcepto)]);
+                }
               }
             });
-          } else {
-             const deducciones = parseFloat(String(nomina.deducciones)) || 0;
-             if (deducciones > 0) {
-               bodyRowsRecibo.push(['Deducciones / Retenciones', '', formatearMoneda(deducciones)]);
-             }
-             totalDed = deducciones;
+          }
+
+          // Bruto Fiscal = Neto + Deducciones - Percepciones (Todas fiscales)
+          const brutoFiscalCalculado = Math.max(0, fiscalNeto + totalDedFiscal - totalPercepFiscal);
+          
+          // Fila del sueldo base fiscal (sin horas extras ni bonos privados)
+          bodyRowsRecibo.push(['Sueldo Base del Periodo (Fiscal)', formatearMoneda(brutoFiscalCalculado), '']);
+          
+          // Si hubo otros conceptos fiscales (bonos fiscales o impuestos FISCALES como ISR/IMSS)
+          if (detallesFiscales.length > 0) {
+              bodyRowsRecibo.push(...detallesFiscales);
           }
           
-          totalPagar = Math.max(0, fiscal - totalDed);
+          totalPagar = fiscalNeto;
+      } else if (tipo === 'Efectivo') {
+          // Lote de EFECTIVO (diferencia entre real y fiscal)
+          const varEfectivo = parseFloat(String(nomina.monto_variacion_complemento)) || 0;
+          
+          // La base en efectivo es sueldo_base - sueldo_fiscal (ej. bono de asistencia, horas extras no fiscales)
+          const baseReal = parseFloat(String(nomina.sueldo_base)) || 0;
+          const fiscal = parseFloat(String(nomina.monto_reportado_fiscal)) || 0;
+          const difBase = Math.max(0, baseReal - fiscal);
+          
+          if (difBase > 0) bodyRowsRecibo.push(['Diferencia de Base / Horas Extras', formatearMoneda(difBase), '']);
+          
+          if (nomina.detalles_nomina && nomina.detalles_nomina.length > 0) {
+            nomina.detalles_nomina.forEach(d => {
+              // Solo mostrar conceptos QUE NO SEAN FISCALES
+              if (!d.conceptos_nomina.es_fiscal) {
+                const nombre = `${d.conceptos_nomina.clave} - ${d.conceptos_nomina.nombre_concepto}`;
+                if (d.conceptos_nomina.tipo === 'Percepcion') {
+                  bodyRowsRecibo.push([nombre, formatearMoneda(d.monto_aplicado), '']);
+                } else {
+                  bodyRowsRecibo.push([nombre, '', formatearMoneda(d.monto_aplicado)]);
+                }
+              }
+            });
+          }
+          totalPagar = varEfectivo;
       } else {
           // Lote Real (El completo, suma de Base, consideraciones y deducciones reales)
           const baseReal = parseFloat(String(nomina.sueldo_base)) || 0;
@@ -235,167 +313,140 @@ const PayrollHistory: React.FC = () => {
       // Table of details
       autoTable(doc, {
         startY: 75,
-        head: [['Concepto', 'Percepciones', 'Deducciones']],
+        head: [['Concepto', 'Percepciones (+)', 'Deducciones (-)']],
         body: bodyRowsRecibo,
         foot: [
-          ['TOTAL NETO A PAGAR', formatearMoneda(totalPagar), '-']
+          ['NETO A RECIBIR', formatearMoneda(totalPagar), '-']
         ],
-        theme: 'grid',
-        headStyles: { fillColor: tipo === 'Fiscal' ? [44, 62, 80] : [167, 49, 58], textColor: 255 },
-        footStyles: { fillColor: [248, 249, 250], textColor: 0, fontStyle: 'bold' }
+        theme: 'striped',
+        headStyles: { fillColor: tipo === 'Fiscal' ? [44, 62, 80] : [167, 49, 58], textColor: 255, fontStyle: 'bold' },
+        footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+        styles: { fontSize: 9 }
       });
 
-      // Final total text
-      const finalY = (doc as any).lastAutoTable.finalY || 120;
-      doc.setFontSize(14);
-      doc.setTextColor(31, 133, 75); // success green
-      doc.text(`Total Depositado: ${formatearMoneda(totalPagar)}`, 14, finalY + 15);
+      // --- Pie de Recibo & Firma ---
+      const finalY = (doc as any).lastAutoTable.finalY + 15;
       
-      // Signature line
-      doc.setLineWidth(0.5);
-      doc.line(70, finalY + 50, 140, finalY + 50);
-      doc.text('Firma del Empleado', 90, finalY + 55);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text('DECLARACIÓN: Recibí a mi entera satisfacción la cantidad neta indicada en este documento por concepto de mis salarios y prestaciones', 14, finalY);
+      doc.text('devengados en el periodo señalado. No se me adeuda cantidad alguna por ningún concepto hasta la fecha.', 14, finalY + 4);
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.line(70, finalY + 35, 140, finalY + 35);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(nomina.empleados.nombre_completo_empleado, 105, finalY + 40, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text('FIRMA DE CONFORMIDAD DEL EMPLEADO', 105, finalY + 45, { align: 'center' });
     });
 
     doc.save(`Lote_Recibos_${tipo === 'Fiscal' ? 'Fiscales' : 'Real'}_${new Date().getTime()}.pdf`);
   };
 
   return (
-    <div className="dashboard-container" style={{ padding: '20px' }}>
-      <div className="dashboard-header" style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+    <div className="payroll-dashboard">
+      <div className="dashboard-header" style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.8rem', margin: '0 0 5px 0' }}>
-            <FaHistory style={{ color: 'var(--color-accent)' }}/> Historial Global de Nóminas
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '2rem', margin: '0 0 5px 0' }}>
+            <FaHistory style={{ color: 'var(--payroll-accent)' }}/> Historial Global de Nóminas
           </h1>
-          <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Consulta todos los pagos realizados e imprime el Listado de Raya (Reporte Consolidado) o los Recibos Individuales.</p>
+          <p style={{ color: '#64748b', margin: 0 }}>Listado de Raya consolidado y descarga de recibos corporativos.</p>
+          <Link to="/payroll-admin" style={{ display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', color: 'var(--payroll-info)', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '10px' }}>
+            <FaArrowLeft /> Volver a Generación de Nóminas
+          </Link>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => exportarRecibosLote('Fiscal')}
-            style={{
-              backgroundColor: 'white', color: '#2c3e50', border: '2px solid #2c3e50', padding: '10px 16px',
-              borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '0.95rem',
-              transition: 'all 0.1s'
-            }}
-            onMouseOver={e => { e.currentTarget.style.backgroundColor = '#2c3e50'; e.currentTarget.style.color = 'white'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-            onMouseOut={e => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = '#2c3e50'; e.currentTarget.style.transform = 'translateY(0)' }}
-          >
-            <FaFilePdf size={16} /> Lote Fiscal (IMSS)
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button onClick={() => exportarRecibosLote('Fiscal')} className="btn-payroll btn-payroll-outline" style={{ borderColor: '#2c3e50', color: '#2c3e50' }}>
+            <FaFilePdf /> Lote Fiscal
           </button>
-          
-          <button 
-            onClick={() => exportarRecibosLote('Real')}
-            style={{
-              backgroundColor: 'white', color: 'var(--color-accent)', border: '2px solid var(--color-accent)', padding: '10px 16px',
-              borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '0.95rem',
-              transition: 'all 0.1s'
-            }}
-            onMouseOver={e => { e.currentTarget.style.backgroundColor = 'var(--color-accent)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-            onMouseOut={e => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'var(--color-accent)'; e.currentTarget.style.transform = 'translateY(0)' }}
-          >
-            <FaFilePdf size={16} /> Lote Efectivo/Real
+          <button onClick={() => exportarRecibosLote('Real')} className="btn-payroll btn-payroll-outline" style={{ borderColor: 'var(--payroll-success)', color: 'var(--payroll-success)' }}>
+            <FaFilePdf /> Lote Real
           </button>
-          
-          <button 
-            onClick={exportarPDFGlobal}
-            style={{
-              backgroundColor: 'var(--color-accent)', color: 'white', border: 'none', padding: '12px 24px',
-              borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '1rem',
-              boxShadow: '0 4px 6px rgba(167, 49, 58, 0.25)', transition: 'transform 0.1s, boxShadow 0.1s'
-            }}
-            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <FaFilePdf size={18} /> Descargar Reporte Global (Listado)
+          <button onClick={exportarPDFGlobal} className="btn-payroll btn-payroll-primary">
+            <FaFilePdf /> Descargar Listado de Raya
           </button>
         </div>
       </div>
 
-      <div className="dashboard-panel" style={{ marginBottom: '25px', display: 'flex', gap: '20px', flexWrap: 'wrap', padding: '20px', backgroundColor: '#f8f9fa', borderLeft: '4px solid var(--color-primary)' }}>
-        <div style={{ flex: '1 1 200px' }}>
-          <h3 style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#666' }}>Resumen Neto (Suma de Listado)</h3>
-          <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
-            {formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.total_pagado)) || 0), 0))}
-          </p>
+      <div className="payroll-summary-grid">
+        <div className="payroll-summary-card">
+          <h3>Costo Total Real</h3>
+          <p>{formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.total_pagado)) || 0), 0))}</p>
         </div>
-        <div style={{ flex: '1 1 200px' }}>
-          <h3 style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#666' }}>Carga Patronal (Aprox. 27% s/Fiscal)</h3>
-          <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#a7313a' }}>
-            {formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.monto_reportado_fiscal)) || 0), 0) * 0.27)} 
-            <span style={{fontSize: '0.8rem', fontWeight: 'normal', color: '#666', marginLeft: '5px'}}>(IMSS, ISN, Infonavit)</span>
-          </p>
+        <div className="payroll-summary-card">
+          <h3>Costo Social (Est.)</h3>
+          <p style={{ color: 'var(--payroll-info)' }}>{formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.monto_reportado_fiscal)) || 0), 0) * 0.32)}</p>
         </div>
-        <div style={{ flex: '1 1 200px' }}>
-          <h3 style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#666' }}>Costo Total Empresa</h3>
-          <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: '#1f854b' }}>
-            {formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.total_pagado)) || 0), 0) + (filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.monto_reportado_fiscal)) || 0), 0) * 0.27))}
-          </p>
+        <div className="payroll-summary-card">
+          <h3>Desembolso Total</h3>
+          <p style={{ color: 'var(--payroll-success)' }}>{formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.total_pagado)) || 0), 0) + (filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.monto_reportado_fiscal)) || 0), 0) * 0.32))}</p>
+        </div>
+        <div className="payroll-summary-card">
+          <h3>Dispersion Bancaria</h3>
+          <p style={{ color: '#2c3e50' }}>{formatearMoneda(filteredNominas.reduce((acc, n) => acc + (parseFloat(String(n.monto_reportado_fiscal)) || 0), 0))}</p>
         </div>
       </div>
 
-      <div className="dashboard-panel" style={{ marginBottom: '25px', display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap', padding: '20px' }}>
-        <div style={{ flex: '1 1 300px' }}>
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Buscar por Empleado</label>
-          <div style={{ position: 'relative' }}>
-            <FaSearch style={{ position: 'absolute', left: '12px', top: '12px', color: '#999' }} />
+      <div className="payroll-focus-toolbar" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '20px', flex: 1, minWidth: '300px' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <FaSearch style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input 
-              type="text" placeholder="Ej. Juan Pérez" value={filterNombre} onChange={e => setFilterNombre(e.target.value)}
-              style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box', outline: 'none', transition: 'border-color 0.2s', fontSize: '1rem' }} 
-              onFocus={e => e.target.style.borderColor = 'var(--color-accent)'}
-              onBlur={e => e.target.style.borderColor = '#ddd'}
+              type="text" placeholder="Buscar empleado..." value={filterNombre} onChange={e => setFilterNombre(e.target.value)}
+              className="payroll-input-currency" style={{ width: '100%', paddingLeft: '35px', boxSizing: 'border-box' }}
             />
           </div>
-        </div>
-        <div style={{ flex: '1 1 200px' }}>
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Filtrar por Mes (Emisión)</label>
           <input 
             type="month" value={filterMes} onChange={e => setFilterMes(e.target.value)}
-            style={{ width: '100%', padding: '10px 15px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box', outline: 'none', cursor: 'pointer', transition: 'border-color 0.2s', fontSize: '1rem', color: '#333' }} 
-            onFocus={e => e.target.style.borderColor = 'var(--color-accent)'}
-            onBlur={e => e.target.style.borderColor = '#ddd'}
+            className="payroll-input-currency" style={{ minWidth: '160px' }}
           />
         </div>
-        <div>
-            <button 
-              onClick={() => { setFilterNombre(''); setFilterMes(''); }} 
-              style={{ padding: '10px 20px', border: '1px solid #ddd', borderRadius: '8px', background: '#f8f9fa', color: '#555', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', fontSize: '0.95rem' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = '#e9ecef'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = '#f8f9fa'; }}
-            >
-              Limpiar Filtros
-            </button>
-        </div>
+        <button onClick={() => { setFilterNombre(''); setFilterMes(''); }} className="btn-payroll btn-payroll-outline" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+          Limpiar Filtros
+        </button>
       </div>
 
-      <div className="dashboard-panel" style={{ overflowX: 'auto' }}>
+      <div className="payroll-table-container">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-muted)' }}><FaSpinner className="spin" /> Cargando historial...</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}><FaSpinner className="spin" /> Cargando bitácora de nóminas...</div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+          <table className="payroll-table">
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--color-accent)', color: 'var(--color-text-muted)' }}>
-                <th style={{ padding: '12px 8px' }}>Folio</th>
-                <th style={{ padding: '12px 8px' }}>Fecha Emisión</th>
-                <th style={{ padding: '12px 8px' }}>Periodo (Inicio - Fin)</th>
-                <th style={{ padding: '12px 8px' }}>Empleado</th>
-                <th style={{ padding: '12px 8px' }}>T. Pagado ($)</th>
-                <th style={{ padding: '12px 8px', color: '#1f854b' }}>Fiscal Reportado ($)</th>
-                <th style={{ padding: '12px 8px', color: '#a7313a' }}>Variación Efectivo ($)</th>
+              <tr>
+                <th>Folio</th>
+                <th>Emisión</th>
+                <th>Periodo</th>
+                <th>Empleado</th>
+                <th style={{ textAlign: 'right' }}>Total Pagado ($)</th>
+                <th style={{ textAlign: 'right', color: 'var(--payroll-success)' }}>Fiscal Banco ($)</th>
+                <th style={{ textAlign: 'right', color: 'var(--payroll-accent)' }}>CASH ($)</th>
+                <th style={{ textAlign: 'center' }}>SAT</th>
               </tr>
             </thead>
             <tbody>
               {filteredNominas.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>No se encontraron registros de nómina.</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No se han generado nóminas en este periodo.</td></tr>
               ) : (
                 filteredNominas.map(n => (
-                  <tr key={n.idnomina} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '12px 8px', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>#{n.idnomina.toString().padStart(5, '0')}</td>
-                    <td style={{ padding: '12px 8px' }}>{new Date(n.fecha_emision).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '0.9rem' }}>{formatearFecha(n.fecha_inicio)} - {formatearFecha(n.fecha_fin)}</td>
-                    <td style={{ padding: '12px 8px', fontWeight: '500' }}>{n.empleados.nombre_completo_empleado}</td>
-                    <td style={{ padding: '12px 8px', fontWeight: 'bold', color: 'var(--color-primary)' }}>{formatearMoneda(n.total_pagado)}</td>
-                    <td style={{ padding: '12px 8px', color: '#1f854b', fontWeight: 'bold' }}>{formatearMoneda(n.monto_reportado_fiscal)}</td>
-                    <td style={{ padding: '12px 8px', color: '#a7313a', fontWeight: 'bold' }}>{formatearMoneda(n.monto_variacion_complemento)}</td>
+                  <tr key={n.idnomina}>
+                    <td style={{ fontWeight: 'bold', color: '#64748b' }}>#{n.idnomina.toString().padStart(5, '0')}</td>
+                    <td>{new Date(n.fecha_emision).toLocaleDateString('es-MX')}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{formatearFecha(n.fecha_inicio)} al {formatearFecha(n.fecha_fin)}</td>
+                    <td style={{ fontWeight: '600' }}>{n.empleados.nombre_completo_empleado}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatearMoneda(n.total_pagado)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--payroll-success)', fontWeight: 'bold' }}>{formatearMoneda(n.monto_reportado_fiscal)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--payroll-accent)', fontWeight: 'bold' }}>{formatearMoneda(n.monto_variacion_complemento)}</td>
+                    <td style={{ textAlign: 'center' }}>
+                        {n.uuid_sat ? (
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <a href={`http://${window.location.hostname}:4000${n.pdf_url}`} target="_blank" rel="noreferrer" title="Ver PDF" style={{ color: '#ef4444' }}><FaFilePdf /></a>
+                                <a href={`http://${window.location.hostname}:4000${n.xml_url}`} target="_blank" rel="noreferrer" title="Bajar XML" style={{ color: '#3b82f6' }}><FaFileCode /></a>
+                            </div>
+                        ) : (
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>-</span>
+                        )}
+                    </td>
                   </tr>
                 ))
               )}

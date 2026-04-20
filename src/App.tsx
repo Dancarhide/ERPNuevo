@@ -10,8 +10,17 @@ import PayrollAdmin from './views/PayrollAdmin';
 import MyPayroll from './views/MyPayroll';
 import PayrollConcepts from './views/PayrollConcepts';
 import PayrollHistory from './views/PayrollHistory';
+import PayrollBatches from './views/PayrollBatches';
 import CyI from './views/CyI';
 import Vacantes from './views/Vacantes';
+import GestionTalento from './views/GestionTalento';
+import Roles from './views/Roles';
+import Incidencias from './views/Incidencias';
+import HRInventory from './views/HRInventory';
+import ClimateSurvey from './views/ClimateSurvey';
+import SurveyAdmin from './views/SurveyAdmin';
+import EventAdmin from './views/EventAdmin';
+import AdminConfig from './views/AdminConfig';
 import MainLayout from './components/layout/MainLayout';
 
 
@@ -74,13 +83,33 @@ function App() {
                             <Route path="/payroll-admin" element={<PayrollAdmin />} />
                             <Route path="/payroll-concepts" element={<PayrollConcepts />} />
                             <Route path="/payroll-history" element={<PayrollHistory />} />
+                            <Route path="/payroll-batches" element={<PayrollBatches />} />
                         </Route>
 
                         <Route element={<ProtectedRoute allowedRoles={['Admin', 'RH']} />}>
                             <Route path="/cyi" element={<CyI />} />
                             <Route path="/vacantes" element={<Vacantes />} />
+                            <Route path="/estructura" element={<GestionTalento />} />
                         </Route>
                         <Route path="/my-payroll" element={<MyPayroll />} />
+
+                        {/* Roles — Admin only */}
+                        <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+                            <Route path="/roles" element={<Roles />} />
+                        </Route>
+
+                        {/* Incidencias — all authenticated users */}
+                        <Route path="/incidencias" element={<Incidencias />} />
+                        <Route path="/hr-inventory" element={<HRInventory />} />
+                        <Route path="/clima-laboral" element={<ClimateSurvey />} />
+                        <Route element={<ProtectedRoute allowedRoles={['Admin', 'RH']} />}>
+                            <Route path="/admin-encuestas" element={<SurveyAdmin />} />
+                            <Route path="/admin-eventos" element={<EventAdmin />} />
+                        </Route>
+
+                        <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+                            <Route path="/admin-config" element={<AdminConfig />} />
+                        </Route>
 
 
                         {/* More secure routes later */}

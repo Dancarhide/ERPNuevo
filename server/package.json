@@ -6,6 +6,8 @@
     "build": "tsc -p .",
     "start": "node dist/server.js",
     "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -16,14 +18,21 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.2",
+    "@types/pdfkit": "^0.17.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.12.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
-    "sharp": "^0.34.3"
+    "qrcode": "^1.5.4",
+    "sharp": "^0.34.3",
+    "uuid": "^13.0.0",
+    "xmlbuilder2": "^4.0.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

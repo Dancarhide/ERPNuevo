@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -14,6 +14,7 @@ model areas {
   jefe_area                            Int?
   empleados_areas_jefe_areaToempleados empleados?  @relation("areas_jefe_areaToempleados", fields: [jefe_area], references: [idempleado], onUpdate: NoAction, map: "fk_areas_jefe")
   empleados_empleados_idareaToareas    empleados[] @relation("empleados_idareaToareas")
+  puestos                              puestos[]
   roles                                roles[]
   vacantes                             vacantes[]
 }
@@ -85,19 +86,40 @@ model empleados {
   puesto                                                   String?                      @db.VarChar(255)
   foto                                                     String?
   sueldo_fiscal                                            Decimal?                     @default(0.00) @db.Decimal(10, 2)
+  infonavit_mensual                                        Decimal?                     @default(0.00) @db.Decimal(10, 2)
+  fondo_ahorro_pct                                         Decimal?                     @default(0.00) @db.Decimal(5, 2)
+  vales_despensa_pct                                       Decimal?                     @default(0.00) @db.Decimal(5, 2)
+  idvacante                                                Int?
+  idpuesto                                                 Int?
+  aspiraciones_profesionales                               String?
+  cartilla_militar                                         Boolean?                     @default(false)
+  ciudad                                                   String?                      @db.VarChar(100)
+  colonia                                                  String?                      @db.VarChar(100)
+  cp                                                       String?                      @db.VarChar(10)
+  entidad_federativa                                       String?                      @db.VarChar(100)
+  estado_civil                                             String?                      @db.VarChar(30)
+  fecha_nacimiento                                         DateTime?                    @db.Date
+  lugar_nacimiento                                         String?                      @db.VarChar(100)
+  sexo                                                     String?                      @db.VarChar(10)
+  ultimo_grado_escolar                                     String?                      @db.VarChar(50)
   areas_areas_jefe_areaToempleados                         areas[]                      @relation("areas_jefe_areaToempleados")
   auditoria_usuarios                                       auditoria_usuarios[]
   conversacion_participantes                               conversacion_participantes[]
   conversaciones                                           conversaciones[]
   credenciales                                             credenciales[]
+  cyi_progreso                                             cyi_progreso[]
+  puestos                                                  puestos?                     @relation(fields: [idpuesto], references: [idpuesto])
+  roles                                                    roles?                       @relation(fields: [idrol], references: [idrol], onDelete: NoAction, onUpdate: NoAction)
+  vacantes                                                 vacantes?                    @relation(fields: [idvacante], references: [idvacante], onUpdate: NoAction)
   areas_empleados_idareaToareas                            areas?                       @relation("empleados_idareaToareas", fields: [idarea], references: [idarea], onDelete: NoAction, onUpdate: NoAction, map: "fk_area")
-  roles                                                    roles?                       @relation(fields: [idrol], references: [idrol], onDelete: NoAction, onUpdate: NoAction, map: "fk_roles")
   empleados_familiar                                       empleados_familiar[]
   empleados_salud                                          empleados_salud[]
+  encuesta_clima                                           encuesta_clima?
   incidencias_incidencias_id_empleado_reportadoToempleados incidencias[]                @relation("incidencias_id_empleado_reportadoToempleados")
   incidencias_incidencias_id_reportanteToempleados         incidencias[]                @relation("incidencias_id_reportanteToempleados")
   mensajes                                                 mensajes[]
   nominas                                                  nominas[]
+  prestamos                                                prestamos[]
   respuestas_evaluacion                                    respuestas_evaluacion[]
   tareas_creadas                                           tareas[]                     @relation("tareas_creadas")
   tareas_asignadas                                         tareas[]                     @relation("tareas_asignadas")
@@ -283,6 +305,17 @@ model nominas {
   monto_reportado_fiscal      Decimal?          @default(0.00) @db.Decimal(10, 2)
   monto_variacion_complemento Decimal?          @default(0.00) @db.Decimal(10, 2)
   dias_trabajados             Int?              @default(15)
+  sdi                         Decimal?          @default(0.00) @db.Decimal(10, 2)
+  factor_integracion          Decimal?          @default(1.0493) @db.Decimal(10, 4)
+  costo_patronal              Decimal?          @default(0.00) @db.Decimal(10, 2)
+  certificado_sat             String?
+  estatus_sat                 String?           @default("Pendiente") @db.VarChar(50)
+  fecha_timbrado              DateTime?         @db.Timestamp(6)
+  pdf_url                     String?
+  sello_sat                   String?
+  uuid_sat                    String?           @db.VarChar(100)
+  xml_url                     String?
+  lote_id                     String?           @db.VarChar(50)
   detalles_nomina             detalles_nomina[]
   empleados                   empleados         @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
 
@@ -296,6 +329,7 @@ model conceptos_nomina {
   tipo            String            @db.VarChar(20)
   monto_defecto   Decimal?          @default(0.00) @db.Decimal(10, 2)
   activo          Boolean?          @default(true)
+  es_fiscal       Boolean?          @default(false)
   detalles_nomina detalles_nomina[]
 }
 
@@ -312,24 +346,147 @@ model detalles_nomina {
 }
 
 model cyi_progreso {
-  id         Int      @id @default(autoincrement())
-  etapa_id   String   @unique
-  status     String   @default("pending")
-  items      Json
-  notas      String?  @db.Text
-  updated_at DateTime @default(now()) @updatedAt
+  id          Int         @id @default(autoincrement())
+  etapa_id    String      @db.VarChar(50)
+  status      String      @default("pending") @db.VarChar(20)
+  items       Json
+  notas       String?
+  updated_at  DateTime    @default(now()) @updatedAt
+  idempleado  Int?
+  idvacante   Int?
+  idcandidato Int?
+  idpuesto    Int?
+  candidatos  candidatos? @relation(fields: [idcandidato], references: [idcandidato], onDelete: Cascade)
+  empleados   empleados?  @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade)
+  puestos     puestos?    @relation(fields: [idpuesto], references: [idpuesto])
+  vacantes    vacantes?   @relation(fields: [idvacante], references: [idvacante], onDelete: Cascade)
+
+  @@unique([idcandidato, etapa_id])
+  @@index([idempleado])
+  @@index([idvacante])
+  @@index([idcandidato])
+  @@index([idpuesto])
+  @@index([etapa_id])
+}
+
+model puestos {
+  idpuesto        Int            @id @default(autoincrement())
+  nombre_puesto   String         @db.VarChar(100)
+  descripcion     String?
+  cupo_maximo     Int            @default(1)
+  personal_actual Int            @default(0)
+  idarea          Int?
+  beneficios      String?
+  requisitos      String?
+  sueldo_max      Decimal?       @db.Decimal(10, 2)
+  sueldo_min      Decimal?       @db.Decimal(10, 2)
+  candidatos      candidatos[]
+  cyi_progreso    cyi_progreso[]
+  empleados       empleados[]
+  areas           areas?         @relation(fields: [idarea], references: [idarea])
+  vacantes        vacantes[]
 }
 
 model vacantes {
-  idvacante          Int       @id @default(autoincrement())
-  titulo             String    @db.VarChar(100)
-  idarea             Int?
-  idrol              Int?
+  idvacante           Int            @id @default(autoincrement())
+  titulo              String         @db.VarChar(100)
+  idarea              Int?
+  idrol               Int?
   cantidad_solicitada Int
-  cantidad_contratada Int       @default(0)
-  descripcion        String?   @db.Text
-  estatus            String    @default("Abierta")
-  fecha_creacion     DateTime  @default(now()) @db.Timestamp(6)
-  areas              areas?    @relation(fields: [idarea], references: [idarea])
-  roles              roles?    @relation(fields: [idrol], references: [idrol])
+  cantidad_contratada Int            @default(0)
+  descripcion         String?
+  estatus             String         @default("Abierta")
+  fecha_creacion      DateTime       @default(now()) @db.Timestamp(6)
+  idpuesto            Int?
+  candidatos          candidatos[]
+  cyi_progreso        cyi_progreso[]
+  empleados           empleados[]
+  areas               areas?         @relation(fields: [idarea], references: [idarea])
+  puestos             puestos?       @relation(fields: [idpuesto], references: [idpuesto])
+  roles               roles?         @relation(fields: [idrol], references: [idrol])
+}
+
+model candidatos {
+  idcandidato       Int            @id @default(autoincrement())
+  nombre_completo   String         @db.VarChar(255)
+  email             String?        @db.VarChar(100)
+  telefono          String?        @db.VarChar(20)
+  cv_url            String?
+  idvacante         Int?
+  idpuesto          Int?
+  estatus           String         @default("Postulado")
+  notas             String?
+  fecha_postulacion DateTime       @default(now())
+  puestos           puestos?       @relation(fields: [idpuesto], references: [idpuesto])
+  vacantes          vacantes?      @relation(fields: [idvacante], references: [idvacante])
+  cyi_progreso      cyi_progreso[]
+}
+
+model prestamos {
+  idprestamo      Int       @id @default(autoincrement())
+  idempleado      Int
+  monto_total     Decimal   @db.Decimal(10, 2)
+  saldo_pendiente Decimal   @db.Decimal(10, 2)
+  abono_periodo   Decimal   @db.Decimal(10, 2)
+  fecha_prestamo  DateTime  @default(now()) @db.Timestamp(6)
+  estatus         String    @default("Activo") @db.VarChar(20)
+  notas           String?
+  empleados       empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade)
+
+  @@index([idempleado])
+}
+
+model encuesta_clima {
+  id               Int        @id @default(autoincrement())
+  idempleado       Int?       @unique
+  fecha            DateTime   @default(now())
+  nivel_jerarquico String?
+  ubicacion        String?
+  hijos            String?
+  antiguedad       String?
+  genero           String?
+  orientacion_org  Json?
+  admin_talento    Json?
+  estilo_direccion Json?
+  comunicacion_int Json?
+  trabajo_equipo   Json?
+  capacidad_prof   Json?
+  medio_ambiente   Json?
+  empleados        empleados? @relation(fields: [idempleado], references: [idempleado])
+}
+
+model eventos_empresa {
+  id                Int       @id @default(autoincrement())
+  titulo            String    @db.VarChar(200)
+  descripcion       String?
+  fecha_inicio      DateTime  @db.Date
+  fecha_fin         DateTime  @db.Date
+  hora_inicio       String?   @db.VarChar(5)
+  hora_fin          String?   @db.VarChar(5)
+  tipo              String    @default("Evento") @db.VarChar(50)
+  color             String?   @db.VarChar(7)
+  target_type       String?   @default("TODOS") @db.VarChar(20)
+  idarea_target     Int?
+  empleados_target  Json?
+  creado_por        Int?
+  fecha_creacion    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model sys_config {
+  id    Int    @id @default(autoincrement())
+  key   String @unique @db.VarChar(50)
+  value String
+}
+
+model notificaciones {
+  idnotificacion Int      @id @default(autoincrement())
+  idempleado     Int?
+  titulo         String   @db.VarChar(100)
+  mensaje        String
+  tipo           String   @db.VarChar(50)
+  leida          Boolean  @default(false)
+  fecha_creacion DateTime @default(now()) @db.Timestamp(6)
+  link           String?  @db.VarChar(255)
+
+  @@index([idempleado])
 }

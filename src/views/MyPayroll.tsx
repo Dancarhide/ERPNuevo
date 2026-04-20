@@ -9,10 +9,11 @@ interface Nomina {
   fecha_emision: string;
   fecha_inicio: string;
   fecha_fin: string;
-  sueldo_base: string;
-  bonos: string;
-  deducciones: string;
-  total_pagado: string;
+  sueldo_base: string | number;
+  bonos: string | number;
+  deducciones: string | number;
+  total_pagado: string | number;
+
   metodo_pago: string;
   estado: string;
   detalles_nomina?: DetalleNomina[];
@@ -60,10 +61,12 @@ const MyPayroll: React.FC = () => {
     }
   };
 
-  const formatearMoneda = (valor: string | number) => {
-    const num = typeof valor === 'string' ? parseFloat(valor) : valor;
-    return `$${(num || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatearMoneda = (valor: string | number | null) => {
+    if (valor === null || valor === undefined) return '$0.00';
+    const num = typeof valor === 'string' ? parseFloat(valor) : Number(valor);
+    return isNaN(num) ? '$0.00' : `$${num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+
 
   const formatearFecha = (fechaStr: string) => {
     const date = new Date(fechaStr);
@@ -116,13 +119,17 @@ const MyPayroll: React.FC = () => {
       if (parseFloat(nomina.deducciones) > 0) bodyRows.push(['Deducciones / Retenciones', '', formatearMoneda(nomina.deducciones)]);
     }
 
+    const sBase = parseFloat(String(nomina.sueldo_base || 0));
+    const sBonos = parseFloat(String(nomina.bonos || 0));
+    const sDeducciones = parseFloat(String(nomina.deducciones || 0));
+
     // Table of details
     autoTable(doc, {
       startY: 75,
       head: [['Concepto', 'Percepciones', 'Deducciones']],
       body: bodyRows,
       foot: [
-        ['TOTAL NETO A PAGAR', formatearMoneda(parseFloat(nomina.sueldo_base) + parseFloat(nomina.bonos)), formatearMoneda(nomina.deducciones)]
+        ['TOTAL NETO A PAGAR', formatearMoneda(sBase + sBonos), formatearMoneda(sDeducciones)]
       ],
       theme: 'grid',
       headStyles: { fillColor: [167, 49, 58], textColor: 255 },
@@ -134,6 +141,7 @@ const MyPayroll: React.FC = () => {
     doc.setFontSize(14);
     doc.setTextColor(31, 133, 75); // success green
     doc.text(`Total Depositado: ${formatearMoneda(nomina.total_pagado)}`, 14, finalY + 15);
+
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text(`Método de Pago: ${nomina.metodo_pago}`, 14, finalY + 22);

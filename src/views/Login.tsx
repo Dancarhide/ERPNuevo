@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import logo from '../assets/Logo.jpeg';
+import logo from '../assets/Logo.png';
 import './styles/Login.css';
 
 const Login: React.FC = () => {
