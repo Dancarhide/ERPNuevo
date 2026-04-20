@@ -115,8 +115,8 @@ const MyPayroll: React.FC = () => {
         }
       });
     } else {
-      if (parseFloat(nomina.bonos) > 0) bodyRows.push(['Bonos / Compensaciones', formatearMoneda(nomina.bonos), '']);
-      if (parseFloat(nomina.deducciones) > 0) bodyRows.push(['Deducciones / Retenciones', '', formatearMoneda(nomina.deducciones)]);
+      if (parseFloat(String(nomina.bonos)) > 0) bodyRows.push(['Bonos / Compensaciones', formatearMoneda(nomina.bonos), '']);
+      if (parseFloat(String(nomina.deducciones)) > 0) bodyRows.push(['Deducciones / Retenciones', '', formatearMoneda(nomina.deducciones)]);
     }
 
     const sBase = parseFloat(String(nomina.sueldo_base || 0));

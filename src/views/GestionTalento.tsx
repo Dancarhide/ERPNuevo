@@ -626,7 +626,7 @@ const GestionTalento: React.FC = () => {
                                 <span className="talento-form-section-label">Adicional</span>
                                 <div className="form-group">
                                     <label>Notas internas / Comentarios iniciales</label>
-                                    <textarea rows={2} placeholder="Observaciones sobre la fuente o perfil…" value={newCandidato.notes} onChange={e => setNewCandidato({...newCandidato, notes: e.target.value})} />
+                                    <textarea rows={2} placeholder="Observaciones sobre la fuente o perfil…" value={newCandidato.notas} onChange={e => setNewCandidato({...newCandidato, notas: e.target.value})} />
                                 </div>
                             </div>
                         </div>
