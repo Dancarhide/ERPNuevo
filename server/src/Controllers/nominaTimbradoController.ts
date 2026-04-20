@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import { timbrarNominaSimulation, saveXmlToStorage } from '../Services/timbradoService';
 import { generateNominaPDF } from '../Services/pdfService';
 
