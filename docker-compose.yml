@@ -1,0 +1,72 @@
+services:
+  # ─────────────────────────────────────────────────────────
+  # Base de datos PostgreSQL
+  # ─────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: erp_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-erp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-ERP_def}
+    ports:
+      - "5432:5432"
+    volumes:
+      - erp_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erp_user} -d ${POSTGRES_DB:-ERP_def}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─────────────────────────────────────────────────────────
+  # Backend — Express + Prisma
+  # Espera a que la BD esté lista, luego corre migrations + seed
+  # ─────────────────────────────────────────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: erp_server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-erp_user}:${POSTGRES_PASSWORD:-erp_pass}@db:5432/${POSTGRES_DB:-ERP_def}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatorio}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@erp.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin1234!}
+      DEFAULT_EMPLOYEE_PASSWORD: ${DEFAULT_EMPLOYEE_PASSWORD:-Bienvenido1!}
+    ports:
+      - "4000:4000"
+    volumes:
+      # Persistir PDFs y XMLs de nómina generados
+      - erp_storage:/app/storage
+
+  # ─────────────────────────────────────────────────────────
+  # Frontend — React + Vite (build de producción con nginx)
+  # ─────────────────────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+    container_name: erp_client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "3000:80"
+
+volumes:
+  erp_postgres_data:
+    name: erp_postgres_data
+  erp_storage:
+    name: erp_storage

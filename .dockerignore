@@ -1,0 +1,29 @@
+node_modules/
+dist/
+.env
+.env.local
+*.env
+npm-debug.log*
+
+# Server specific
+server/node_modules/
+server/dist/
+server/.env
+server/scripts/
+server/coverage/
+server/storage/
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Prisma generated
+server/src/generated/

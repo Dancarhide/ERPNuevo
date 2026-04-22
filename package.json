@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:server": "cd server && npm run dev",
+    "dev:all": "concurrently -n frontend,backend -c cyan,yellow \"npm run dev\" \"npm run dev:server\"",
+    "setup:db": "cd server && npm run setup",
+    "setup:dev": "npm install && cd server && npm install && npm run setup",
+    "db:seed": "cd server && npm run db:seed",
+    "db:reset": "cd server && npm run db:reset"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",
@@ -35,15 +41,16 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "jest": "^30.3.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
-    "vite": "^7.1.2",
-    "jest": "^30.3.0"
+    "vite": "^7.1.2"
   }
 }
