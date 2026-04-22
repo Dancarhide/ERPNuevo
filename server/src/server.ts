@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config(); // Must be first — loads env vars before any module reads them
+
 import app from './index';
 
 const PORT = Number(process.env.PORT ?? 4000);

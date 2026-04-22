@@ -1,6 +1,39 @@
-node_modules
+node_modules/
 # Keep environment variables out of version control
 .env
 
 /src/generated/prisma
-/dist
+/dist/
+/scratch/
+
+# Archivos de output de compilación y debug
+*.txt
+tsc_out.txt
+tsc_errors.txt
+output.txt
+
+# Scripts de debug ad hoc (mover a /scripts/ si se quieren conservar)
+check_*.ts
+check_*.cjs
+check_*.js
+debug_*.ts
+debug_*.js
+find_*.ts
+fix_*.ts
+fix_*.js
+clear_debug.ts
+distribute_roles.ts
+generate_sql.cjs
+get_admins_pg.cjs
+get_roles.cjs
+get_roles.ts
+populate_areas.ts
+query.cjs
+query.js
+resync_roles.ts
+roles_print.ts
+roles_stats.ts
+seed_payroll.ts
+sync_puestos.ts
+update_roles.ts
+

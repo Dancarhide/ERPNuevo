@@ -1,9 +1,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config();
+// dotenv ya está cargado en server.ts — no duplicar aquí
 
 // Extender la interfaz Request para incluir el usuario decodificado
 declare global {

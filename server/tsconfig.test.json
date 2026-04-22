@@ -5,9 +5,14 @@
             "node",
             "jest"
         ],
-        "rootDir": "."
+        "rootDir": "src",
+        "strict": false
     },
     "include": [
         "src/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
     ]
-}
+}

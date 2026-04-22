@@ -99,7 +99,8 @@ export const updateSystemConfig = async (req: Request, res: Response): Promise<v
 
 export const getMyPermissions = async (req: Request, res: Response): Promise<void> => {
     try {
-        const userId = (req as any).user.userId;
+        // req.user.id está definido en el middleware auth.ts
+        const userId = (req as any).user?.id;
         const employee = await prisma.empleados.findUnique({
             where: { idempleado: userId },
             include: {

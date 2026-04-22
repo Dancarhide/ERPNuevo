@@ -15,10 +15,17 @@ export interface Empleado {
     telefono: string | null;
     direccion: string | null;
     puesto: string | null;
+    /** Slugs de permisos del rol del empleado, ej: ['employees.view', 'payroll.create'] */
+    permissions: string[];
 }
 
 function mapPrismaToEmpleado(e: any): Empleado {
     const area = e.areas_empleados_idareaToareas;
+    // Extraer slugs de permisos del rol (puede ser null si no tiene rol asignado)
+    const permissions: string[] = e.roles?.role_permissions
+        ?.map((rp: any) => rp.permissions?.slug)
+        .filter(Boolean) ?? [];
+
     return {
         id: e.idempleado,
         nombre: e.nombre_completo_empleado,
@@ -33,7 +40,8 @@ function mapPrismaToEmpleado(e: any): Empleado {
         rfc: e.rfc || null,
         telefono: e.telefono_empleado || null,
         direccion: e.direccion_empleado || null,
-        puesto: e.puesto || null
+        puesto: e.puesto || null,
+        permissions
     };
 }
 
@@ -42,7 +50,18 @@ export async function getEmpleadoPorId(id: number): Promise<Empleado | null> {
         where: { idempleado: id },
         include: {
             areas_empleados_idareaToareas: true,
-            roles: true,
+            roles: {
+                include: {
+                    // Incluir permisos del rol en la misma query del login
+                    role_permissions: {
+                        include: {
+                            permissions: {
+                                select: { slug: true }
+                            }
+                        }
+                    }
+                }
+            },
             empleados_salud: true,
             empleados_familiar: true
         }
@@ -50,4 +69,4 @@ export async function getEmpleadoPorId(id: number): Promise<Empleado | null> {
 
     if (!empleado) return null;
     return mapPrismaToEmpleado(empleado);
-}
+}

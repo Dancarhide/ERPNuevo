@@ -127,7 +127,7 @@ export const updateVacacionStatus = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Solicitud no encontrada' });
         }
 
-        // Si se aprueba, descontar los días del empleado
+        // Si se aprueba, descontar los días del empleado y actualizar el estatus en una transacción atómica
         if (estatus_vacacion === 'Aprobado' && vacacionOriginal.estatus_vacacion !== 'Aprobado') {
             const inicio = new Date(vacacionOriginal.fecha_inicio);
             const fin = new Date(vacacionOriginal.fecha_fin);
@@ -139,17 +139,28 @@ export const updateVacacionStatus = async (req: Request, res: Response) => {
                 return res.status(400).json({ error: 'Las fechas de la solicitud son inválidas' });
             }
 
-            await prisma.empleados.update({
-                where: { idempleado: vacacionOriginal.idempleado },
-                data: {
-                    dias_vacaciones_disponibles: {
-                        decrement: diffDays
-                    },
-                    estatus_empleado: 'Vacaciones'
-                }
-            });
+            // Transacción atómica: ambas operaciones ocurren juntas o ninguna
+            const [updated] = await prisma.$transaction([
+                prisma.vacaciones.update({
+                    where: { idvacacion: vacId },
+                    data: {
+                        estatus_vacacion,
+                        motivo_rechazo: null
+                    }
+                }),
+                prisma.empleados.update({
+                    where: { idempleado: vacacionOriginal.idempleado },
+                    data: {
+                        dias_vacaciones_disponibles: { decrement: diffDays },
+                        estatus_empleado: 'Vacaciones'
+                    }
+                })
+            ]);
+
+            return res.status(200).json(updated);
         }
 
+        // Para otros estados (Rechazado, Pendiente) solo actualizar el estatus
         const updated = await prisma.vacaciones.update({
             where: { idvacacion: vacId },
             data: {

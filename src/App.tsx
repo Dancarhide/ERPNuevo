@@ -23,7 +23,16 @@ import EventAdmin from './views/EventAdmin';
 import AdminConfig from './views/AdminConfig';
 import MainLayout from './components/layout/MainLayout';
 
+// Constantes de roles del sistema — centralizar para evitar strings hardcodeados dispersos
+export const ROLES = {
+    ADMIN: 'Admin',
+    RH: 'RH',
+    CONTADOR: 'Contador',
+    DIRECTIVO: 'Directivo',
+    JEFE_AREA: 'Jefe de Area',
+} as const;
 
+export type RoleName = typeof ROLES[keyof typeof ROLES];
 
 // Wrapper to check permissions exactly when the route mounts
 const ProtectedRoute = ({ allowedRoles = ['ALL'] }: { allowedRoles?: string[] }) => {
@@ -66,48 +75,48 @@ function App() {
                 <Route element={<ProtectedRoute />}>
                     <Route element={<MainLayout />}>
                         <Route path="/home" element={<Home />} />
-                        <Route element={<ProtectedRoute allowedRoles={['Admin', 'RH']} />}>
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH]} />}>
                             <Route path="/empleados" element={<Employees />} />
                         </Route>
 
                         <Route path="/vacaciones" element={<Vacations />} />
                         
-                        <Route element={<ProtectedRoute allowedRoles={['Admin', 'RH', 'Directivo', 'Jefe de Area']} />}>
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH, ROLES.DIRECTIVO, ROLES.JEFE_AREA]} />}>
                             <Route path="/organigrama" element={<OrganizationChart />} />
                         </Route>
 
                         <Route path="/quienes-somos" element={<AboutUs />} />
                         <Route path="/mi-perfil" element={<Profile />} />
 
-                        <Route element={<ProtectedRoute allowedRoles={['Admin', 'Contador']} />}>
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.CONTADOR]} />}>
                             <Route path="/payroll-admin" element={<PayrollAdmin />} />
                             <Route path="/payroll-concepts" element={<PayrollConcepts />} />
                             <Route path="/payroll-history" element={<PayrollHistory />} />
                             <Route path="/payroll-batches" element={<PayrollBatches />} />
                         </Route>
 
-                        <Route element={<ProtectedRoute allowedRoles={['Admin', 'RH']} />}>
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH]} />}>
                             <Route path="/cyi" element={<CyI />} />
                             <Route path="/vacantes" element={<Vacantes />} />
                             <Route path="/estructura" element={<GestionTalento />} />
                         </Route>
                         <Route path="/my-payroll" element={<MyPayroll />} />
 
-                        {/* Roles — Admin only */}
-                        <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+                        {/* Roles — solo Admin */}
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
                             <Route path="/roles" element={<Roles />} />
                         </Route>
 
-                        {/* Incidencias — all authenticated users */}
+                        {/* Incidencias — todos los usuarios autenticados */}
                         <Route path="/incidencias" element={<Incidencias />} />
                         <Route path="/hr-inventory" element={<HRInventory />} />
                         <Route path="/clima-laboral" element={<ClimateSurvey />} />
-                        <Route element={<ProtectedRoute allowedRoles={['Admin', 'RH']} />}>
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH]} />}>
                             <Route path="/admin-encuestas" element={<SurveyAdmin />} />
                             <Route path="/admin-eventos" element={<EventAdmin />} />
                         </Route>
 
-                        <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
                             <Route path="/admin-config" element={<AdminConfig />} />
                         </Route>
 

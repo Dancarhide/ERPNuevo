@@ -2,9 +2,7 @@ import { Request, Response } from 'express';
 import { verificarCredenciales } from '../models/credenciales';
 import { getEmpleadoPorId } from '../models/empleados';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config();
+// dotenv ya está cargado en server.ts — no duplicar aquí
 
 export async function loginController(req: Request, res: Response) {
     try {
@@ -17,10 +15,11 @@ export async function loginController(req: Request, res: Response) {
         const idEmpleado = await verificarCredenciales(email, password);
 
         if (idEmpleado === null) {
-            // Usamos un mensaje genérico para no dar pistas a posibles atacantes.
+            // Mensaje genérico para no dar pistas a posibles atacantes
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
+        // getEmpleadoPorId ahora incluye permissions[] del rol en una sola query
         const empleado = await getEmpleadoPorId(idEmpleado);
 
         if (!empleado) {
@@ -41,10 +40,12 @@ export async function loginController(req: Request, res: Response) {
         res.json({
             message: 'Inicio de sesión exitoso',
             token,
-            user: empleado  // Return the entire mapped empleado object
+            // 'user' incluye permissions[] — el frontend los guarda en localStorage/sessionStorage
+            // y los usa en hasPermission() sin necesitar una llamada adicional al servidor
+            user: empleado
         });
     } catch (error) {
         console.error('Error en el inicio de sesión:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
-}
+}

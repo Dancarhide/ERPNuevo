@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma';
 import { recountPuesto } from '../Services/puestoService';
+import { crearCredenciales } from '../models/credenciales';
 
 export const getEmpleados = async (req: Request, res: Response) => {
     try {
@@ -75,7 +76,7 @@ export const updateEmpleado = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
-        const updated = await (prisma.empleados as any).update({
+        const updated = await prisma.empleados.update({
             where: { idempleado: parseInt(id as string) },
             data: {
                 nombre_completo_empleado,
@@ -188,21 +189,18 @@ export const createEmpleado = async (req: Request, res: Response) => {
                 }
             });
 
-            const username = email_empleado ? email_empleado.split('@')[0] : nombre_completo_empleado.split(' ')[0].toLowerCase() + emp.idempleado;
-            await tx.credenciales.create({
-                data: {
-                    idempleado: emp.idempleado,
-                    username,
-                    user_password: '$2b$10$BYdSFdIjkNzlc3JE983QS.ho41mdZPqLXk.FN8XvmOilfLVa.hfYq'
-                }
-            });
+            // Crear credenciales usando el helper del modelo:
+            // - genera username único basado en el nombre
+            // - usa la contraseña configurable por env (DEFAULT_EMPLOYEE_PASSWORD)
+            const passwordInicial = process.env.DEFAULT_EMPLOYEE_PASSWORD ?? 'Bienvenido1!';
+            await crearCredenciales(emp.idempleado, nombre_completo_empleado, passwordInicial);
 
             if (idvacante) {
                 const vacanteId = parseInt(idvacante);
-                const vacante = await (tx as any).vacantes.findUnique({ where: { idvacante: vacanteId } });
+                const vacante = await prisma.vacantes.findUnique({ where: { idvacante: vacanteId } });
                 if (vacante) {
                     const nuevaCantidad = (vacante.cantidad_contratada || 0) + 1;
-                    await (tx as any).vacantes.update({
+                    await prisma.vacantes.update({
                         where: { idvacante: vacanteId },
                         data: {
                             cantidad_contratada: nuevaCantidad,
