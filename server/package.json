@@ -9,6 +9,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx --env-file=.env prisma/seed-demo-users.ts",
     "db:reset": "prisma migrate reset --force",
     "setup": "npm run db:migrate && npm run db:seed",
     "lint": "eslint src/",
