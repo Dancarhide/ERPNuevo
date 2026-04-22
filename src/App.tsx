@@ -21,7 +21,9 @@ import ClimateSurvey from './views/ClimateSurvey';
 import SurveyAdmin from './views/SurveyAdmin';
 import EventAdmin from './views/EventAdmin';
 import AdminConfig from './views/AdminConfig';
+import KPIs from './views/KPIs';
 import MainLayout from './components/layout/MainLayout';
+import { SysConfigProvider } from './contexts/SysConfigContext';
 
 // Constantes de roles del sistema — centralizar para evitar strings hardcodeados dispersos
 export const ROLES = {
@@ -64,6 +66,7 @@ const PublicRoute = () => {
 
 function App() {
     return (
+        <SysConfigProvider>
         <Router>
             <Routes>
                 {/* Public Route (Login Page) */}
@@ -120,6 +123,10 @@ function App() {
                             <Route path="/admin-config" element={<AdminConfig />} />
                         </Route>
 
+                        {/* KPIs & Reportes — Admin, RH, Directivo, Contador */}
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH, ROLES.DIRECTIVO, ROLES.CONTADOR]} />}>
+                            <Route path="/reports" element={<KPIs />} />
+                        </Route>
 
                         {/* More secure routes later */}
                     </Route>
@@ -129,6 +136,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Router>
+        </SysConfigProvider>
     );
 }
 

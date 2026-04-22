@@ -1,0 +1,320 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   KPIs.css — Dashboard ejecutivo de indicadores
+───────────────────────────────────────────────────────────────────────────── */
+
+.kpi-container {
+    width: 100%;
+    min-height: calc(100vh - 70px);
+    background: #f8f9fb;
+    padding: 1.75rem 2rem;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.75rem;
+    gap: 1rem;
+}
+
+.kpi-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 0.3rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.kpi-header h1 svg { color: #4f46e5; }
+
+.kpi-header p {
+    color: #64748b;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.kpi-btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.2rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.kpi-btn-refresh:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+    background: #f0f0ff;
+}
+
+/* ── Tarjetas KPI ─────────────────────────────────────────────────────────── */
+
+.kpi-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    border-top: 4px solid #4f46e5;
+    padding: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.09);
+}
+
+.kpi-card-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.kpi-card-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.kpi-card-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+}
+
+.kpi-card-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.kpi-card-sub {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.35rem;
+    font-weight: 500;
+}
+
+.kpi-card-sub.up   { color: #ef4444; }
+.kpi-card-sub.down { color: #10b981; }
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+
+.kpi-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.4rem;
+    width: fit-content;
+}
+
+.kpi-tab {
+    padding: 0.55rem 1.4rem;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.kpi-tab.active {
+    background: #4f46e5;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+}
+
+.kpi-tab:hover:not(.active) {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+/* ── Grid de paneles ──────────────────────────────────────────────────────── */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.kpi-panel {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+}
+
+.kpi-panel--wide {
+    grid-column: 1 / -1;
+}
+
+.kpi-panel-header {
+    margin-bottom: 1.25rem;
+}
+
+.kpi-panel-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.2rem;
+}
+
+.kpi-panel-header p {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* ── Tooltip personalizado ────────────────────────────────────────────────── */
+
+.kpi-tooltip {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.82rem;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.kpi-tooltip-label {
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+    color: #cbd5e1;
+}
+
+/* ── Reclutamiento summary cards ─────────────────────────────────────────── */
+
+.kpi-recruit-summary {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.kpi-recruit-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.kpi-recruit-num {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.kpi-recruit-label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Loading y Error ──────────────────────────────────────────────────────── */
+
+.kpi-loading,
+.kpi-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 1rem;
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.kpi-spinner {
+    font-size: 2.5rem;
+    color: #4f46e5;
+    animation: kpi-spin 1s linear infinite;
+}
+
+@keyframes kpi-spin { to { transform: rotate(360deg); } }
+
+.kpi-error svg {
+    font-size: 2.5rem;
+    color: #ef4444;
+}
+
+.kpi-btn-retry {
+    padding: 0.6rem 1.5rem;
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.kpi-btn-retry:hover { background: #4338ca; }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+    .kpi-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .kpi-container { padding: 1.25rem; }
+    .kpi-grid      { grid-template-columns: 1fr; }
+    .kpi-panel--wide { grid-column: 1; }
+    .kpi-recruit-summary { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .kpi-cards-grid  { grid-template-columns: 1fr; }
+    .kpi-tabs        { flex-direction: column; width: 100%; }
+    .kpi-recruit-summary { grid-template-columns: 1fr; }
+    .kpi-header      { flex-direction: column; }
+}

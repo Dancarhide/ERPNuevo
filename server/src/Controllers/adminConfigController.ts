@@ -23,7 +23,8 @@ export const getRolesWithPermissions = async (req: Request, res: Response): Prom
 export const getAllPermissionsList = async (req: Request, res: Response): Promise<void> => {
     try {
         const permissions = await prisma.permissions.findMany({
-            orderBy: { slug: 'asc' }
+            include: { resources: true },
+            orderBy: [{ resource_id: 'asc' }, { slug: 'asc' }],
         });
         res.json(permissions);
     } catch (error) {

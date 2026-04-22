@@ -22,6 +22,7 @@ import encuestasRouter from './routes/encuestas';
 import notificationRouter from './routes/notificationRoutes';
 import eventosRouter from './routes/eventos';
 import adminConfigRouter from './routes/adminConfig';
+import kpisRouter from './routes/kpis';
 
 // Fix para serialización de BigInt y Decimal (Prisma)
 (BigInt.prototype as any).toJSON = function () {
@@ -74,6 +75,7 @@ app.use('/api/encuestas', encuestasRouter);
 app.use('/api/notificaciones', notificationRouter);
 app.use('/api/eventos', eventosRouter);
 app.use('/api/admin/config', adminConfigRouter);
+app.use('/api/kpis', kpisRouter);
 
 // Health check
 app.get('/api/ping', (_req: Request, res: Response) => {
