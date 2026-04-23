@@ -146,6 +146,29 @@ const Employees: React.FC = () => {
     }
   };
 
+  const handleDeleteEmpleado = async (id: number) => {
+    if (!window.confirm('¿Está seguro de que desea dar de baja (eliminar) a este empleado? Esta acción no se puede deshacer.')) return;
+    try {
+      const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const token = userDataStr ? JSON.parse(userDataStr)?.token : null;
+      const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}/api/empleados/${id}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        fetchEmpleados();
+      } else {
+        const errorData = await response.json().catch(() => null);
+        alert(errorData?.error || 'Error al eliminar el empleado');
+      }
+    } catch (error) {
+      console.error('Error al eliminar empleado:', error);
+      alert('Error de conexión al eliminar el empleado');
+    }
+  };
+
   const filteredEmpleados = empleados.filter((emp) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = 
@@ -304,7 +327,7 @@ const Employees: React.FC = () => {
                       </td>
                       <td data-label="Puesto / Área">
                         <div className="employee-info-text">
-                           <span className="emp-name">{emp.puesto || 'No asignado'}</span>
+                           <span className="emp-name">{emp.roles?.nombre_rol || emp.puesto || 'No asignado'}</span>
                            <span className="emp-email">{emp.areas_empleados_idareaToareas?.nombre_area || 'Sin área'}</span>
                         </div>
                       </td>
@@ -331,7 +354,7 @@ const Employees: React.FC = () => {
                                >
                                  <FaEdit />
                                </button>
-                               <button title="Dar de Baja" style={{background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center'}}><FaTrash /></button>
+                               <button onClick={() => handleDeleteEmpleado(emp.idempleado)} title="Dar de Baja" style={{background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center'}}><FaTrash /></button>
                               </>
                             )}
                          </div>
@@ -350,7 +373,7 @@ const Employees: React.FC = () => {
                   </div>
                   <div className="card-body">
                     <h3>{emp.nombre_completo_empleado}</h3>
-                    <div className="role">{emp.puesto || 'Sin Puesto'}</div>
+                    <div className="role">{emp.roles?.nombre_rol || emp.puesto || 'Sin Puesto'}</div>
                     <div className="area">
                       {emp.areas_empleados_idareaToareas?.nombre_area || 'Sin Área asignada'}
                     </div>
@@ -381,7 +404,7 @@ const Employees: React.FC = () => {
                           <button className="edit-btn" onClick={() => handleEditClick(emp)} title="Editar Colaborador" style={{ flex: 1 }}>
                             <FaEdit /> 
                           </button>
-                          <button className="delete-btn" title="Dar de Baja" style={{ flex: 1, color: '#ef4444' }}>
+                          <button onClick={() => handleDeleteEmpleado(emp.idempleado)} className="delete-btn" title="Dar de Baja" style={{ flex: 1, color: '#ef4444' }}>
                             <FaTrash />
                           </button>
                         </>

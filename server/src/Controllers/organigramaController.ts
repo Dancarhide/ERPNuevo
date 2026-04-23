@@ -22,7 +22,11 @@ export const getOrganigrama = async (_req: Request, res: Response) => {
                 },
                 // Todos los empleados cuyo idarea = este área
                 empleados_empleados_idareaToareas: {
-                    where: { estatus_empleado: 'Activo' },
+                    where: {
+                        estatus_empleado: 'Activo',
+                        // Excluir super admin (hierarchy_level = 0)
+                        roles: { hierarchy_level: { gt: 0 } },
+                    },
                     include: { roles: true },
                     orderBy: [
                         // Ordenar por hierarchy_level del rol (ASC = más senior primero)
@@ -39,6 +43,8 @@ export const getOrganigrama = async (_req: Request, res: Response) => {
             where: {
                 estatus_empleado: 'Activo',
                 idarea: null,
+                // Excluir super admin (hierarchy_level = 0)
+                roles: { hierarchy_level: { gt: 0 } },
             },
             include: { roles: true },
             orderBy: [
@@ -51,14 +57,20 @@ export const getOrganigrama = async (_req: Request, res: Response) => {
         const orgAreas = areas.map(area => ({
             id:     area.idarea,
             nombre: area.nombre_area ?? 'Sin nombre',
-            // El jefe del área (si está definido en jefe_area)
-            jefe: area.empleados_areas_jefe_areaToempleados ? {
-                id:             area.empleados_areas_jefe_areaToempleados.idempleado,
-                nombre:         area.empleados_areas_jefe_areaToempleados.nombre_completo_empleado,
-                puesto:         area.empleados_areas_jefe_areaToempleados.puesto ?? null,
-                rol:            area.empleados_areas_jefe_areaToempleados.roles?.nombre_rol ?? null,
-                hierarchyLevel: area.empleados_areas_jefe_areaToempleados.roles?.hierarchy_level ?? null,
-            } : null,
+            // El jefe del área — omitir si es super admin (hierarchy_level = 0)
+            jefe: (() => {
+                const j = area.empleados_areas_jefe_areaToempleados;
+                if (!j) return null;
+                if ((j.roles?.hierarchy_level ?? 1) <= 0) return null;
+                return {
+                    id:             j.idempleado,
+                    nombre:         j.nombre_completo_empleado,
+                    puesto:         j.puesto ?? null,
+                    rol:            j.roles?.nombre_rol ?? null,
+                    hierarchyLevel: j.roles?.hierarchy_level ?? null,
+                    id_jefe_directo: j.id_jefe_directo,
+                };
+            })(),
             // Todos los empleados del área, ordenados por jerarquía
             empleados: area.empleados_empleados_idareaToareas.map(emp => ({
                 id:             emp.idempleado,
@@ -66,6 +78,7 @@ export const getOrganigrama = async (_req: Request, res: Response) => {
                 puesto:         emp.puesto ?? null,
                 rol:            emp.roles?.nombre_rol ?? null,
                 hierarchyLevel: emp.roles?.hierarchy_level ?? 99,
+                id_jefe_directo: emp.id_jefe_directo,
             })),
         }));
 
@@ -76,6 +89,7 @@ export const getOrganigrama = async (_req: Request, res: Response) => {
             puesto:         emp.puesto ?? null,
             rol:            emp.roles?.nombre_rol ?? null,
             hierarchyLevel: emp.roles?.hierarchy_level ?? 99,
+                id_jefe_directo: emp.id_jefe_directo,
         }));
 
         res.status(200).json({ areas: orgAreas, sinArea });
@@ -84,3 +98,4 @@ export const getOrganigrama = async (_req: Request, res: Response) => {
         res.status(500).json({ error: 'Error al obtener organigrama' });
     }
 };
+

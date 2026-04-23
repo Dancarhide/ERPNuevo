@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { 
     FaHome, FaUsers, FaChartBar, FaTimes, FaCalendarAlt, FaSitemap, 
     FaInfoCircle, FaMoneyBillWave, FaFileInvoiceDollar, FaShieldAlt, 
-    FaExclamationTriangle, FaLayerGroup, FaUserEdit, FaPoll, FaCogs, FaSpinner 
+    FaExclamationTriangle, FaLayerGroup, FaUserEdit, FaPoll, FaCogs, FaSpinner, FaBuilding 
 } from 'react-icons/fa';
 import client from '../../api/client';
 import './styles/Layout.css';
@@ -27,6 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     const navItems: NavItem[] = [
         { path: '/home', label: 'Tablero Principal', icon: <FaHome />, permission: 'ALL' },
         { path: '/empleados', label: 'Capital Humano', icon: <FaUsers />, permission: 'empleados.view' },
+        { path: '/hr-config', label: 'Config. Recursos Humanos', icon: <FaBuilding />, permission: 'areas.manage' },
         { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacaciones.view' }, 
         { path: '/organigrama', label: 'Estructura Organizacional', icon: <FaSitemap />, permission: 'ALL' },
         { path: '/quienes-somos', label: 'Cultura Corporativa', icon: <FaInfoCircle />, permission: 'ALL' },

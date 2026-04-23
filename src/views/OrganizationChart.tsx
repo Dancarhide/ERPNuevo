@@ -17,6 +17,7 @@ interface EmpOrg {
     puesto:         string | null;
     rol:            string | null;
     hierarchyLevel: number;
+    id_jefe_directo?: number | null;
 }
 
 interface AreaOrg {
@@ -89,9 +90,9 @@ const PersonCard = ({ data }: any) => {
 
 // ─── Layout dagre ──────────────────────────────────────────────────────────────
 
-const CARD_W = 190;
-const CARD_H = 88;
-const JEFE_H = 92;
+const CARD_W = 220;
+const CARD_H = 96;
+const JEFE_H = 100;
 
 function applyLayout(nodes: Node[], edges: Edge[]): { nodes: Node[]; edges: Edge[] } {
     const g = new dagre.graphlib.Graph();
@@ -138,6 +139,28 @@ function buildGraph(data: OrgData, compact: boolean): { nodes: Node[]; edges: Ed
         });
     };
 
+    // Encontrar el nodo raíz global (empleado con hierarchyLevel más bajo, ej. Director General)
+    let globalRootEmp: EmpOrg | null = null;
+    let minLevel = Infinity;
+
+    const allEmps = [
+        ...data.areas.flatMap(a => {
+            const arr = [...a.empleados];
+            if (a.jefe && !arr.find(e => e.id === a.jefe!.id)) arr.push(a.jefe);
+            return arr;
+        }),
+        ...data.sinArea
+    ];
+
+    allEmps.forEach(e => {
+        if (e.hierarchyLevel != null && e.hierarchyLevel < minLevel) {
+            minLevel = e.hierarchyLevel;
+            globalRootEmp = e;
+        }
+    });
+
+    const globalRootIdStr = globalRootEmp ? `emp-${(globalRootEmp as any).id}` : null;
+
     // ── Por cada área ──────────────────────────────────────────────────────
     data.areas.forEach((area, areaIdx) => {
         const pal        = PALETTE[areaIdx % PALETTE.length];
@@ -146,12 +169,21 @@ function buildGraph(data: OrgData, compact: boolean): { nodes: Node[]; edges: Ed
 
         if (todosMap.size === 0) return; // área sin personal, omitir
 
-        const jefe   = area.jefe;
-        const jefeId = jefe ? `emp-${jefe.id}` : null;
+        const areaEmployees = [...todosMap.values()]
+            .sort((a, b) => (a.hierarchyLevel ?? 99) - (b.hierarchyLevel ?? 99));
 
-        // Nodo del jefe: conecta a la raíz
-        if (jefe && jefeId) {
-            addNode(jefeId, 'person', {
+        const jefe = area.jefe;
+        const effectiveJefe = jefe || areaEmployees[0];
+        const effectiveJefeId = effectiveJefe ? `emp-${effectiveJefe.id}` : null;
+
+        // Si este jefe NO es el root global, conectarlo al root global
+        if (effectiveJefeId && globalRootIdStr && effectiveJefeId !== globalRootIdStr) {
+            addEdge(globalRootIdStr, effectiveJefeId, '#94a3b8', 2);
+        }
+
+        // Nodo del jefe: si hay jefe explícito, renderizarlo siempre (incluso en compact)
+        if (jefe) {
+            addNode(`emp-${jefe.id}`, 'person', {
                 area:    area.nombre,
                 nombre:  jefe.nombre,
                 puesto:  jefe.puesto,
@@ -161,14 +193,24 @@ function buildGraph(data: OrgData, compact: boolean): { nodes: Node[]; edges: Ed
                 colorIdx: areaIdx,
                 w: CARD_W, h: JEFE_H,
             });
-            // jefe es nodo raíz — sin arista de entrada
+        } else if (compact && effectiveJefeId && effectiveJefeId === globalRootIdStr) {
+            // Si no hay jefe explícito, pero este es el root global, y estamos en compact (que oculta a los empleados normales), debemos forzar su renderizado para que no se rompa el gráfico.
+            addNode(effectiveJefeId, 'person', {
+                area:    area.nombre,
+                nombre:  effectiveJefe.nombre,
+                puesto:  effectiveJefe.puesto,
+                rol:     effectiveJefe.rol,
+                initials: initials(effectiveJefe.nombre || ''),
+                isJefe:  false,
+                colorIdx: areaIdx,
+                w: CARD_W, h: CARD_H,
+            });
         }
 
         if (!compact) {
             // Empleados restantes ordenados: más senior primero
-            [...todosMap.values()]
+            areaEmployees
                 .filter(e => e.id !== jefe?.id)
-                .sort((a, b) => (a.hierarchyLevel ?? 99) - (b.hierarchyLevel ?? 99))
                 .forEach(emp => {
                     const empId = `emp-${emp.id}`;
                     addNode(empId, 'person', {
@@ -181,8 +223,28 @@ function buildGraph(data: OrgData, compact: boolean): { nodes: Node[]; edges: Ed
                         colorIdx: areaIdx,
                         w: CARD_W, h: CARD_H,
                     });
-                    // Conectar al jefe del área (o sin padre si no hay jefe)
-                    if (jefeId) addEdge(jefeId, empId, pal.area + 'AA', 1.2);
+                    // Encontrar al superior inmediato (el empleado con el hierarchyLevel estrictamente menor pero más cercano)
+                    const superiors = areaEmployees.filter(e => 
+                        (e.hierarchyLevel ?? 99) < (emp.hierarchyLevel ?? 99)
+                    );
+                    
+                    let superiorId = effectiveJefeId; // por defecto el jefe
+                    if (emp.id_jefe_directo) {
+                        superiorId = `emp-${emp.id_jefe_directo}`;
+                    } else if (superiors.length > 0) {
+                        // Como areaEmployees está ordenado ascendentemente, el último de "superiors" tiene el nivel más cercano
+                        const targetLevel = superiors[superiors.length - 1].hierarchyLevel ?? 99;
+                        // Tomamos al primero de ese nivel inmediato
+                        const closestSuperior = superiors.find(e => (e.hierarchyLevel ?? 99) === targetLevel);
+                        if (closestSuperior) {
+                            superiorId = `emp-${closestSuperior.id}`;
+                        }
+                    }
+
+                    // Conectar al superior inmediato
+                    if (superiorId && empId !== superiorId) {
+                        addEdge(superiorId, empId, pal.area + 'AA', 1.2);
+                    }
                 });
         }
     });
@@ -192,7 +254,22 @@ function buildGraph(data: OrgData, compact: boolean): { nodes: Node[]; edges: Ed
         [...data.sinArea]
             .sort((a, b) => (a.hierarchyLevel ?? 99) - (b.hierarchyLevel ?? 99))
             .forEach(emp => {
-                const empId = `emp-sa-${emp.id}`;
+                const empId = `emp-${emp.id}`;
+                // Avoid rendering global root twice if it is in sinArea
+                if (empId === globalRootIdStr) {
+                    addNode(empId, 'person', {
+                        area:    'Sin área',
+                        nombre:  emp.nombre,
+                        puesto:  emp.puesto,
+                        rol:     emp.rol,
+                        initials: initials(emp.nombre),
+                        isJefe:  true,
+                        colorIdx: 6,
+                        w: CARD_W, h: JEFE_H,
+                    });
+                    return;
+                }
+
                 addNode(empId, 'person', {
                     area:    'Sin área',
                     nombre:  emp.nombre,
@@ -203,8 +280,39 @@ function buildGraph(data: OrgData, compact: boolean): { nodes: Node[]; edges: Ed
                     colorIdx: 6,
                     w: CARD_W, h: CARD_H,
                 });
-                addEdge('root', empId, '#94a3b8', 1.2);
+                // Encontrar al superior inmediato en sinArea
+                const sinAreaEmps = [...data.sinArea].sort((a, b) => (a.hierarchyLevel ?? 99) - (b.hierarchyLevel ?? 99));
+                const superiors = sinAreaEmps.filter(e => 
+                    (e.hierarchyLevel ?? 99) < (emp.hierarchyLevel ?? 99)
+                );
+                
+                let superiorId = globalRootIdStr;
+                if (emp.id_jefe_directo) {
+                    superiorId = `emp-${emp.id_jefe_directo}`;
+                } else if (superiors.length > 0) {
+                    const targetLevel = superiors[superiors.length - 1].hierarchyLevel ?? 99;
+                    const closestSuperior = superiors.find(e => (e.hierarchyLevel ?? 99) === targetLevel);
+                    if (closestSuperior) {
+                        superiorId = `emp-${closestSuperior.id}`;
+                    }
+                }
+
+                if (superiorId && empId !== superiorId) {
+                    addEdge(superiorId, empId, '#94a3b8', 1.2);
+                }
             });
+    } else if (compact && globalRootEmp && data.sinArea.find(e => e.id === (globalRootEmp as any).id)) {
+        // En modo compact, si el global root está en sinArea, debemos forzar su renderizado
+        addNode(`emp-${(globalRootEmp as any).id}`, 'person', {
+            area:    'Sin área',
+            nombre:  (globalRootEmp as any).nombre,
+            puesto:  (globalRootEmp as any).puesto,
+            rol:     (globalRootEmp as any).rol,
+            initials: initials((globalRootEmp as any).nombre || ''),
+            isJefe:  true,
+            colorIdx: 6,
+            w: CARD_W, h: JEFE_H,
+        });
     }
 
     return applyLayout(nodes, edges);

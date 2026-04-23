@@ -21,7 +21,7 @@ export const getRoles = async (_req: Request, res: Response): Promise<void> => {
  */
 export const createRol = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { nombre_rol, desc_rol, idarea } = req.body;
+        const { nombre_rol, desc_rol, idarea, hierarchy_level } = req.body;
         if (!nombre_rol) {
             res.status(400).json({ error: 'Nombre de rol es requerido' });
             return;
@@ -33,7 +33,7 @@ export const createRol = async (req: Request, res: Response): Promise<void> => {
                 desc_rol,
                 idarea: idarea ? parseInt(idarea) : null,
                 is_system: false,
-                hierarchy_level: 10
+                hierarchy_level: hierarchy_level ? parseInt(hierarchy_level) : 10
             }
         });
         res.json(nuevoRol);

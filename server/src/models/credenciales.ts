@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt';
  * @param nombreCompleto El nombre completo del empleado.
  * @returns Un nombre de usuario único.
  */
-async function generarUsername(nombreCompleto: string): Promise<string> {
+async function generarUsername(nombreCompleto: string, tx?: any): Promise<string> {
     const partes = nombreCompleto.split(' ');
     const baseUsername = partes.length > 1
         ? `${partes[0]}.${partes[partes.length - 1]}`.toLowerCase()
@@ -17,9 +17,10 @@ async function generarUsername(nombreCompleto: string): Promise<string> {
     let username = baseUsername;
     let contador = 0;
     let esUnico = false;
+    const db = tx || prisma;
 
     while (!esUnico) {
-        const count = await prisma.credenciales.count({
+        const count = await db.credenciales.count({
             where: { username: username }
         });
 
@@ -40,11 +41,12 @@ async function generarUsername(nombreCompleto: string): Promise<string> {
  * @param passwordPlano Contraseña sin encriptar.
  * @returns El username generado.
  */
-export async function crearCredenciales(idempleado: number, nombreCompleto: string, passwordPlano: string): Promise<string> {
-    const username = await generarUsername(nombreCompleto);
+export async function crearCredenciales(idempleado: number, nombreCompleto: string, passwordPlano: string, tx?: any): Promise<string> {
+    const db = tx || prisma;
+    const username = await generarUsername(nombreCompleto, db);
     const passwordHash = await bcrypt.hash(passwordPlano, 10);
 
-    await prisma.credenciales.create({
+    await db.credenciales.create({
         data: {
             idempleado,
             username,

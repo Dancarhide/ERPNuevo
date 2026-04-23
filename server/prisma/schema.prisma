@@ -123,6 +123,9 @@ model empleados {
   tareas_creadas                                           tareas[]                     @relation("tareas_creadas")
   tareas_asignadas                                         tareas[]                     @relation("tareas_asignadas")
   vacaciones                                               vacaciones[]
+  id_jefe_directo                                          Int?
+  jefe_directo                                             empleados?                   @relation("JefeDirecto", fields: [id_jefe_directo], references: [idempleado])
+  subordinados                                             empleados[]                  @relation("JefeDirecto")
 
   @@index([idarea], map: "ix_empleados_idarea")
   @@index([idrol], map: "ix_empleados_idrol")

@@ -100,7 +100,7 @@
 */
 
 .org-card {
-    width: 190px;
+    width: 220px;
     background: #fff;
     border-radius: 10px;
     overflow: hidden;
@@ -177,10 +177,14 @@
     font-size: 0.76rem;
     font-weight: 700;
     color: #1e293b;
-    white-space: nowrap;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
     letter-spacing: -0.01em;
+    line-height: 1.2;
 }
 
 /* Jefe: nombre algo más grande */
@@ -192,10 +196,14 @@
     font-size: 0.65rem;
     color: #64748b;
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
     margin-top: 1px;
+    line-height: 1.2;
 }
 
 /* ── Loading ──────────────────────────────────────────────────────────────── */

@@ -22,6 +22,7 @@ import SurveyAdmin from './views/SurveyAdmin';
 import EventAdmin from './views/EventAdmin';
 import AdminConfig from './views/AdminConfig';
 import KPIs from './views/KPIs';
+import HRSetup from './views/HRSetup';
 import MainLayout from './components/layout/MainLayout';
 import { SysConfigProvider } from './contexts/SysConfigContext';
 
@@ -80,6 +81,7 @@ function App() {
                         <Route path="/home" element={<Home />} />
                         <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH]} />}>
                             <Route path="/empleados" element={<Employees />} />
+                            <Route path="/hr-config" element={<HRSetup />} />
                         </Route>
 
                         <Route path="/vacaciones" element={<Vacations />} />
