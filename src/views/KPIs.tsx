@@ -39,20 +39,29 @@ interface KPIData {
 // ─── Paletas de color ─────────────────────────────────────────────────────────
 
 const PALETTE = {
-    primary:  '#4f46e5',
+    primary:  '#A7313A',
     success:  '#10b981',
     warning:  '#f59e0b',
     danger:   '#ef4444',
-    info:     '#3b82f6',
-    purple:   '#8b5cf6',
-    pink:     '#ec4899',
-    teal:     '#14b8a6',
-    orange:   '#f97316',
-    gray:     '#6b7280',
+    info:     '#44474A',
+    purple:   '#858789',
+    pink:     '#A4A4A4',
+    teal:     '#B59CA4',
+    orange:   '#8F2930',
+    gray:     '#E1DFE0',
+    // Ad-hoc theme colors (Stratia)
+    theme1: '#44474A', // Stratia Black
+    theme2: '#A7313A', // Stratia Red
+    theme3: '#858789', // Stratia Gray
+    theme4: '#8F2930', // Stratia Red Dark
+    theme5: '#5A5D60', // Lighter Stratia Black
+    theme6: '#C24D56', // Lighter Stratia Red
+    theme7: '#A4A4A4', // Light Gray
+    theme8: '#2E3134', // Darker Stratia Black
 };
 
-const AREA_COLORS  = [PALETTE.primary, PALETTE.info, PALETTE.teal, PALETTE.purple, PALETTE.orange];
-const ROL_COLORS   = [PALETTE.success, PALETTE.warning, PALETTE.danger, PALETTE.info, PALETTE.purple, PALETTE.pink, PALETTE.teal];
+const AREA_COLORS  = [PALETTE.theme2, PALETTE.theme4, PALETTE.theme6, PALETTE.theme8, PALETTE.theme3, PALETTE.theme5, PALETTE.theme7];
+const ROL_COLORS   = [PALETTE.theme1, PALETTE.theme2, PALETTE.theme4, PALETTE.theme6, PALETTE.theme8, PALETTE.theme3, PALETTE.theme7];
 const VAC_COLORS   = { Pendiente: PALETTE.warning, Aprobado: PALETTE.success, Rechazado: PALETTE.danger };
 const INC_COLORS   = [PALETTE.danger, PALETTE.warning, PALETTE.orange, PALETTE.purple, PALETTE.gray];
 
@@ -251,9 +260,9 @@ const KPIs: React.FC = () => {
                                     dataKey="empleados"
                                     nameKey="rol"
                                     cx="50%" cy="50%"
-                                    outerRadius={100}
+                                    outerRadius={75}
                                     label={({ rol, percent }: any) => `${rol} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                    labelLine={false}
+                                    labelLine={true}
                                 >
                                     {data.headcountPorRol.map((_, i) => (
                                         <Cell key={i} fill={ROL_COLORS[i % ROL_COLORS.length]} />
@@ -284,8 +293,8 @@ const KPIs: React.FC = () => {
                                     dataKey="total"
                                     nameKey="estatus"
                                     cx="50%" cy="50%"
-                                    innerRadius={55}
-                                    outerRadius={95}
+                                    innerRadius={45}
+                                    outerRadius={75}
                                     paddingAngle={3}
                                 >
                                     {data.vacaciones.map((v, i) => (
@@ -409,7 +418,7 @@ const KPIs: React.FC = () => {
                                     dataKey="total"
                                     nameKey="estatus"
                                     cx="50%" cy="50%"
-                                    outerRadius={100}
+                                    outerRadius={75}
                                     label={({ estatus, percent }: any) => `${estatus} ${((percent ?? 0) * 100).toFixed(0)}%`}
                                 >
                                     {data.reclutamiento.vacantes.map((_, i) => (
@@ -475,3 +484,6 @@ const KPIs: React.FC = () => {
 };
 
 export default KPIs;
+
+
+
