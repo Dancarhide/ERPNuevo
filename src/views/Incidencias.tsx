@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
     FaExclamationTriangle, FaPlus, FaTimes, FaCheck,
-    FaFilter, FaChevronDown
+    FaFilter, FaChevronDown, FaUser, FaHeading, FaInfoCircle, FaLayerGroup, FaExclamationCircle, FaSave
 } from 'react-icons/fa';
 import client from '../api/client';
 import './styles/Incidencias.css';
@@ -70,8 +70,11 @@ const Incidencias: React.FC = () => {
     const [filtroGravedad, setFiltroGravedad] = useState('');
     const [filtroTipo, setFiltroTipo] = useState('');
 
-    // New incident modal
+    // Modals & Saving
     const [modalOpen, setModalOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<Incidencia | null>(null);
     const [form, setForm] = useState({
         id_empleado_reportado: '',
         titulo: '',
@@ -79,7 +82,6 @@ const Incidencias: React.FC = () => {
         tipo: 'General',
         gravedad: 'Leve'
     });
-    const [saving, setSaving] = useState(false);
 
     // Status change dropdown
     const [statusDropdown, setStatusDropdown] = useState<number | null>(null);
@@ -145,10 +147,17 @@ const Incidencias: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('¿Eliminar esta incidencia?')) return;
+    const handleDelete = (inc: Incidencia) => {
+        setItemToDelete(inc);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
         try {
-            await client.delete(`/incidencias/${id}`);
+            await client.delete(`/incidencias/${itemToDelete.idincidencia}`);
+            setDeleteModalOpen(false);
+            setItemToDelete(null);
             showSuccess('Incidencia eliminada');
             fetchData();
         } catch (e: any) {
@@ -223,7 +232,7 @@ const Incidencias: React.FC = () => {
                                 const eStyle = estatusStyle(inc.estatus);
                                 return (
                                     <tr key={inc.idincidencia}>
-                                        <td>
+                                        <td data-label="Empleado Reportado">
                                             <div className="inc-emp-cell">
                                                 <div className="inc-avatar">
                                                     {inc.empleados_incidencias_id_empleado_reportadoToempleados?.nombre_completo_empleado?.[0] || '?'}
@@ -234,14 +243,14 @@ const Incidencias: React.FC = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="inc-titulo">{inc.titulo || '—'}</td>
-                                        <td><span className="inc-tipo-badge">{inc.tipo || '—'}</span></td>
-                                        <td>
+                                        <td data-label="Título" className="inc-titulo">{inc.titulo || '—'}</td>
+                                        <td data-label="Tipo"><span className="inc-tipo-badge">{inc.tipo || '—'}</span></td>
+                                        <td data-label="Gravedad">
                                             <span className="badge-pill" style={{ background: gStyle.bg, color: gStyle.color }}>
                                                 {inc.gravedad || '—'}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Estatus">
                                             {isAdmin ? (
                                                 <div className="status-dropdown-wrap">
                                                     <button
@@ -272,17 +281,17 @@ const Incidencias: React.FC = () => {
                                                 </span>
                                             )}
                                         </td>
-                                        <td style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                                        <td data-label="Fecha" style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                                             {formatDate(inc.fecha_registro || inc.fecha_incidencia)}
                                         </td>
-                                        <td style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                        <td data-label="Reportante" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
                                             {inc.empleados_incidencias_id_reportanteToempleados?.nombre_completo_empleado || '—'}
                                         </td>
                                         {isAdmin && (
-                                            <td>
+                                            <td data-label="Acciones">
                                                 <button
                                                     className="action-btn delete"
-                                                    onClick={() => handleDelete(inc.idincidencia)}
+                                                    onClick={() => handleDelete(inc)}
                                                     title="Eliminar"
                                                 >
                                                     <FaTimes />
@@ -302,63 +311,127 @@ const Incidencias: React.FC = () => {
                 <div className="modal-overlay" onClick={() => setModalOpen(false)}>
                     <div className="inc-modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-head">
-                            <h2><FaExclamationTriangle /> Registrar Incidencia</h2>
+                            <div className="header-title-clean">
+                                <h3><FaExclamationTriangle style={{ color: 'var(--color-accent)' }} /> Registrar Incidencia</h3>
+                                <span className="id-badge">STRATIA ERP</span>
+                            </div>
                             <button className="modal-close" onClick={() => setModalOpen(false)}><FaTimes /></button>
                         </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label>Empleado Reportado *</label>
-                                <select
-                                    value={form.id_empleado_reportado}
-                                    onChange={e => setForm(f => ({ ...f, id_empleado_reportado: e.target.value }))}
-                                >
-                                    <option value="">— Seleccionar empleado —</option>
-                                    {empleados.map(e => (
-                                        <option key={e.idempleado} value={e.idempleado}>
-                                            {e.nombre_completo_empleado} {e.puesto ? `(${e.puesto})` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Título *</label>
-                                <input
-                                    type="text"
-                                    value={form.titulo}
-                                    onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
-                                    placeholder="Ej. Llegada tarde reiterada..."
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Descripción</label>
-                                <textarea
-                                    value={form.descripcion}
-                                    onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-                                    placeholder="Describe el detalle de la incidencia..."
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Tipo</label>
-                                    <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}>
-                                        {TIPO_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
+                        
+                        <div className="modal-body-scroll">
+                            <div className="form-intro-banner">
+                                <FaExclamationCircle className="banner-icon" />
+                                <div className="banner-text">
+                                    <strong>Reporte Disciplinario</strong>
+                                    <p>Por favor, complete todos los campos obligatorios (*) para procesar el reporte correctamente.</p>
                                 </div>
-                                <div className="form-group">
-                                    <label>Gravedad</label>
-                                    <select value={form.gravedad} onChange={e => setForm(f => ({ ...f, gravedad: e.target.value }))}>
-                                        {GRAVEDAD_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                            </div>
+
+                            <div className="form-section">
+                                <h4 className="section-title"><span className="step-num">1</span> Información del Empleado</h4>
+                                <div className="form-group-clean">
+                                    <label><FaUser className="input-icon" /> Empleado Reportado *</label>
+                                    <select
+                                        value={form.id_empleado_reportado}
+                                        onChange={e => setForm(f => ({ ...f, id_empleado_reportado: e.target.value }))}
+                                        className="modern-select"
+                                    >
+                                        <option value="">— Seleccionar empleado —</option>
+                                        {empleados.map(e => (
+                                            <option key={e.idempleado} value={e.idempleado}>
+                                                {e.nombre_completo_empleado} {e.puesto ? `(${e.puesto})` : ''}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
-                            {error && <p className="form-error">{error}</p>}
+
+                            <div className="form-section">
+                                <h4 className="section-title"><span className="step-num">2</span> Detalle de la Incidencia</h4>
+                                <div className="form-grid-clean">
+                                    <div className="form-group-clean full-width">
+                                        <label><FaHeading className="input-icon" /> Título o Asunto *</label>
+                                        <input
+                                            type="text"
+                                            value={form.titulo}
+                                            onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}
+                                            placeholder="Ej. Llegada tarde reiterada, Incumplimiento de políticas..."
+                                            className="modern-input"
+                                        />
+                                    </div>
+                                    <div className="form-group-clean full-width">
+                                        <label><FaInfoCircle className="input-icon" /> Descripción Detallada</label>
+                                        <textarea
+                                            value={form.descripcion}
+                                            onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
+                                            placeholder="Describa el detalle de la incidencia, hechos, fechas y cualquier información relevante..."
+                                            rows={4}
+                                            className="modern-textarea"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h4 className="section-title"><span className="step-num">3</span> Clasificación</h4>
+                                <div className="form-grid-clean">
+                                    <div className="form-group-clean">
+                                        <label><FaLayerGroup className="input-icon" /> Tipo de Incidencia</label>
+                                        <select 
+                                            value={form.tipo} 
+                                            onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}
+                                            className="modern-select"
+                                        >
+                                            {TIPO_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="form-group-clean">
+                                        <label><FaExclamationTriangle className="input-icon" /> Nivel de Gravedad</label>
+                                        <select 
+                                            value={form.gravedad} 
+                                            onChange={e => setForm(f => ({ ...f, gravedad: e.target.value }))}
+                                            className="modern-select"
+                                        >
+                                            {GRAVEDAD_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {error && <div className="form-error-banner"><FaTimes /> {error}</div>}
                         </div>
-                        <div className="modal-footer">
-                            <button className="btn-secondary" onClick={() => setModalOpen(false)}>Cancelar</button>
-                            <button className="btn-primary" onClick={handleCreate} disabled={saving}>
-                                {saving ? 'Guardando...' : 'Registrar Incidencia'}
+
+                        <div className="modal-footer-fixed">
+                            <button className="btn-cancel-clean" onClick={() => setModalOpen(false)}>Cancelar</button>
+                            <button className="btn-save-clean" onClick={handleCreate} disabled={saving}>
+                                {saving ? (
+                                    <span className="btn-loading"><div className="btn-spinner" /> Procesando...</span>
+                                ) : (
+                                    <><FaSave /> Registrar Incidencia</>
+                                )}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {deleteModalOpen && (
+                <div className="modal-overlay" onClick={() => setDeleteModalOpen(false)}>
+                    <div className="inc-modal delete-confirm" onClick={e => e.stopPropagation()}>
+                        <div className="modal-body-clean">
+                            <div className="delete-icon-wrapper">
+                                <FaExclamationTriangle />
+                            </div>
+                            <h3>¿Eliminar Incidencia?</h3>
+                            <p>Esta acción no se puede deshacer. Se eliminará el reporte de:</p>
+                            <div className="delete-target-info">
+                                <strong>{itemToDelete?.empleados_incidencias_id_empleado_reportadoToempleados?.nombre_completo_empleado}</strong>
+                                <span>{itemToDelete?.titulo}</span>
+                            </div>
+                        </div>
+                        <div className="modal-footer-clean">
+                            <button className="btn-cancel-clean" onClick={() => setDeleteModalOpen(false)}>No, cancelar</button>
+                            <button className="btn-delete-confirm" onClick={confirmDelete}>Sí, eliminar ahora</button>
                         </div>
                     </div>
                 </div>

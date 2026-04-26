@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FaTimes, FaCommentAlt, FaPaperPlane } from 'react-icons/fa';
+import { FaTimes, FaCommentAlt, FaPaperPlane, FaSearch, FaArrowLeft, FaUserTie, FaSmile } from 'react-icons/fa';
 import client from '../../api/client';
 import Modal from '../common/Modal';
 
@@ -30,7 +30,9 @@ const ChatDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Modal state
   const [modalConfig, setModalConfig] = useState<{
@@ -65,7 +67,10 @@ const ChatDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
     if (selectedContact) {
       fetchMessages(selectedContact.id);
       const interval = setInterval(() => fetchMessages(selectedContact.id), 5000);
+      inputRef.current?.focus();
       return () => clearInterval(interval);
+    } else {
+      setMessages([]);
     }
   }, [selectedContact]);
 
@@ -116,81 +121,163 @@ const ChatDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const filteredContacts = contacts.filter(c => 
+    c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.puesto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.area.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getAvatarColor = (name: string) => {
+    const colors = ['#A7313A', '#44474A', '#2D3436', '#636E72', '#0984E3', '#6C5CE7', '#D63031', '#E84393'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const groupMessagesByDate = (msgs: Message[]) => {
+    const groups: { [key: string]: Message[] } = {};
+    msgs.forEach(msg => {
+      const date = new Date(msg.fecha_envio).toLocaleDateString('es-ES', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+      });
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(msg);
+    });
+    return groups;
+  };
+
+  const messageGroups = groupMessagesByDate(messages);
+
   if (!isOpen) return null;
 
   return createPortal(
     <div className="drawer-overlay" onClick={onClose}>
       <div className="drawer-panel" onClick={e => e.stopPropagation()}>
         
-        <div className="drawer-header">
-          <h2 className="drawer-title">
-            <FaCommentAlt /> {selectedContact ? selectedContact.nombre : 'Chat Empresarial'}
-          </h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {selectedContact && (
-              <button className="drawer-close-btn" onClick={() => setSelectedContact(null)} title="Volver a contactos">
-                 <FaCommentAlt style={{ transform: 'scaleX(-1)', fontSize: '0.9rem' }} />
+        <div className="drawer-header chat-header-modern">
+          {selectedContact ? (
+            <div className="chat-active-contact">
+              <button className="chat-back-btn" onClick={() => setSelectedContact(null)}>
+                <FaArrowLeft />
               </button>
-            )}
-            <button className="drawer-close-btn" onClick={onClose}>
-              <FaTimes />
-            </button>
-          </div>
+              <div className="chat-avatar-small" style={{ background: getAvatarColor(selectedContact.nombre) }}>
+                {selectedContact.nombre.substring(0, 2).toUpperCase()}
+              </div>
+              <div className="chat-header-info">
+                <span className="chat-header-name">{selectedContact.nombre}</span>
+              </div>
+            </div>
+          ) : (
+            <h2 className="drawer-title">
+              <FaCommentAlt /> Chat Empresarial
+            </h2>
+          )}
+          <button className="drawer-close-btn" onClick={onClose}>
+            <FaTimes />
+          </button>
         </div>
 
-        <div className="drawer-content" style={{ padding: selectedContact ? '0' : '1.5rem', display: 'flex', flexDirection: 'column' }}>
+        <div className="drawer-content chat-content-modern">
           {!selectedContact ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-               <div className="chat-placeholder" style={{ margin: '2rem 0', textAlign: 'center' }}>
-                <FaCommentAlt size={40} style={{ opacity: 0.2, marginBottom: '10px' }} />
-                <p style={{ color: 'var(--color-text-muted)' }}>Selecciona un contacto para iniciar una conversación.</p>
+            <div className="chat-list-container">
+              <div className="chat-search-wrapper">
+                <FaSearch className="search-icon" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar colegas..." 
+                  className="chat-search-input"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
-                {contacts.map(contact => (
-                  <div key={contact.id} className="chat-item" onClick={() => setSelectedContact(contact)}>
-                    <div className="chat-avatar">{contact.nombre.substring(0, 2).toUpperCase()}</div>
-                    <div className="todo-info">
-                      <p className="todo-title">{contact.nombre}</p>
-                      <p className="todo-desc">{contact.puesto} · {contact.area}</p>
+
+              <div className="chat-contacts-scroll">
+                {filteredContacts.length > 0 ? (
+                  filteredContacts.map(contact => (
+                    <div key={contact.id} className="chat-item-modern" onClick={() => setSelectedContact(contact)}>
+                      <div className="chat-avatar-modern" style={{ backgroundColor: `${getAvatarColor(contact.nombre)}15`, color: getAvatarColor(contact.nombre) }}>
+                        {contact.nombre.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="chat-item-info">
+                        <div className="chat-item-top">
+                          <span className="chat-item-name">{contact.nombre}</span>
+                          <span className="chat-item-time">{contact.area}</span>
+                        </div>
+                        <p className="chat-item-desc">{contact.puesto}</p>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="chat-empty-state">
+                    <FaUserTie size={40} style={{ opacity: 0.1, marginBottom: '1rem' }} />
+                    <p>No se encontraron contactos</p>
                   </div>
-                ))}
-                {contacts.length === 0 && (
-                  <p style={{ textAlign: 'center', opacity: 0.5, marginTop: '20px', fontSize: '0.9rem' }}>
-                    No se encontraron otros empleados disponibles.
-                  </p>
                 )}
               </div>
             </div>
           ) : (
-            <>
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '1.5rem', gap: '10px' }}>
-                {messages.map((msg, idx) => (
-                  <div key={idx} className={`chat-bubble ${msg.emisor_id === currentUserId ? 'mine' : 'theirs'}`}>
-                    {msg.contenido}
-                    <div style={{ fontSize: '0.7rem', marginTop: '4px', opacity: 0.7, textAlign: 'right' }}>
-                      {new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
+            <div className="chat-conversation-container">
+              <div className="chat-messages-area">
+                {messages.length === 0 ? (
+                  <div className="chat-empty-convo">
+                     <div className="welcome-chat-info">
+                        <div className="chat-avatar-welcome" style={{ background: getAvatarColor(selectedContact.nombre) }}>
+                           {selectedContact.nombre.substring(0, 2).toUpperCase()}
+                        </div>
+                        <h3>{selectedContact.nombre}</h3>
+                        <p>{selectedContact.puesto} · {selectedContact.area}</p>
+                        <span className="security-note">Las conversaciones están protegidas y son para uso interno.</span>
+                     </div>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(messageGroups).map(([date, msgs]) => (
+                    <React.Fragment key={date}>
+                      <div className="chat-date-separator">
+                        <span>{date}</span>
+                      </div>
+                      {msgs.map((msg, idx) => {
+                        const isMine = msg.emisor_id === currentUserId;
+                        const nextMsg = msgs[idx + 1];
+                        const isLastInSequence = !nextMsg || nextMsg.emisor_id !== msg.emisor_id;
+                        
+                        return (
+                          <div key={msg.id} className={`chat-msg-wrapper ${isMine ? 'mine' : 'theirs'} ${isLastInSequence ? 'last-in-sequence' : ''}`}>
+                            <div className="chat-msg-bubble">
+                              {msg.contenido}
+                              <span className="chat-msg-time">
+                                {new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {isMine && <span className="read-status"> ✓✓</span>}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
-              <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '10px', padding: '1.2rem', backgroundColor: 'var(--color-bg-white)', borderTop: '1px solid var(--color-border)' }}>
-                 <input 
+              <form onSubmit={handleSendMessage} className="chat-input-area-improved">
+                <div className="chat-input-wrapper-inner">
+                  <button type="button" className="chat-tool-btn" title="Emojis"><FaSmile /></button>
+                  <input 
+                    ref={inputRef}
                     type="text" 
-                    className="drawer-input" 
+                    className="chat-input-field-new" 
                     placeholder="Escribe un mensaje..." 
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     disabled={loading}
-                 />
-                 <button type="submit" className="drawer-btn" disabled={loading || !newMessage.trim()}>
+                  />
+                  <button type="submit" className="chat-send-btn-new" disabled={loading || !newMessage.trim()}>
                     <FaPaperPlane />
-                 </button>
+                  </button>
+                </div>
               </form>
-            </>
+            </div>
           )}
         </div>
 

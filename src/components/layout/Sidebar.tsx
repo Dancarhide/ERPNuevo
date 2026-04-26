@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-    FaHome, FaUsers, FaChartBar, FaTimes, FaCalendarAlt, FaSitemap, 
-    FaInfoCircle, FaMoneyBillWave, FaFileInvoiceDollar, FaShieldAlt, 
-    FaExclamationTriangle, FaLayerGroup, FaUserEdit, FaPoll, FaCogs, FaSpinner, FaBuilding 
+import {
+    FaHome, FaUsers, FaChartBar, FaTimes, FaCalendarAlt, FaSitemap,
+    FaInfoCircle, FaMoneyBillWave, FaFileInvoiceDollar, FaShieldAlt,
+    FaExclamationTriangle, FaLayerGroup, FaUserEdit, FaPoll, FaCogs, FaSpinner,
+    FaBuilding, FaUserCircle, FaSignOutAlt
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import './styles/Layout.css';
 
@@ -21,6 +23,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
+    const navigate = useNavigate();
     const [myPermissions, setMyPermissions] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -28,19 +31,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
         { path: '/home', label: 'Tablero Principal', icon: <FaHome />, permission: 'ALL' },
         { path: '/empleados', label: 'Capital Humano', icon: <FaUsers />, permission: 'empleados.view' },
         { path: '/hr-config', label: 'Config. Recursos Humanos', icon: <FaBuilding />, permission: 'areas.manage' },
-        { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacaciones.view' }, 
+        { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacaciones.view' },
         { path: '/organigrama', label: 'Estructura Organizacional', icon: <FaSitemap />, permission: 'ALL' },
-        { path: '/quienes-somos', label: 'Cultura Corporativa', icon: <FaInfoCircle />, permission: 'ALL' },
+        { path: '/quienes-somos', label: 'Quienes Somos', icon: <FaInfoCircle />, permission: 'ALL' },
         { path: '/reports', label: 'KPIS & Reportes', icon: <FaChartBar />, permission: 'kpis.view' },
         { path: '/my-payroll', label: 'Mis Comprobantes', icon: <FaFileInvoiceDollar />, permission: 'ALL' },
         { path: '/payroll-admin', label: 'Control Nómina', icon: <FaMoneyBillWave />, permission: 'nominas.view' },
         { path: '/payroll-batches', label: 'Dispersión Lotes', icon: <FaLayerGroup />, permission: 'nominas.view' },
         { path: '/estructura', label: 'Gestión Talento', icon: <FaShieldAlt />, permission: 'cyi.manage' },
-        { path: '/incidencias', label: 'Reportes Disciplinarios', icon: <FaExclamationTriangle />, permission: 'reportes.view' },
-        { path: '/hr-inventory', label: 'Bóveda Digital', icon: <FaUserEdit />, permission: 'ALL' },
-        { path: '/clima-laboral', label: 'Voz del Empleado', icon: <FaPoll />, permission: 'ALL' },
+        { path: '/incidencias', label: 'Inicidencias', icon: <FaExclamationTriangle />, permission: 'reportes.view' },
+        { path: '/hr-inventory', label: 'Inventario de RH', icon: <FaUserEdit />, permission: 'ALL' },
+        { path: '/clima-laboral', label: 'Clima Laboral', icon: <FaPoll />, permission: 'ALL' },
         { path: '/admin-encuestas', label: 'Control Encuestas', icon: <FaChartBar />, permission: 'evaluations.view' },
-        { path: '/admin-eventos', label: 'Control Calendario', icon: <FaCalendarAlt />, permission: 'calendario.view' },
+        { path: '/admin-eventos', label: 'Crear Eventos', icon: <FaCalendarAlt />, permission: 'calendario.view' },
         { path: '/admin-config', label: 'Ajustes Maestros', icon: <FaCogs />, permission: 'ajustes.view' },
     ];
 
@@ -66,8 +69,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     const allowedItems = navItems.filter(item => {
         if (item.permission === 'ALL') return true;
         // Admins bypass everything if lists are empty, but we check if the slug is allowed
-        return myPermissions.includes(item.permission) || isAdmin; 
+        return myPermissions.includes(item.permission) || isAdmin;
     });
+
+    const userName = userData?.nombre || 'Administrador';
+    const userRole = userData?.rol || 'Admin. de Sistema';
+    const initials = userName.substring(0, 2).toUpperCase();
+
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        navigate('/');
+    };
+
+    const navigateToProfile = () => {
+        closeSidebar();
+        navigate('/mi-perfil');
+    };
 
     return (
         <aside className={`sidebar-container ${isOpen ? 'open' : ''}`}>
@@ -85,8 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
                 ) : (
                     allowedItems.map((item, index) => (
                         <li className="sidebar-item" key={index}>
-                            <NavLink 
-                                to={item.path} 
+                            <NavLink
+                                to={item.path}
                                 className={({ isActive }) => isActive ? "sidebar-link active" : "sidebar-link"}
                                 onClick={closeSidebar}
                             >
@@ -97,6 +115,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
                     ))
                 )}
             </ul>
+
+            <div className="sidebar-footer">
+                <div className="sidebar-user-info">
+                    <div className="user-avatar-mini" style={{ background: 'var(--color-accent)', color: 'white' }}>
+                        {initials}
+                    </div>
+                    <div className="user-details-mini">
+                        <span className="user-name-mini">{userName}</span>
+                        <span className="user-role-mini">{userRole}</span>
+                    </div>
+                </div>
+                <div className="sidebar-user-actions">
+                    <button className="sidebar-user-action" onClick={navigateToProfile}>
+                        <FaUserCircle /> <span>Perfil</span>
+                    </button>
+                    {isAdmin && (
+                        <button className="sidebar-user-action" onClick={() => { closeSidebar(); navigate('/roles'); }}>
+                            <FaCogs /> <span>Ajustes</span>
+                        </button>
+                    )}
+                    <button className="sidebar-user-action danger" onClick={handleLogout}>
+                        <FaSignOutAlt /> <span>Salir</span>
+                    </button>
+                </div>
+            </div>
         </aside>
     );
 };

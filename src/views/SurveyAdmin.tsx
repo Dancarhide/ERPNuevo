@@ -119,99 +119,57 @@ const SurveyAdmin: React.FC = () => {
     );
 
     return (
-        <div className="survey-admin-container" style={{ padding: '30px' }}>
-            <div className="admin-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#44474A' }}>Panel de Encuestas RH</h1>
-                    <p style={{ color: '#858789' }}>Administración de campañas y análisis de resultados</p>
+        <div className="survey-admin-container">
+            <div className="admin-header">
+                <div className="header-text">
+                    <h1>Panel de Encuestas RH</h1>
+                    <p>Administración de campañas y análisis de resultados</p>
                 </div>
-                <div className="admin-controls" style={{ display: 'flex', gap: '15px' }}>
+                <div className="admin-controls">
                     <button className="btn-modern outline" onClick={fetchData}><FaSync /> Actualizar</button>
                     
-                    {/* E-Expediente Toggle */}
-                    <div 
-                        onClick={() => handleToggle('expediente_active', config.expediente_active)}
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '12px', 
-                            padding: '10px 18px', 
-                            borderRadius: '12px', 
-                            background: config.expediente_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                            border: `1px solid ${config.expediente_active ? '#10b981' : '#ef4444'}`,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                        title="Activar/Desactivar llenado de Expediente Digital"
-                    >
-                        {config.expediente_active ? <FaToggleOn style={{ color: '#10b981' }} /> : <FaToggleOff style={{ color: '#ef4444' }} />}
-                        <span style={{ fontWeight: 800, fontSize: '0.8rem', color: config.expediente_active ? '#10b981' : '#ef4444' }}>
-                            E-EXPEDIENTE
-                        </span>
-                    </div>
+                    <div className="toggle-group">
+                        {/* E-Expediente Toggle */}
+                        <div 
+                            className={`toggle-pill ${config.expediente_active ? 'active' : 'inactive'}`}
+                            onClick={() => handleToggle('expediente_active', config.expediente_active)}
+                            title="Activar/Desactivar llenado de Expediente Digital"
+                        >
+                            {config.expediente_active ? <FaToggleOn /> : <FaToggleOff />}
+                            <span>E-EXPEDIENTE</span>
+                        </div>
 
-                    {/* Clima Laboral Toggle */}
-                    <div 
-                        onClick={() => handleToggle('clima_active', config.clima_active)}
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '12px', 
-                            padding: '10px 18px', 
-                            borderRadius: '12px', 
-                            background: config.clima_active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                            border: `1px solid ${config.clima_active ? '#10b981' : '#ef4444'}`,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                        title="Activar/Desactivar Encuesta de Clima Laboral"
-                    >
-                        {config.clima_active ? <FaToggleOn style={{ color: '#10b981' }} /> : <FaToggleOff style={{ color: '#ef4444' }} />}
-                        <span style={{ fontWeight: 800, fontSize: '0.8rem', color: config.clima_active ? '#10b981' : '#ef4444' }}>
-                            CLIMA LABORAL
-                        </span>
+                        {/* Clima Laboral Toggle */}
+                        <div 
+                            className={`toggle-pill ${config.clima_active ? 'active' : 'inactive'}`}
+                            onClick={() => handleToggle('clima_active', config.clima_active)}
+                            title="Activar/Desactivar Encuesta de Clima Laboral"
+                        >
+                            {config.clima_active ? <FaToggleOn /> : <FaToggleOff />}
+                            <span>CLIMA LABORAL</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Tab Switcher */}
-            <div className="admin-tabs" style={{ display: 'flex', gap: '30px', marginBottom: '25px', borderBottom: '1px solid #e2e8f0' }}>
+            <div className="admin-tabs">
                 <button 
                     onClick={() => setActiveTab('clima')}
-                    style={{ 
-                        padding: '10px 20px', 
-                        border: 'none', 
-                        background: 'none', 
-                        fontSize: '1rem', 
-                        fontWeight: activeTab === 'clima' ? 800 : 500,
-                        color: activeTab === 'clima' ? '#A7313A' : '#64748b',
-                        borderBottom: activeTab === 'clima' ? '4px solid #A7313A' : 'none',
-                        cursor: 'pointer',
-                        transition: '0.2s'
-                    }}
+                    className={`tab-btn ${activeTab === 'clima' ? 'active' : ''}`}
                 >
-                    <FaChartPie /> Resultados Clima Laboral
+                    <FaChartPie /> <span>Resultados Clima</span>
                 </button>
                 <button 
                     onClick={() => setActiveTab('expediente')}
-                    style={{ 
-                        padding: '10px 20px', 
-                        border: 'none', 
-                        background: 'none', 
-                        fontSize: '1rem', 
-                        fontWeight: activeTab === 'expediente' ? 800 : 500,
-                        color: activeTab === 'expediente' ? '#A7313A' : '#64748b',
-                        borderBottom: activeTab === 'expediente' ? '4px solid #A7313A' : 'none',
-                        cursor: 'pointer',
-                        transition: '0.2s'
-                    }}
+                    className={`tab-btn ${activeTab === 'expediente' ? 'active' : ''}`}
                 >
-                    <FaUsers /> Seguimiento E-Expediente
+                    <FaUsers /> <span>E-Expediente</span>
                 </button>
             </div>
 
             {/* Metrics Row */}
-            <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
+            <div className="metrics-grid">
                 <div className="kpi-card">
                     <div className="kpi-content">
                         <p>Respuestas Totales</p>
@@ -236,7 +194,7 @@ const SurveyAdmin: React.FC = () => {
                 <div className="kpi-card">
                     <div className="kpi-content">
                         <p>Último Registro</p>
-                        <h3 style={{ fontSize: '1.1rem' }}>{responsesList[0] ? new Date(responsesList[0].fecha).toLocaleDateString() : 'N/A'}</h3>
+                        <h3 className="date-kpi">{responsesList[0] ? new Date(responsesList[0].fecha).toLocaleDateString() : 'N/A'}</h3>
                     </div>
                     <div className="kpi-icon"><FaStar /></div>
                 </div>
@@ -244,10 +202,10 @@ const SurveyAdmin: React.FC = () => {
 
             {activeTab === 'clima' ? (
                 <>
-                    <div className="charts-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                        <div className="admin-card" style={{ background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}><FaChartPie /> Perfil de Clima Organizacional</h3>
-                            <div style={{ height: '400px', width: '100%' }}>
+                    <div className="charts-main-grid">
+                        <div className="admin-card chart-card">
+                            <h3 className="card-title"><FaChartPie /> Perfil de Clima Organizacional</h3>
+                            <div className="chart-container">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                                         <PolarGrid />
@@ -266,9 +224,9 @@ const SurveyAdmin: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="admin-card" style={{ background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}><FaPollH /> Detalle por Categoría</h3>
-                            <div style={{ height: '400px', width: '100%' }}>
+                        <div className="admin-card chart-card">
+                            <h3 className="card-title"><FaPollH /> Detalle por Categoría</h3>
+                            <div className="chart-container">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={barData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -283,12 +241,12 @@ const SurveyAdmin: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="results-table-card" style={{ marginTop: '30px', background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#44474A' }}>Explorador de Respuestas Detalladas (Clima)</h3>
-                            <button className="btn-modern accent"><FaFileDownload /> Exportar Excel</button>
+                    <div className="results-table-card">
+                        <div className="card-header-flex">
+                            <h3>Explorador de Respuestas</h3>
+                            <button className="btn-modern accent"><FaFileDownload /> Exportar</button>
                         </div>
-                        <div style={{ overflowX: 'auto' }}>
+                        <div className="table-responsive-wrap">
                             <table className="employees-table">
                                 <thead>
                                     <tr>
@@ -302,24 +260,22 @@ const SurveyAdmin: React.FC = () => {
                                 </thead>
                                 <tbody>
                                     {responsesList.map((resp, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td>{new Date(resp.fecha).toLocaleDateString()}</td>
-                                            <td style={{ fontWeight: 700 }}>{resp.colaborador}</td>
-                                            <td><span className="badge-puesto">{resp.nivel_jerarquico}</span></td>
-                                            <td>{resp.ubicacion}</td>
-                                            <td>{resp.antiguedad}</td>
-                                            <td style={{ fontWeight: 800 }}>
-                                                <span style={{ color: '#A7313A' }}>{resp.promedio.toFixed(2)}</span>
+                                        <tr key={idx}>
+                                            <td data-label="FECHA">{new Date(resp.fecha).toLocaleDateString()}</td>
+                                            <td data-label="COLABORADOR" className="bold">{resp.colaborador}</td>
+                                            <td data-label="NIVEL"><span className="badge-puesto">{resp.nivel_jerarquico}</span></td>
+                                            <td data-label="UBICACIÓN">{resp.ubicacion}</td>
+                                            <td data-label="ANTIGÜEDAD">{resp.antiguedad}</td>
+                                            <td data-label="CALIF. PROMEDIO" className="accent-bold">
+                                                <span>{resp.promedio.toFixed(2)}</span>
                                             </td>
                                         </tr>
                                     ))}
                                     {responsesList.length === 0 && (
                                         <tr>
-                                            <td colSpan={6} style={{ textAlign: 'center', padding: '80px 40px', color: '#858789' }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-                                                    <FaPollH style={{ fontSize: '3rem', opacity: 0.2 }} />
-                                                    <p>Sin respuestas de clima todavía.</p>
-                                                </div>
+                                            <td colSpan={6} className="empty-table">
+                                                <FaPollH className="empty-icon" />
+                                                <p>Sin respuestas de clima todavía.</p>
                                             </td>
                                         </tr>
                                     )}
@@ -330,70 +286,144 @@ const SurveyAdmin: React.FC = () => {
                 </>
             ) : (
                 <>
-                    <div className="expediente-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px' }}>
-                        <div className="admin-card" style={{ background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ marginBottom: '20px' }}>Progreso de Recolección</h3>
-                            <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                                <div style={{ fontSize: '4rem', fontWeight: 900, color: '#A7313A' }}>
+                    <div className="expediente-stats-grid">
+                        <div className="admin-card stats-mini">
+                            <h3 className="card-title">Progreso de Recolección</h3>
+                            <div className="progress-big">
+                                <div className="percent">
                                     {Math.round((expedienteStats.completed / (expedienteStats.total || 1)) * 100)}%
                                 </div>
-                                <p style={{ color: '#858789', fontSize: '1.2rem' }}>Expedientes Completos</p>
+                                <p>Expedientes Completos</p>
                             </div>
-                            <div style={{ marginTop: '50px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#f8fafc', borderRadius: '8px' }}>
+                            <div className="stats-breakdown">
+                                <div className="stat-row">
                                     <span>Total Empleados:</span> <strong>{expedienteStats.total}</strong>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(16,185,129,0.05)', borderRadius: '8px', color: '#10b981' }}>
+                                <div className="stat-row ready">
                                     <span>Perfiles Listos:</span> <strong>{expedienteStats.completed}</strong>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'rgba(239,68,68,0.05)', borderRadius: '8px', color: '#ef4444' }}>
+                                <div className="stat-row pending">
                                     <span>Perfiles Incompletos:</span> <strong>{expedienteStats.pending}</strong>
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="admin-card" style={{ background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ marginBottom: '20px' }}>Próximos Pasos Recomendados</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', borderLeft: '4px solid #A7313A' }}>
-                                    <h4 style={{ margin: '0 0 5px 0' }}>Enviar Recordatorio General</h4>
-                                    <p style={{ margin: 0, color: '#64748b' }}>Notificar a los epleados que aún no terminan su expediente.</p>
+                        <div className="admin-card recommend-card">
+                            <h3 className="card-title">Próximos Pasos Recomendados</h3>
+                            <div className="steps-stack">
+                                <div className="step-item danger">
+                                    <h4>Enviar Recordatorio General</h4>
+                                    <p>Notificar a los empleados que aún no terminan su expediente.</p>
                                 </div>
-                                <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', borderLeft: '4px solid #10b981' }}>
-                                    <h4 style={{ margin: '0 0 5px 0' }}>Descarga Masiva de Datos</h4>
-                                    <p style={{ margin: 0, color: '#64748b' }}>Exportar la base de datos actualizada para el reporte anual de RH.</p>
+                                <div className="step-item success">
+                                    <h4>Descarga Masiva de Datos</h4>
+                                    <p>Exportar la base de datos actualizada para el reporte anual de RH.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="results-table-card" style={{ marginTop: '30px', background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#44474A' }}>Audit de Expediente Digital</h3>
+                    <div className="results-table-card">
+                        <div className="card-header-flex">
+                            <h3>Audit de Expediente Digital</h3>
                             <button className="btn-modern accent"><FaUsers /> Ver Todos</button>
                         </div>
-                        <p style={{ color: '#858789' }}>Actualmente hay <strong>{expedienteStats.completed}</strong> expedientes validados y <strong>{expedienteStats.pending}</strong> pendientes de revisión.</p>
+                        <p className="audit-info">Actualmente hay <strong>{expedienteStats.completed}</strong> expedientes validados y <strong>{expedienteStats.pending}</strong> pendientes de revisión.</p>
                     </div>
                 </>
             )}
             
             <style>{`
-                .employees-table { width: 100%; border-collapse: collapse; }
-                .employees-table th { text-align: left; padding: 15px; color: #858789; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
-                .employees-table td { padding: 18px 15px; font-size: 0.95rem; color: #44474A; }
-                .employees-table tr:hover { background: #f8fafc; }
-                .badge-puesto { background: #f1f5f9; color: #44474A; padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; }
-                .btn-modern { cursor: pointer; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-                .btn-modern.outline { background: white; border: 1px solid #e2e8f0; color: #64748b; }
-                .btn-modern.accent { background: #A7313A; color: white; }
-                .btn-modern:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                .survey-admin-container { padding: 30px; }
+                .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; gap: 20px; flex-wrap: wrap; }
+                .header-text h1 { margin: 0; font-size: 2rem; font-weight: 800; color: #1e293b; }
+                .header-text p { margin: 5px 0 0 0; color: #64748b; }
+                
+                .admin-controls { display: flex; gap: 15px; flex-wrap: wrap; }
+                .toggle-group { display: flex; gap: 10px; flex-wrap: wrap; }
+                
+                .toggle-pill { 
+                    display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; border: 1px solid; font-weight: 800; font-size: 0.75rem; 
+                }
+                .toggle-pill.active { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; }
+                .toggle-pill.inactive { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444; }
+                
+                .admin-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; scrollbar-width: none; }
+                .admin-tabs::-webkit-scrollbar { display: none; }
+                .tab-btn { padding: 12px 20px; border: none; background: none; font-size: 0.9rem; font-weight: 500; color: #64748b; cursor: pointer; white-space: nowrap; transition: 0.2s; border-bottom: 3px solid transparent; display: flex; align-items: center; gap: 8px; }
+                .tab-btn.active { color: #A7313A; border-bottom-color: #A7313A; font-weight: 800; }
+                
+                .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
                 .kpi-card { background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: all 0.2s; }
                 .kpi-card:hover { transform: translateY(-3px); border-color: #A7313A; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
                 .kpi-content p { margin: 0; font-size: 0.85rem; color: #858789; font-weight: 600; }
-                .kpi-content h3 { margin: 5px 0 0 0; font-size: 2rem; font-weight: 800; color: #A7313A; }
+                .kpi-content h3 { margin: 5px 0 0 0; font-size: 1.8rem; font-weight: 800; color: #1e293b; }
+                .kpi-content .date-kpi { font-size: 1.1rem; }
                 .kpi-icon { font-size: 2.2rem; color: #A7313A; opacity: 0.15; }
+
+                .charts-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+                .admin-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
+                .card-title { margin: 0 0 20px 0; font-size: 1.1rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+                .chart-container { height: 350px; width: 100%; }
+
+                .results-table-card { margin-top: 30px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+                .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
+                .card-header-flex h3 { margin: 0; font-size: 1.2rem; font-weight: 800; color: #1e293b; }
+
+                .employees-table { width: 100%; border-collapse: collapse; }
+                .employees-table th { text-align: left; padding: 15px; color: #64748b; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+                .employees-table td { padding: 15px; font-size: 0.9rem; color: #334155; }
+                .employees-table tr:hover { background: #f8fafc; }
+                .employees-table .bold { font-weight: 700; color: #1e293b; }
+                .employees-table .accent-bold { font-weight: 800; color: #A7313A; }
+                .badge-puesto { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+                
+                .btn-modern { cursor: pointer; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.85rem; }
+                .btn-modern.outline { background: white; border: 1px solid #e2e8f0; color: #64748b; }
+                .btn-modern.accent { background: #A7313A; color: white; }
+                .btn-modern:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+                .expediente-stats-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; }
+                .progress-big { text-align: center; margin: 30px 0; }
+                .progress-big .percent { fontSize: 3.5rem; fontWeight: 900; color: #A7313A; line-height: 1; }
+                .progress-big p { margin: 5px 0 0 0; color: #64748b; font-weight: 600; }
+                
+                .stats-breakdown { display: flex; flexDirection: column; gap: 10px; }
+                .stat-row { display: flex; justify-content: space-between; padding: 12px 15px; background: #f8fafc; border-radius: 12px; font-size: 0.9rem; }
+                .stat-row.ready { background: rgba(16, 185, 129, 0.05); color: #059669; }
+                .stat-row.pending { background: rgba(239, 68, 68, 0.05); color: #dc2626; }
+                
+                .steps-stack { display: flex; flex-direction: column; gap: 15px; }
+                .step-item { padding: 18px; border: 1px solid #e2e8f0; border-radius: 15px; border-left-width: 6px; }
+                .step-item.danger { border-left-color: #A7313A; background: #fffafb; }
+                .step-item.success { border-left-color: #10b981; background: #f9fffb; }
+                .step-item h4 { margin: 0 0 5px 0; font-size: 1rem; color: #1e293b; }
+                .step-item p { margin: 0; font-size: 0.85rem; color: #64748b; line-height: 1.4; }
+
+                .empty-table { text-align: center; padding: 60px 20px !important; color: #94a3b8; }
+                .empty-icon { font-size: 3rem; opacity: 0.2; margin-bottom: 10px; }
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+                @media (max-width: 1024px) {
+                    .charts-main-grid, .expediente-stats-grid { grid-template-columns: 1fr; }
+                    .survey-admin-container { padding: 20px; }
+                }
+
+                @media (max-width: 768px) {
+                    .admin-header { flex-direction: column; align-items: flex-start; }
+                    .admin-controls, .toggle-group { width: 100%; }
+                    .btn-modern, .toggle-pill { flex: 1; justify-content: center; }
+                    
+                    .employees-table thead { display: none; }
+                    .employees-table tr { display: block; background: #fff; border: 1px solid #f1f5f9; border-radius: 15px; margin-bottom: 15px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+                    .employees-table td { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f8fafc; text-align: right; }
+                    .employees-table td:last-child { border-bottom: none; }
+                    .employees-table td::before { content: attr(data-label); font-weight: 800; color: #94a3b8; text-transform: uppercase; font-size: 0.65rem; text-align: left; }
+                    
+                    .tab-btn span { display: block; }
+                    .header-text h1 { font-size: 1.5rem; }
+                }
             `}</style>
         </div>
     );
