@@ -9,10 +9,12 @@ import empleadosRouter from './routes/empleados';
 import vacacionesRouter from './routes/vacaciones';
 import organigramaRouter from './routes/organigrama';
 import rolesRouter from './routes/roles';
-import nominaRouter from './routes/nominaRoutes';
-import conceptosRouter from './routes/conceptosRoutes';
+
 import cyiRouter from './routes/cyi';
 import vacantesRouter from './routes/vacantes';
+import kpisRouter from './routes/kpis';
+import festivosRouter from './routes/festivos';
+import nominasRouter from './routes/nominas';
 import areasRouter from './routes/areas';
 import puestosRouter from './routes/puestos';
 import candidatosRouter from './routes/candidatos';
@@ -22,7 +24,6 @@ import encuestasRouter from './routes/encuestas';
 import notificationRouter from './routes/notificationRoutes';
 import eventosRouter from './routes/eventos';
 import adminConfigRouter from './routes/adminConfig';
-import kpisRouter from './routes/kpis';
 
 // Fix para serialización de BigInt y Decimal (Prisma)
 (BigInt.prototype as any).toJSON = function () {
@@ -62,8 +63,7 @@ app.use('/api/empleados', empleadosRouter);
 app.use('/api/vacaciones', vacacionesRouter);
 app.use('/api/organigrama', organigramaRouter);
 app.use('/api/roles', rolesRouter);
-app.use('/api/nominas', nominaRouter);
-app.use('/api/conceptos-nomina', conceptosRouter);
+
 app.use('/api/cyi', cyiRouter);
 app.use('/api/vacantes', vacantesRouter);
 app.use('/api/areas', areasRouter);
@@ -76,6 +76,8 @@ app.use('/api/notificaciones', notificationRouter);
 app.use('/api/eventos', eventosRouter);
 app.use('/api/admin/config', adminConfigRouter);
 app.use('/api/kpis', kpisRouter);
+app.use('/api/festivos', festivosRouter);
+app.use('/api/nominas', nominasRouter);
 
 // Health check
 app.get('/api/ping', (_req: Request, res: Response) => {

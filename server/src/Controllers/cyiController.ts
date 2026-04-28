@@ -127,6 +127,36 @@ export const updateCyiProgress = async (req: Request, res: Response) => {
             });
         }
 
+        // Final stage approval logic: Candidate -> Employee conversion
+        if (etapa_id === 'onboarding' && status === 'approved' && idCan) {
+            const candidate = await prisma.candidatos.findUnique({
+                where: { idcandidato: idCan }
+            });
+
+            if (candidate && candidate.estatus !== 'Contratado') {
+                await prisma.$transaction([
+                    // 1. Create Employee
+                    prisma.empleados.create({
+                        data: {
+                            nombre_completo_empleado: candidate.nombre_completo,
+                            email_empleado: candidate.email,
+                            telefono_empleado: candidate.telefono,
+                            idpuesto: candidate.idpuesto || idPue,
+                            idvacante: candidate.idvacante || idVac,
+                            estatus_empleado: 'Activo',
+                            fecha_ingreso: new Date()
+                        }
+                    }),
+                    // 2. Update Candidate status
+                    prisma.candidatos.update({
+                        where: { idcandidato: idCan },
+                        data: { estatus: 'Contratado' }
+                    })
+                ]);
+                console.log(`Candidate ${idCan} (${candidate.nombre_completo}) promoted to Employee.`);
+            }
+        }
+
         res.json(updated);
     } catch (error) {
         console.error('Error updating CyI progress:', error);

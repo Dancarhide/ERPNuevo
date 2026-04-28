@@ -1,16 +1,16 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Home from './views/Home';
 import Login from './views/Login';
+import HRSetup from './views/HRSetup';
+import Payroll from './views/Payroll';
+import MisComprobantes from './views/MisComprobantes';
+import MainLayout from './components/layout/MainLayout';
 import Employees from './views/Employees';
 import Vacations from './views/Vacations';
 import Profile from './views/Profile';
 import OrganizationChart from './views/OrganizationChart';
 import AboutUs from './views/AboutUs';
-import PayrollAdmin from './views/PayrollAdmin';
-import MyPayroll from './views/MyPayroll';
-import PayrollConcepts from './views/PayrollConcepts';
-import PayrollHistory from './views/PayrollHistory';
-import PayrollBatches from './views/PayrollBatches';
+
 import CyI from './views/CyI';
 import Vacantes from './views/Vacantes';
 import GestionTalento from './views/GestionTalento';
@@ -22,8 +22,6 @@ import SurveyAdmin from './views/SurveyAdmin';
 import EventAdmin from './views/EventAdmin';
 import AdminConfig from './views/AdminConfig';
 import KPIs from './views/KPIs';
-import HRSetup from './views/HRSetup';
-import MainLayout from './components/layout/MainLayout';
 import { SysConfigProvider } from './contexts/SysConfigContext';
 
 // Constantes de roles del sistema — centralizar para evitar strings hardcodeados dispersos
@@ -93,19 +91,14 @@ function App() {
                         <Route path="/quienes-somos" element={<AboutUs />} />
                         <Route path="/mi-perfil" element={<Profile />} />
 
-                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.CONTADOR]} />}>
-                            <Route path="/payroll-admin" element={<PayrollAdmin />} />
-                            <Route path="/payroll-concepts" element={<PayrollConcepts />} />
-                            <Route path="/payroll-history" element={<PayrollHistory />} />
-                            <Route path="/payroll-batches" element={<PayrollBatches />} />
-                        </Route>
+
 
                         <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH]} />}>
                             <Route path="/cyi" element={<CyI />} />
                             <Route path="/vacantes" element={<Vacantes />} />
                             <Route path="/estructura" element={<GestionTalento />} />
                         </Route>
-                        <Route path="/my-payroll" element={<MyPayroll />} />
+
 
                         {/* Roles — solo Admin */}
                         <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
@@ -129,6 +122,12 @@ function App() {
                         <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH, ROLES.DIRECTIVO, ROLES.CONTADOR]} />}>
                             <Route path="/reports" element={<KPIs />} />
                         </Route>
+
+                        <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.RH, ROLES.CONTADOR]} />}>
+                            <Route path="/payroll" element={<Payroll />} />
+                        </Route>
+
+                        <Route path="/mis-comprobantes" element={<MisComprobantes />} />
 
                         {/* More secure routes later */}
                     </Route>

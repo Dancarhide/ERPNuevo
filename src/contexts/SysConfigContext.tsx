@@ -3,10 +3,12 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface SysConfig {
-    company_name:     string;
-    accent_color:     string;
-    maintenance_mode: string;
-    clima_active:     string;
+    company_name:         string;
+    accent_color:         string;
+    maintenance_mode:     string;
+    clima_active:         string;
+    about_footer_text:    string;
+    about_footer_version: string;
 }
 
 interface SysConfigCtx {
@@ -19,10 +21,12 @@ interface SysConfigCtx {
 // ─── Valores por defecto ───────────────────────────────────────────────────────
 
 const DEFAULTS: SysConfig = {
-    company_name:     'ERP Sistema',
-    accent_color:     '#A7313A',
-    maintenance_mode: 'false',
-    clima_active:     'true',
+    company_name:         'ERP Sistema',
+    accent_color:         '#A7313A',
+    maintenance_mode:     'false',
+    clima_active:         'true',
+    about_footer_text:    'FERRO CORPORATE SYSTEM | DEPARTAMENTO DE ESTRATEGIA DIGITAL',
+    about_footer_version: 'Build v2.1.0-2026',
 };
 
 // ─── Contexto ─────────────────────────────────────────────────────────────────

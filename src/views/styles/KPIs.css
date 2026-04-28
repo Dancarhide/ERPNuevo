@@ -72,10 +72,6 @@
 }
 
 .kpi-card {
-    background: #fff;
-    border-radius: 12px;
-    border-top: 4px solid #A7313A;
-    padding: 1.25rem;
     display: flex;
     align-items: flex-start;
     gap: 1rem;
@@ -144,17 +140,6 @@
     width: fit-content;
 }
 
-.kpi-tab {
-    padding: 0.55rem 1.4rem;
-    border-radius: 7px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
 
 .kpi-tab.active {
     background: #A7313A;

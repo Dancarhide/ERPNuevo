@@ -126,6 +126,53 @@ async function main() {
 
     console.log(`📋 Roles encontrados: ${roles.map(r => r.nombre_rol).join(', ')}\n`);
 
+    // ─── Crear el usuario Admin específico solicitado ────────────────────────
+    const adminEmail = 'Sistemas@Startia.com';
+    const adminPassword = 'StartiaSistemas_123';
+    const adminRol = roles.find(r => r.nombre_rol === 'Admin');
+
+    if (adminRol) {
+        const existeAdmin = await prisma.empleados.findFirst({
+            where: { email_empleado: adminEmail }
+        });
+
+        if (!existeAdmin) {
+            console.log(`👤 Creando usuario administrador especial: ${adminEmail}`);
+            const adminHash = await bcrypt.hash(adminPassword, 10);
+            const adminPuesto = 'Administrador del Sistema';
+            const adminSueldo = 25000;
+
+            const empleadoAdmin = await prisma.empleados.create({
+                data: {
+                    nombre_completo_empleado: 'Administrador Startia',
+                    email_empleado: adminEmail,
+                    idrol: adminRol.idrol,
+                    idarea: adminRol.idarea ?? null,
+                    estatus_empleado: 'Activo',
+                    sueldo: adminSueldo,
+                    puesto: adminPuesto,
+                    dias_vacaciones_disponibles: 15,
+                    curp: generarCurp('Admin', 'Startia'),
+                    fecha_ingreso: new Date(),
+                }
+            });
+
+            await prisma.credenciales.create({
+                data: {
+                    idempleado: empleadoAdmin.idempleado,
+                    username: 'sistemas.admin',
+                    user_password: adminHash,
+                }
+            });
+            console.log(`   ✅ Administrador creado con éxito: ${adminEmail}\n`);
+        } else {
+            console.log(`   ⏭  El usuario administrador especial ya existe: ${adminEmail}\n`);
+        }
+    } else {
+        console.log(`   ⚠️  No se encontró el rol 'Admin', no se pudo crear el usuario especial.\n`);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     let totalCreados = 0;
     let totalOmitidos = 0;
     let globalIndex = 1; // índice global para evitar colisiones de email/username

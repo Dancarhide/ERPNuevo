@@ -1,8 +1,10 @@
 import React from 'react';
 import { FaRocket, FaEye, FaHandshake, FaChartLine, FaUsers, FaShieldAlt } from 'react-icons/fa';
+import { useSysConfig } from '../contexts/SysConfigContext';
 import './styles/AboutUs.css';
 
 const AboutUs: React.FC = () => {
+    const { config } = useSysConfig();
     return (
         <div className="about-us-container">
             <header className="about-header">
@@ -84,8 +86,8 @@ const AboutUs: React.FC = () => {
             </div>
 
             <footer className="about-footer">
-                <p>FERRO CORPORATE SYSTEM | DEPARTAMENTO DE ESTRATEGIA DIGITAL</p>
-                <span className="version-tag">Build v2.1.0-2026</span>
+                <p>{config.about_footer_text}</p>
+                <span className="version-tag">{config.about_footer_version}</span>
             </footer>
         </div>
     );

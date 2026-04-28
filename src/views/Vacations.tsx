@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaHistory, FaCheckCircle, FaSave, FaPlus, FaClock, FaTimes, FaPlane } from 'react-icons/fa';
+import { FaCalendarAlt, FaHistory, FaCheckCircle, FaSave, FaPlus, FaClock, FaTimes, FaPlane, FaComments, FaLayerGroup } from 'react-icons/fa';
 import client from '../api/client';
 import './styles/Vacations.css';
 
@@ -17,7 +17,9 @@ const Vacations: React.FC = () => {
     const [allVacaciones, setAllVacaciones] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [eventos, setEventos] = useState<any[]>([]);
+    const [festivos, setFestivos] = useState<any[]>([]);
     const [stats, setStats] = useState({ available: 0, pending: 0, taken: 0 });
+    const [currentStep, setCurrentStep] = useState(1);
 
     // Calendar State
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -58,10 +60,14 @@ const Vacations: React.FC = () => {
 
     const fetchEventos = async () => {
         try {
-            const res = await client.get('/eventos');
-            setEventos(res.data);
+            const [resEv, resFest] = await Promise.all([
+                client.get('/eventos'),
+                client.get('/festivos')
+            ]);
+            setEventos(resEv.data);
+            setFestivos(resFest.data);
         } catch (error) {
-            console.error('Error fetching eventos:', error);
+            console.error('Error fetching eventos/festivos:', error);
         }
     };
 
@@ -177,9 +183,9 @@ const Vacations: React.FC = () => {
         }
     };
 
-    const handleDayClick = (date: Date, events: any[], vacations: any[]) => {
+    const handleDayClick = (date: Date, events: any[], vacations: any[], festivos: any[]) => {
         if (window.innerWidth <= 768) {
-            setSelectedDayInfo({ date, events, vacations });
+            setSelectedDayInfo({ date, events, vacations, festivos });
         }
     };
 
@@ -189,17 +195,58 @@ const Vacations: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleNextStep = () => {
+        const requestedDays = calculateDays(formData.fecha_inicio, formData.fecha_fin);
+        
+        if (currentStep === 2) {
+            if (!formData.fecha_inicio || !formData.fecha_fin) {
+                alert('Por favor selecciona ambas fechas.');
+                return;
+            }
+            if (new Date(formData.fecha_inicio) > new Date(formData.fecha_fin)) {
+                alert('La fecha de inicio no puede ser posterior a la fecha de fin.');
+                return;
+            }
+            if (formData.tipo_solicitud === 'Vacaciones' && requestedDays > stats.available) {
+                alert(`No tienes suficientes días disponibles. Tienes ${stats.available} y estás solicitando ${requestedDays}.`);
+                return;
+            }
+            if (requestedDays <= 0) {
+                alert('El periodo seleccionado no es válido.');
+                return;
+            }
+        }
+        
+        console.log('Moving from step', currentStep, 'to', currentStep + 1);
+        if (currentStep < 3) setCurrentStep(currentStep + 1);
+    };
+
+    const handlePrevStep = () => {
+        if (currentStep > 1) setCurrentStep(currentStep - 1);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Prevent submission if not on the last step
+        if (currentStep < 3) {
+            handleNextStep();
+            return;
+        }
+
+        console.log('Submitting vacation request:', formData);
         setIsSubmitting(true);
         try {
-            await client.post('/vacaciones', {
+            const payload = {
                 idempleado: idEmpleado,
                 ...formData
-            });
+            };
+            console.log('Sending payload:', payload);
+            await client.post('/vacaciones', payload);
 
             setIsModalOpen(false);
             setFormData({ fecha_inicio: '', fecha_fin: '', motivo: '', tipo_solicitud: 'Vacaciones' });
+            setCurrentStep(1);
             fetchData();
             if (isAdmin) fetchAllVacations();
         } catch (error) {
@@ -219,9 +266,12 @@ const Vacations: React.FC = () => {
     };
 
     const calculateDays = (start: string, end: string) => {
+        if (!start || !end) return 0;
         const d1 = new Date(start);
         const d2 = new Date(end);
-        return Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
+        const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        return diff > 0 ? diff : 0;
     };
 
     return (
@@ -231,7 +281,7 @@ const Vacations: React.FC = () => {
                     <h1>Vacaciones Calendario</h1>
                     <p>Calendario integral de descansos y eventos corporativos.</p>
                 </div>
-                <button className="btn-primary-strat" onClick={() => setIsModalOpen(true)}>
+                <button className="btn-primary-strat" onClick={() => { setCurrentStep(1); setIsModalOpen(true); }}>
                     <FaPlus /> Nueva Solicitud
                 </button>
             </header>
@@ -278,6 +328,7 @@ const Vacations: React.FC = () => {
                         {/* Legend */}
                         <div className="calendar-legend">
                             <div className="legend-item"><div className="dot vacation"></div> Vacaciones</div>
+                            <div className="legend-item"><div className="dot festivo"></div> Festivos</div>
                             <div className="legend-item"><div className="dot event"></div> Eventos</div>
                         </div>
 
@@ -326,6 +377,10 @@ const Vacations: React.FC = () => {
                                     const end = e.fecha_fin.split('T')[0];
                                     return localDateStr >= start && localDateStr <= end;
                                 });
+                                const dayFestivos = festivos.filter(f => {
+                                    const dateStr = f.fecha.split('T')[0];
+                                    return localDateStr === dateStr;
+                                });
                                 const myVacs = (allVacaciones.length > 0 ? allVacaciones : vacaciones).filter(v => {
                                     if (v.estatus_vacacion !== 'Aprobado') return false;
                                     const start = v.fecha_inicio.split('T')[0];
@@ -334,12 +389,13 @@ const Vacations: React.FC = () => {
                                 });
                                 const isToday = new Date().toISOString().split('T')[0] === localDateStr;
                                 days.push(
-                                    <div key={d} className={`cal-day ${isToday ? 'today' : ''}`} onClick={() => handleDayClick(date, dayEvents, myVacs)}>
+                                    <div key={d} className={`cal-day ${isToday ? 'today' : ''}`} onClick={() => handleDayClick(date, dayEvents, myVacs, dayFestivos)}>
                                         <div className="day-number-wrapper">
                                             {d} {isToday && <span className="today-badge">HOY</span>}
                                         </div>
                                         <div className="day-dots-container">
                                             {myVacs.length > 0 && <div className="dot-indicator vacation"></div>}
+                                            {dayFestivos.length > 0 && <div className="dot-indicator festivo" style={{ background: '#A7313A' }}></div>}
                                             {dayEvents.slice(0, 3).map((e, i) => (
                                                 <div key={i} className="dot-indicator generic" style={{ background: e.color || '#A7313A' }}></div>
                                             ))}
@@ -349,6 +405,11 @@ const Vacations: React.FC = () => {
                                             {myVacs.map((v, i) => (
                                                 <div key={i} className="event-tag vacation" title={v.empleados?.nombre_completo_empleado}>
                                                     <span className="event-title">VAC: {getInitials(v.empleados?.nombre_completo_empleado)}</span>
+                                                </div>
+                                            ))}
+                                            {dayFestivos.map((f, i) => (
+                                                <div key={i} className="event-tag festivo" title={f.nombre} style={{ background: '#A7313A', borderLeft: '3px solid #ffd700' }}>
+                                                    <span className="event-title">⭐ {f.nombre}</span>
                                                 </div>
                                             ))}
                                             {dayEvents.map((e, i) => (
@@ -485,47 +546,71 @@ const Vacations: React.FC = () => {
             </div>
 
             {isAdmin && (
-                <div style={{ marginTop: '4rem' }}>
-                    <div className="header-text" style={{ marginBottom: '1.5rem' }}>
-                        <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Gestión de Solicitudes Pendientes</h2>
-                        <p style={{ color: 'var(--color-text-muted)' }}>Autorización de ausencias para el equipo.</p>
+                <div className="admin-management-section">
+                    <div className="section-header-premium">
+                        <div className="header-title-group">
+                            <h2 className="premium-title">Gestión de Solicitudes Pendientes</h2>
+                            <p className="premium-subtitle">Revisión y autorización de ausencias corporativas.</p>
+                        </div>
+                        <div className="pending-counter-badge">
+                            {allVacaciones.filter(v => v.estatus_vacacion === 'Pendiente').length} Pendientes
+                        </div>
                     </div>
 
                     {allVacaciones.filter(v => v.estatus_vacacion === 'Pendiente').length === 0 ? (
-                        <div style={{ padding: '40px', background: 'white', borderRadius: '24px', border: '1px dashed var(--color-border)', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                            <FaCheckCircle style={{ color: '#10b981', fontSize: '2rem', marginBottom: '10px' }} />
-                            <p>Sin solicitudes pendientes por revisar.</p>
+                        <div className="empty-state-card">
+                            <FaCheckCircle className="empty-icon" />
+                            <p>No hay solicitudes pendientes en este momento.</p>
                         </div>
                     ) : (
-                        <div className="admin-grid">
+                        <div className="admin-requests-grid">
                             {allVacaciones.filter(v => v.estatus_vacacion === 'Pendiente').map((req) => (
-                                <div key={req.idvacacion} className="pending-request-card">
-                                    <div className="mini-avatar-strat">
-                                        {getInitials(req.empleados?.nombre_completo_empleado)}
+                                <div key={req.idvacacion} className="premium-request-card">
+                                    <div className="request-card-header">
+                                        <div className="user-info-group">
+                                            <div className="avatar-circle">
+                                                {getInitials(req.empleados?.nombre_completo_empleado)}
+                                            </div>
+                                            <div className="name-puesto">
+                                                <h4>{req.empleados?.nombre_completo_empleado}</h4>
+                                                <span>{req.empleados?.puesto || 'Puesto no asignado'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="type-badge">{req.tipo_solicitud}</div>
                                     </div>
-                                    <div style={{ marginBottom: '1.5rem' }}>
-                                        <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-text-main)' }}>{req.empleados?.nombre_completo_empleado}</h4>
-                                        <p style={{ margin: 0, color: 'var(--color-accent)', fontWeight: 600, fontSize: '0.85rem' }}>{req.empleados?.puesto || 'Puesto no asignado'}</p>
+                                    
+                                    <div className="request-details-box">
+                                        <div className="detail-item">
+                                            <FaCalendarAlt />
+                                            <span>{formatDate(req.fecha_inicio)} - {formatDate(req.fecha_fin)}</span>
+                                        </div>
+                                        <div className="detail-item highlight">
+                                            <FaClock />
+                                            <span><strong>{calculateDays(req.fecha_inicio, req.fecha_fin)}</strong> días hábiles</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaPlane />
+                                            <span>Disponibles: {req.empleados?.dias_vacaciones_disponibles} días</span>
+                                        </div>
                                     </div>
-                                    <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '15px', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                                        <p style={{ margin: '0 0 5px 0' }}><strong>Días:</strong> {calculateDays(req.fecha_inicio, req.fecha_fin)} hábil(es)</p>
-                                        <p style={{ margin: '0 0 5px 0' }}><strong>Periodo:</strong> {formatDate(req.fecha_inicio)} al {formatDate(req.fecha_fin)}</p>
-                                        <p style={{ margin: 0, fontStyle: 'italic', color: '#666' }}>"{req.motivo || 'Sin motivo especificado'}"</p>
+
+                                    <div className="justification-block">
+                                        <p>"{req.motivo || 'Sin motivo especificado'}"</p>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '10px' }}>
+
+                                    <div className="action-buttons-group">
                                         <button
+                                            className="btn-action-premium approve"
                                             onClick={() => handleStatusUpdate(req.idvacacion, 'Aprobado')}
-                                            style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--color-accent)', color: 'white', fontWeight: 700, cursor: 'pointer' }}
                                         >
-                                            Aprobar
+                                            Aprobar Solicitud
                                         </button>
                                         <button
+                                            className="btn-action-premium reject"
                                             onClick={() => openRejectModal(req.idvacacion)}
-                                            style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', background: 'white', color: '#ef4444', fontWeight: 700, cursor: 'pointer' }}
                                         >
                                             Rechazar
                                         </button>
-
                                     </div>
                                 </div>
                             ))}
@@ -536,127 +621,194 @@ const Vacations: React.FC = () => {
 
             {/* Request Modal - Matching EditEmployeeModal requirements */}
             {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)} style={{ zIndex: 2000 }}>
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }} style={{ zIndex: 2000 }}>
                     <div className="edit-modal-container" onClick={e => e.stopPropagation()}>
                         <div className="edit-modal-header">
                             <div className="header-title-clean">
-                                <h3>Nueva Solicitud</h3>
-                                <span className="id-badge">STRATIA ERP</span>
+                                <div className="title-with-badge">
+                                    <h3>Nueva Solicitud de Ausencia</h3>
+                                </div>
                             </div>
                             <button className="close-btn-clean" onClick={() => setIsModalOpen(false)}><FaTimes /></button>
                         </div>
-                        <form onSubmit={handleSubmit} className="edit-modal-body-scroll">
 
-                            <div className="profile-photo-section">
-                                <div className="photo-circle" style={{ borderRadius: '15px' }}>
-                                    <FaCalendarAlt />
-                                </div>
-                                <div className="photo-label">Gestión de Ausencias</div>
+                        <div className="edit-modal-main-layout">
+                            <div className="modal-sidebar-wizard">
+                                {[
+                                    { s: 1, l: 'Categoría', i: <FaLayerGroup /> },
+                                    { s: 2, l: 'Fechas', i: <FaCalendarAlt /> },
+                                    { s: 3, l: 'Detalles', i: <FaComments /> }
+                                ].map(step => (
+                                    <div 
+                                        key={step.s} 
+                                        className={`wizard-step-item ${currentStep === step.s ? 'active' : ''} ${currentStep > step.s ? 'completed' : ''}`}
+                                        onClick={() => setCurrentStep(step.s)}
+                                    >
+                                        <div className="step-number">{currentStep > step.s ? <FaCheckCircle /> : step.s}</div>
+                                        <div className="step-label">{step.l}</div>
+                                    </div>
+                                ))}
                             </div>
 
-                            <div className="form-section">
-                                <h4 className="section-title"><span className="step-num">1</span> Tipo de Ausencia</h4>
-                                <div className="form-grid-clean">
-                                    <div className="form-group-clean full-width">
-                                        <label>Categoría</label>
-                                        <select name="tipo_solicitud" value={formData.tipo_solicitud} onChange={handleFormChange}>
-                                            <option value="Vacaciones">Vacaciones Anuales</option>
-                                            <option value="Permiso Personal">Permiso Personal</option>
-                                            <option value="Incapacidad">Incapacidad Médica</option>
-                                        </select>
+                                <div className="edit-modal-body-content">
+                                <div className="edit-modal-scroll-area">
+                                    <form 
+                                        id="vacation-form" 
+                                        onSubmit={handleSubmit}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+                                                e.preventDefault();
+                                                handleNextStep();
+                                            }
+                                        }}
+                                    >
+                                        {currentStep === 1 && (
+                                            <div className="form-section-modern step-content-fade">
+                                                <div className="vacation-request-preview-card">
+                                                    <div className="preview-stat">
+                                                        <span className="preview-label">Disponibles</span>
+                                                        <span className="preview-value">{stats.available}</span>
+                                                    </div>
+                                                    <div className="preview-divider"></div>
+                                                    <div className="preview-stat">
+                                                        <span className="preview-label">Días a Solicitar</span>
+                                                        <span className="preview-value highlight">
+                                                            {formData.fecha_inicio && formData.fecha_fin 
+                                                                ? calculateDays(formData.fecha_inicio, formData.fecha_fin) 
+                                                                : 0}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <h4 className="section-title-modern">1. Tipo de Ausencia</h4>
+                                                <div className="form-grid-clean">
+                                                    <div className="form-group-clean full-width">
+                                                        <label>Categoría del Permiso</label>
+                                                        <select name="tipo_solicitud" value={formData.tipo_solicitud} onChange={handleFormChange}>
+                                                            <option value="Vacaciones">Vacaciones Anuales</option>
+                                                            <option value="Permiso Personal">Permiso Personal</option>
+                                                            <option value="Incapacidad">Incapacidad Médica</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {currentStep === 2 && (
+                                            <div className="form-section-modern step-content-fade">
+                                                <h4 className="section-title-modern">2. Periodo Solicitado</h4>
+                                                <div className="form-grid-clean">
+                                                    <div className="form-group-clean">
+                                                        <label>Fecha Inicio</label>
+                                                        <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleFormChange} required />
+                                                    </div>
+                                                    <div className="form-group-clean">
+                                                        <label>Fecha Fin</label>
+                                                        <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleFormChange} required />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {currentStep === 3 && (
+                                            <div className="form-section-modern step-content-fade">
+                                                <h4 className="section-title-modern">3. Justificación</h4>
+                                                <div className="form-grid-clean">
+                                                    <div className="form-group-clean full-width">
+                                                        <label>Motivo de la ausencia</label>
+                                                        <textarea
+                                                            name="motivo"
+                                                            value={formData.motivo}
+                                                            onChange={handleFormChange}
+                                                            style={{
+                                                                width: '100%',
+                                                                minHeight: '150px',
+                                                                padding: '14px 18px',
+                                                                borderRadius: '12px',
+                                                                border: '1px solid #E1DFE0',
+                                                                backgroundColor: '#F8F9FA',
+                                                                fontFamily: 'inherit',
+                                                                fontSize: '0.95rem'
+                                                            }}
+                                                            placeholder="Explica brevemente el motivo de tu solicitud..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </form>
+                                </div>
+
+                                <div className="edit-modal-footer">
+                                    <div className="footer-actions-left">
+                                        {currentStep > 1 && (
+                                            <button type="button" className="btn-modern outline" onClick={handlePrevStep}>
+                                                Anterior
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="footer-actions-right">
+                                        {currentStep < 3 ? (
+                                            <button type="button" className="btn-modern primary" onClick={handleNextStep}>
+                                                Siguiente
+                                            </button>
+                                        ) : (
+                                            <button type="submit" form="vacation-form" className="btn-modern primary" disabled={isSubmitting}>
+                                                {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="form-section">
-                                <h4 className="section-title"><span className="step-num">2</span> Periodo Solicitado</h4>
-                                <div className="form-grid-clean">
-                                    <div className="form-group-clean">
-                                        <label>Fecha Inicio</label>
-                                        <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleFormChange} required />
-                                    </div>
-                                    <div className="form-group-clean">
-                                        <label>Fecha Fin</label>
-                                        <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleFormChange} required />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="form-section">
-                                <h4 className="section-title"><span className="step-num">3</span> Justificación</h4>
-                                <div className="form-grid-clean">
-                                    <div className="form-group-clean full-width">
-                                        <label>Motivo</label>
-                                        <textarea
-                                            name="motivo"
-                                            value={formData.motivo}
-                                            onChange={handleFormChange}
-                                            style={{
-                                                width: '100%',
-                                                minHeight: '120px',
-                                                padding: '14px 18px',
-                                                borderRadius: '12px',
-                                                border: '1px solid #E1DFE0',
-                                                backgroundColor: '#F8F9FA',
-                                                fontFamily: 'inherit',
-                                                fontSize: '0.95rem'
-                                            }}
-                                            placeholder="Explica brevemente el motivo..."
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="edit-modal-footer-fixed">
-                                <button type="button" className="btn-cancel-clean" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn-save-clean" disabled={isSubmitting} style={{ background: 'var(--color-accent)' }}>
-                                    {isSubmitting ? 'Enviando...' : <><FaSave /> Confirmar Solicitud</>}
-                                </button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             )}
             {/* Rejection Modal */}
             {rejectModalOpen && (
-                <div className="modal-overlay" onClick={() => setRejectModalOpen(false)} style={{ zIndex: 2001 }}>
-                    <div className="edit-modal-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-                        <div className="edit-modal-header">
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setRejectModalOpen(false); }} style={{ zIndex: 2001 }}>
+                    <div className="edit-modal-container" style={{ maxWidth: '600px', height: 'auto', maxHeight: '90vh' }}>
+                        <div className="edit-modal-header" style={{ borderBottom: 'none', paddingBottom: '10px' }}>
                             <div className="header-title-clean">
-                                <h3>Motivo de Rechazo</h3>
-                                <span className="id-badge" style={{ background: '#ef4444' }}>RECHAZO</span>
+                                <h3 style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <FaTimes /> Rechazar Solicitud
+                                </h3>
                             </div>
                             <button className="close-btn-clean" onClick={() => setRejectModalOpen(false)}><FaTimes /></button>
                         </div>
-                        <div className="edit-modal-body-scroll" style={{ padding: '20px' }}>
-                            <p style={{ marginBottom: '15px', color: 'var(--color-text-muted)' }}>
-                                Por favor indica la razón por la cual se está rechazando esta solicitud de vacaciones.
-                            </p>
-                            <textarea
-                                value={rejectionReason}
-                                onChange={(e) => setRejectionReason(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    minHeight: '120px',
-                                    padding: '14px 18px',
-                                    borderRadius: '12px',
-                                    border: '1px solid #E1DFE0',
-                                    backgroundColor: '#F8F9FA,',
-                                    fontFamily: 'inherit',
-                                    fontSize: '0.95rem'
-                                }}
-                                placeholder="Escribe aquí el motivo..."
-                                autoFocus
-                            />
+                        
+                        <div className="edit-modal-scroll-area" style={{ padding: '20px 40px 40px' }}>
+                            <div className="rejection-warning">
+                                <p>Esta acción notificará al empleado y cancelará el periodo solicitado.</p>
+                            </div>
+                            
+                            <div className="form-group-clean full-width" style={{ marginTop: '20px' }}>
+                                <label style={{ color: '#ef4444', fontWeight: 800 }}>Motivo del Rechazo</label>
+                                <textarea
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                    placeholder="Explica detalladamente por qué se rechaza la solicitud..."
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '150px',
+                                        padding: '16px',
+                                        borderRadius: '12px',
+                                        border: '2px solid #fee2e2',
+                                        background: '#fff5f5',
+                                        fontFamily: 'inherit',
+                                        fontSize: '0.95rem',
+                                        outline: 'none',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    autoFocus
+                                />
+                            </div>
                         </div>
-                        <div className="edit-modal-footer-fixed" style={{ marginTop: '0' }}>
-                            <button className="btn-cancel-clean" onClick={() => setRejectModalOpen(false)}>Cancelar</button>
-                            <button
-                                className="btn-save-clean"
-                                onClick={confirmRejection}
-                                style={{ background: '#ef4444' }}
-                            >
-                                <FaTimes /> Confirmar Rechazo
+
+                        <div className="edit-modal-footer">
+                            <button className="btn-modern outline" onClick={() => setRejectModalOpen(false)}>Cancelar</button>
+                            <button className="btn-modern primary" onClick={confirmRejection} style={{ background: '#ef4444' }}>
+                                Confirmar Rechazo
                             </button>
                         </div>
                     </div>
@@ -675,24 +827,24 @@ const Vacations: React.FC = () => {
                         </div>
                         <div className="edit-modal-body-scroll" style={{ padding: '20px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                {selectedDayInfo.vacations.length > 0 && (
-                                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '15px', borderRadius: '15px', border: '1px solid #10b981' }}>
-                                        <h4 style={{ margin: '0 0 5px 0', color: '#059669', display: 'flex', alignItems: 'center', gap: '8px' }}><FaPlane /> Vacaciones</h4>
-                                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                            {selectedDayInfo.vacations.map((v, idx) => (
-                                                <div key={idx} style={{ fontSize: '0.85rem', color: '#065f46', fontWeight: 600 }}>
-                                                    • {v.empleados?.nombre_completo_empleado || 'Empleado'}
+                                        {selectedDayInfo.festivos && selectedDayInfo.festivos.length > 0 && (
+                                            <div style={{ background: 'rgba(167, 49, 58, 0.1)', padding: '15px', borderRadius: '15px', border: '1px solid var(--color-accent)' }}>
+                                                <h4 style={{ margin: '0 0 5px 0', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>⭐ Festivos</h4>
+                                                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    {selectedDayInfo.festivos.map((f: any, idx: number) => (
+                                                        <div key={idx} style={{ fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: 600 }}>
+                                                            • {f.nombre} ({f.tipo_ley})
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {selectedDayInfo.events.length === 0 && selectedDayInfo.vacations.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '30px', color: '#858789' }}>
-                                        <p>No hay eventos programados para este día.</p>
-                                    </div>
-                                ) : (
-                                    selectedDayInfo.events.map((e, idx) => (
+                                            </div>
+                                        )}
+                                        {selectedDayInfo.events.length === 0 && selectedDayInfo.vacations.length === 0 && (!selectedDayInfo.festivos || selectedDayInfo.festivos.length === 0) ? (
+                                            <div style={{ textAlign: 'center', padding: '30px', color: '#858789' }}>
+                                                <p>No hay eventos programados para este día.</p>
+                                            </div>
+                                        ) : (
+                                            selectedDayInfo.events.map((e, idx) => (
                                         <div key={idx} style={{ background: '#f8fafc', padding: '15px', borderRadius: '15px', borderLeft: `5px solid ${e.color || '#A7313A'}` }}>
                                             <div style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>{e.titulo}</div>
                                             {e.hora_inicio && <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}><FaClock style={{ fontSize: '0.7rem' }} /> {e.hora_inicio} - {e.hora_fin || '...'}</div>}
@@ -718,6 +870,7 @@ const Vacations: React.FC = () => {
                 .legend-item { display: flex; align-items: center; gap: 5px; }
                 .dot { width: 10px; height: 10px; border-radius: 3px; }
                 .dot.vacation { background: #10b981; }
+                .dot.festivo { background: #A7313A; border: 1px solid #ffd700; }
                 .dot.event { background: #A7313A; }
                 
                 .calendar-nav-wrapper { display: flex; align-items: center; background: #f1f5f9; padding: 5px; borderRadius: 12px; }

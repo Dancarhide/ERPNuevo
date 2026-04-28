@@ -366,6 +366,33 @@ const AdminConfig: React.FC = () => {
                                 />
                             </ConfigRow>
 
+                            {/* Footer de Quienes Somos */}
+                            <ConfigRow
+                                title="Footer 'Quiénes Somos' - Texto"
+                                subtitle="Texto principal que aparece en el pie de página institucional."
+                            >
+                                <input
+                                    type="text"
+                                    value={sysConfig.about_footer_text || ''}
+                                    onChange={e => handleConfigChange('about_footer_text', e.target.value)}
+                                    placeholder="Nombre del Sistema | Departamento"
+                                    style={inputStyle}
+                                />
+                            </ConfigRow>
+
+                            <ConfigRow
+                                title="Footer 'Quiénes Somos' - Versión"
+                                subtitle="Etiqueta de versión o build que aparece debajo del texto."
+                            >
+                                <input
+                                    type="text"
+                                    value={sysConfig.about_footer_version || ''}
+                                    onChange={e => handleConfigChange('about_footer_version', e.target.value)}
+                                    placeholder="Build vX.X.X"
+                                    style={inputStyle}
+                                />
+                            </ConfigRow>
+
                         </div>
                     </div>
                 </div>

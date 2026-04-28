@@ -29,22 +29,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
 
     const navItems: NavItem[] = [
         { path: '/home', label: 'Tablero Principal', icon: <FaHome />, permission: 'ALL' },
-        { path: '/empleados', label: 'Capital Humano', icon: <FaUsers />, permission: 'empleados.view' },
+        { path: '/empleados', label: 'Capital Humano', icon: <FaUsers />, permission: 'employees.view' },
         { path: '/hr-config', label: 'Config. Recursos Humanos', icon: <FaBuilding />, permission: 'areas.manage' },
-        { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacaciones.view' },
+        { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacations.view' },
         { path: '/organigrama', label: 'Estructura Organizacional', icon: <FaSitemap />, permission: 'ALL' },
         { path: '/quienes-somos', label: 'Quienes Somos', icon: <FaInfoCircle />, permission: 'ALL' },
         { path: '/reports', label: 'KPIS & Reportes', icon: <FaChartBar />, permission: 'kpis.view' },
-        { path: '/my-payroll', label: 'Mis Comprobantes', icon: <FaFileInvoiceDollar />, permission: 'ALL' },
-        { path: '/payroll-admin', label: 'Control Nómina', icon: <FaMoneyBillWave />, permission: 'nominas.view' },
-        { path: '/payroll-batches', label: 'Dispersión Lotes', icon: <FaLayerGroup />, permission: 'nominas.view' },
-        { path: '/estructura', label: 'Gestión Talento', icon: <FaShieldAlt />, permission: 'cyi.manage' },
-        { path: '/incidencias', label: 'Inicidencias', icon: <FaExclamationTriangle />, permission: 'reportes.view' },
+        { path: '/payroll', label: 'Gestión Nómina', icon: <FaMoneyBillWave />, permission: 'payroll.view' },
+        { path: '/mis-comprobantes', label: 'Mis Comprobantes', icon: <FaFileInvoiceDollar />, permission: 'ALL' },
+
+        { path: '/estructura', label: 'Gestión Talento', icon: <FaShieldAlt />, permission: 'recruitment.manage' },
+        { path: '/incidencias', label: 'Inicidencias', icon: <FaExclamationTriangle />, permission: 'incidents.view' },
         { path: '/hr-inventory', label: 'Inventario de RH', icon: <FaUserEdit />, permission: 'ALL' },
         { path: '/clima-laboral', label: 'Clima Laboral', icon: <FaPoll />, permission: 'ALL' },
-        { path: '/admin-encuestas', label: 'Control Encuestas', icon: <FaChartBar />, permission: 'evaluations.view' },
-        { path: '/admin-eventos', label: 'Crear Eventos', icon: <FaCalendarAlt />, permission: 'calendario.view' },
-        { path: '/admin-config', label: 'Ajustes Maestros', icon: <FaCogs />, permission: 'ajustes.view' },
+        { path: '/admin-encuestas', label: 'Control Encuestas', icon: <FaChartBar />, permission: 'surveys.admin' },
+        { path: '/admin-eventos', label: 'Crear Eventos', icon: <FaCalendarAlt />, permission: 'events.manage' },
+        { path: '/admin-config', label: 'Ajustes Maestros', icon: <FaCogs />, permission: 'admin.config' },
     ];
 
     useEffect(() => {
@@ -68,12 +68,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
 
     const allowedItems = navItems.filter(item => {
         if (item.permission === 'ALL') return true;
-        // Admins bypass everything if lists are empty, but we check if the slug is allowed
+        // Admins bypass everything
         return myPermissions.includes(item.permission) || isAdmin;
     });
 
-    const userName = userData?.nombre || 'Administrador';
-    const userRole = userData?.rol || 'Admin. de Sistema';
+    const userName = userData?.nombre || 'Usuario';
+    const userRole = userData?.rol || 'Empleado';
     const initials = userName.substring(0, 2).toUpperCase();
 
     const handleLogout = () => {
@@ -145,4 +145,3 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
 };
 
 export default Sidebar;
-

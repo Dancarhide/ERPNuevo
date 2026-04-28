@@ -56,19 +56,18 @@ Estos módulos están completamente integrados con el backend (Node.js/Express) 
     *   Estados de tarea (Pendiente, Completada).
     *   Priorización y fechas de vencimiento.
 
+### **Nómina y Compensaciones**
+*   **Gestión por Lotes**: Creación de lotes de nómina por periodos (quincenal/mensual).
+*   **Cálculo Automático**: Cálculo de sueldos, fondo de ahorro, vales de despensa e infonavit.
+*   **Recibos PDF**: Generación y descarga de comprobantes de pago en formato profesional.
+*   **Autoservicio**: Panel para que los empleados consulten y descarguen sus propios recibos.
+
 ---
 
 ## 2. Módulos en Prototipo / Lógica Frontend
 
 Estos módulos presentan una interfaz funcional y lógica de negocio en el cliente, pero actualmente utilizan almacenamiento local, datos simulados (mock data) o cálculos en tiempo real sin persistencia histórica en base de datos.
 
-### **Nómina y Compensaciones**
-*   **Proyección de Nómina**:
-    *   Cálculo en tiempo real de percepciones y deducciones basado en el salario base del empleado.
-    *   Estimación de impuestos (ISR) y seguridad social (IMSS) según normativa mexicana.
-    *   **Balance General**: Vista de "Balance de Nóminas" con desglose por departamento y totales.
-*   **Generación de Recibos**: Capacidad de generar visualizaciones previas de recibos (PDF/XML).
-    *   *Nota: Actualmente el cálculo es volátil y se realiza al momento de la consulta.*
 
 ### **Reclutamiento y Selección (Captación y Inducción)**
 *   **Pipeline de Talento**: Tablero visual del proceso (Publicación -> Entrevistas -> Selección -> Contratación -> Inducción).

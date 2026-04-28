@@ -62,9 +62,12 @@ model credenciales {
 }
 
 model dias_festivos {
-  id     Int      @id @default(autoincrement())
-  fecha  DateTime @db.Date
-  nombre String   @db.VarChar(255)
+  id         Int      @id @default(autoincrement())
+  fecha      DateTime @db.Date
+  nombre     String   @db.VarChar(255)
+  tipo_ley   String   @default("Obligatorio") @db.VarChar(100)
+  paga_doble Boolean  @default(true)
+  nota_ley   String?  @db.Text
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -318,10 +321,24 @@ model nominas {
   uuid_sat                    String?           @db.VarChar(100)
   xml_url                     String?
   lote_id                     String?           @db.VarChar(50)
+  lotes_nomina                lotes_nomina?     @relation(fields: [lote_id], references: [id_lote], onUpdate: NoAction)
   detalles_nomina             detalles_nomina[]
   empleados                   empleados         @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([idempleado], map: "ix_nominas_idempleado")
+  @@index([lote_id], map: "ix_nominas_lote")
+}
+
+model lotes_nomina {
+  id_lote        String    @id @db.VarChar(50)
+  fecha_creacion DateTime? @default(now()) @db.Timestamp(6)
+  periodo_inicio DateTime  @db.Date
+  periodo_fin    DateTime  @db.Date
+  tipo_nomina    String?   @db.VarChar(20) // Quincenal, Mensual, etc.
+  total_lote     Decimal   @db.Decimal(15, 2)
+  estatus        String?   @default("Borrador") @db.VarChar(20) // Borrador, Cerrado, Timbrado
+  creado_por     Int?
+  nominas        nominas[]
 }
 
 model conceptos_nomina {

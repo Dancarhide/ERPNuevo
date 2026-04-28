@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaCalendarPlus, FaTrash, FaSpinner, FaSave, FaExclamationCircle, FaUsers, FaBuilding, FaGlobe } from 'react-icons/fa';
+import { 
+    FaCalendarPlus, FaTrash, FaSpinner, FaSave, FaExclamationCircle, 
+    FaUsers, FaBuilding, FaGlobe, FaUmbrellaBeach, FaBalanceScale 
+} from 'react-icons/fa';
 import client from '../api/client';
 import './styles/Vacations.css';
 
@@ -17,6 +20,15 @@ interface Evento {
     idarea_target: number | null;
 }
 
+interface Festivo {
+    id: number;
+    fecha: string;
+    nombre: string;
+    tipo_ley: string;
+    paga_doble: boolean;
+    nota_ley: string | null;
+}
+
 interface Area {
     idarea: number;
     nombre_area: string;
@@ -28,13 +40,15 @@ interface Empleado {
 }
 
 const EventAdmin: React.FC = () => {
+    const [activeTab, setActiveTab] = useState<'eventos' | 'festivos'>('eventos');
     const [eventos, setEventos] = useState<Evento[]>([]);
+    const [festivos, setFestivos] = useState<Festivo[]>([]);
     const [areas, setAreas] = useState<Area[]>([]);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    const [formData, setFormData] = useState({
+    const [eventFormData, setEventFormData] = useState({
         titulo: '',
         descripcion: '',
         fecha_inicio: '',
@@ -48,6 +62,14 @@ const EventAdmin: React.FC = () => {
         empleados_target: [] as number[]
     });
 
+    const [festivoFormData, setFestivoFormData] = useState({
+        fecha: '',
+        nombre: '',
+        tipo_ley: 'Obligatorio',
+        paga_doble: true,
+        nota_ley: ''
+    });
+
     const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
     const userData = sessionData?.user || sessionData;
@@ -57,15 +79,18 @@ const EventAdmin: React.FC = () => {
     }, []);
 
     const fetchInitialData = async () => {
+        setLoading(true);
         try {
-            const [resEv, resAr, resEmp] = await Promise.all([
+            const [resEv, resAr, resEmp, resFest] = await Promise.all([
                 client.get('/eventos'),
                 client.get('/areas'),
-                client.get('/empleados')
+                client.get('/empleados'),
+                client.get('/festivos')
             ]);
             setEventos(resEv.data);
             setAreas(resAr.data);
             setEmpleados(resEmp.data);
+            setFestivos(resFest.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -73,13 +98,19 @@ const EventAdmin: React.FC = () => {
         }
     };
 
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleEventFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setEventFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFestivoFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        const { name, value, type } = e.target;
+        const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+        setFestivoFormData(prev => ({ ...prev, [name]: val }));
     };
 
     const handleEmployeeToggle = (id: number) => {
-        setFormData(prev => {
+        setEventFormData(prev => {
             const current = [...prev.empleados_target];
             if (current.includes(id)) {
                 return { ...prev, empleados_target: current.filter(cid => cid !== id) };
@@ -89,15 +120,15 @@ const EventAdmin: React.FC = () => {
         });
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleEventSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
         try {
             await client.post('/eventos', {
-                ...formData,
+                ...eventFormData,
                 creado_por: userData?.idempleado
             });
-            setFormData({
+            setEventFormData({
                 titulo: '',
                 descripcion: '',
                 fecha_inicio: '',
@@ -120,7 +151,29 @@ const EventAdmin: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleFestivoSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        try {
+            await client.post('/festivos', festivoFormData);
+            setFestivoFormData({
+                fecha: '',
+                nombre: '',
+                tipo_ley: 'Obligatorio',
+                paga_doble: true,
+                nota_ley: ''
+            });
+            const res = await client.get('/festivos');
+            setFestivos(res.data);
+        } catch (error) {
+            console.error('Error creating festivo:', error);
+            alert('Error al crear el día festivo');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteEvent = async (id: number) => {
         if (!window.confirm('¿Estás seguro de eliminar este evento?')) return;
         try {
             await client.delete(`/eventos/${id}`);
@@ -132,180 +185,307 @@ const EventAdmin: React.FC = () => {
         }
     };
 
+    const handleDeleteFestivo = async (id: number) => {
+        if (!window.confirm('¿Estás seguro de eliminar este día festivo?')) return;
+        try {
+            await client.delete(`/festivos/${id}`);
+            const res = await client.get('/festivos');
+            setFestivos(res.data);
+        } catch (error) {
+            console.error('Error deleting festivo:', error);
+            alert('Error al eliminar');
+        }
+    };
+
     return (
         <div className="vacations-container event-admin-page">
             <header className="vacations-header">
                 <div className="header-text">
-                    <h1>Administración de Eventos</h1>
-                    <p>Gestiona el calendario corporativo con segmentación avanzada.</p>
+                    <h1>Administración del Calendario</h1>
+                    <p>Gestiona eventos corporativos y días festivos oficiales para nómina.</p>
+                </div>
+                <div className="tabs-container-strat">
+                    <button 
+                        className={`tab-strat ${activeTab === 'eventos' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('eventos')}
+                    >
+                        <FaCalendarPlus /> Eventos
+                    </button>
+                    <button 
+                        className={`tab-strat ${activeTab === 'festivos' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('festivos')}
+                    >
+                        <FaUmbrellaBeach /> Días Festivos
+                    </button>
                 </div>
             </header>
 
             <div className="admin-grid">
                 {/* Form Section */}
                 <div className="admin-card form-card">
-                    <h3 className="card-title">
-                        <FaCalendarPlus style={{ color: 'var(--color-accent)' }} /> Nuevo Evento
-                    </h3>
-                    <form onSubmit={handleSubmit} className="admin-form-clean">
-                        <div className="form-group-clean">
-                            <label>Título del Evento</label>
-                            <input
-                                type="text"
-                                name="titulo"
-                                value={formData.titulo}
-                                onChange={handleFormChange}
-                                required
-                                placeholder="Ej: Junta de Capacitación"
-                            />
-                        </div>
-
-                        <div className="form-row-2col">
-                            <div className="form-group-clean">
-                                <label>Fecha Inicio</label>
-                                <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleFormChange} required />
-                            </div>
-                            <div className="form-group-clean">
-                                <label>Fecha Fin</label>
-                                <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleFormChange} required />
-                            </div>
-                        </div>
-
-                        <div className="form-row-2col">
-                            <div className="form-group-clean">
-                                <label>Hora Inicio</label>
-                                <input type="time" name="hora_inicio" value={formData.hora_inicio} onChange={handleFormChange} />
-                            </div>
-                            <div className="form-group-clean">
-                                <label>Hora Fin</label>
-                                <input type="time" name="hora_fin" value={formData.hora_fin} onChange={handleFormChange} />
-                            </div>
-                        </div>
-
-                        <div className="form-row-2col special-border">
-                            <div className="form-group-clean">
-                                <label>Tipo</label>
-                                <select name="tipo" value={formData.tipo} onChange={handleFormChange}>
-                                    <option value="Evento">Evento General</option>
-                                    <option value="Junta">Junta/Reunión</option>
-                                    <option value="Capacitación">Capacitación</option>
-                                    <option value="Festejo">Festejo</option>
-                                    <option value="Feriado">Feriado</option>
-                                </select>
-                            </div>
-                            <div className="form-group-clean">
-                                <label>Color</label>
-                                <input type="color" name="color" value={formData.color} onChange={handleFormChange} className="color-input" />
-                            </div>
-                        </div>
-
-                        {/* TARGETING SECTION */}
-                        <div className="targeting-section">
-                            <label className="section-label">¿QUIÉN DEBE VER ESTE EVENTO?</label>
-                            <div className="targeting-buttons">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(f => ({ ...f, target_type: 'TODOS' }))}
-                                    className={`target-btn ${formData.target_type === 'TODOS' ? 'active' : ''}`}
-                                >
-                                    <FaGlobe /> TODOS
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(f => ({ ...f, target_type: 'DEPARTAMENTO' }))}
-                                    className={`target-btn ${formData.target_type === 'DEPARTAMENTO' ? 'active' : ''}`}
-                                >
-                                    <FaBuilding /> DEPTO.
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(f => ({ ...f, target_type: 'INDIVIDUALES' }))}
-                                    className={`target-btn ${formData.target_type === 'INDIVIDUALES' ? 'active' : ''}`}
-                                >
-                                    <FaUsers /> ESPECÍFICO
-                                </button>
-                            </div>
-
-                            {formData.target_type === 'DEPARTAMENTO' && (
-                                <div className="form-group-clean mt-10">
-                                    <select name="idarea_target" value={formData.idarea_target} onChange={handleFormChange} required>
-                                        <option value="">— Seleccionar Departamento —</option>
-                                        {areas.map(a => <option key={a.idarea} value={a.idarea}>{a.nombre_area}</option>)}
-                                    </select>
+                    {activeTab === 'eventos' ? (
+                        <>
+                            <h3 className="card-title">
+                                <FaCalendarPlus style={{ color: 'var(--color-accent)' }} /> Nuevo Evento
+                            </h3>
+                            <form onSubmit={handleEventSubmit} className="admin-form-clean">
+                                <div className="form-group-clean">
+                                    <label>Título del Evento</label>
+                                    <input
+                                        type="text"
+                                        name="titulo"
+                                        value={eventFormData.titulo}
+                                        onChange={handleEventFormChange}
+                                        required
+                                        placeholder="Ej: Junta de Capacitación"
+                                    />
                                 </div>
-                            )}
 
-                            {formData.target_type === 'INDIVIDUALES' && (
-                                <div className="employee-selector">
-                                    {empleados.map(emp => (
-                                        <div
-                                            key={emp.idempleado}
-                                            onClick={() => handleEmployeeToggle(emp.idempleado)}
-                                            className={`emp-item ${formData.empleados_target.includes(emp.idempleado) ? 'selected' : ''}`}
+                                <div className="form-row-2col">
+                                    <div className="form-group-clean">
+                                        <label>Fecha Inicio</label>
+                                        <input type="date" name="fecha_inicio" value={eventFormData.fecha_inicio} onChange={handleEventFormChange} required />
+                                    </div>
+                                    <div className="form-group-clean">
+                                        <label>Fecha Fin</label>
+                                        <input type="date" name="fecha_fin" value={eventFormData.fecha_fin} onChange={handleEventFormChange} required />
+                                    </div>
+                                </div>
+
+                                <div className="form-row-2col">
+                                    <div className="form-group-clean">
+                                        <label>Hora Inicio</label>
+                                        <input type="time" name="hora_inicio" value={eventFormData.hora_inicio} onChange={handleEventFormChange} />
+                                    </div>
+                                    <div className="form-group-clean">
+                                        <label>Hora Fin</label>
+                                        <input type="time" name="hora_fin" value={eventFormData.hora_fin} onChange={handleEventFormChange} />
+                                    </div>
+                                </div>
+
+                                <div className="form-row-2col special-border">
+                                    <div className="form-group-clean">
+                                        <label>Tipo</label>
+                                        <select name="tipo" value={eventFormData.tipo} onChange={handleEventFormChange}>
+                                            <option value="Evento">Evento General</option>
+                                            <option value="Junta">Junta/Reunión</option>
+                                            <option value="Capacitación">Capacitación</option>
+                                            <option value="Festejo">Festejo</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group-clean">
+                                        <label>Color</label>
+                                        <input type="color" name="color" value={eventFormData.color} onChange={handleEventFormChange} className="color-input" />
+                                    </div>
+                                </div>
+
+                                {/* TARGETING SECTION */}
+                                <div className="targeting-section">
+                                    <label className="section-label">¿QUIÉN DEBE VER ESTE EVENTO?</label>
+                                    <div className="targeting-buttons">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEventFormData(f => ({ ...f, target_type: 'TODOS' }))}
+                                            className={`target-btn ${eventFormData.target_type === 'TODOS' ? 'active' : ''}`}
                                         >
-                                            {emp.nombre_completo_empleado}
-                                            {formData.empleados_target.includes(emp.idempleado) && <span className="check">✓</span>}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                            <FaGlobe /> TODOS
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEventFormData(f => ({ ...f, target_type: 'DEPARTAMENTO' }))}
+                                            className={`target-btn ${eventFormData.target_type === 'DEPARTAMENTO' ? 'active' : ''}`}
+                                        >
+                                            <FaBuilding /> DEPTO.
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEventFormData(f => ({ ...f, target_type: 'INDIVIDUALES' }))}
+                                            className={`target-btn ${eventFormData.target_type === 'INDIVIDUALES' ? 'active' : ''}`}
+                                        >
+                                            <FaUsers /> ESPECÍFICO
+                                        </button>
+                                    </div>
 
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="btn-primary-strat submit-btn"
-                        >
-                            {isSaving ? <FaSpinner className="spin" /> : <FaSave />} Publicar Evento
-                        </button>
-                    </form>
+                                    {eventFormData.target_type === 'DEPARTAMENTO' && (
+                                        <div className="form-group-clean mt-10">
+                                            <select name="idarea_target" value={eventFormData.idarea_target} onChange={handleEventFormChange} required>
+                                                <option value="">— Seleccionar Departamento —</option>
+                                                {areas.map(a => <option key={a.idarea} value={a.idarea}>{a.nombre_area}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {eventFormData.target_type === 'INDIVIDUALES' && (
+                                        <div className="employee-selector">
+                                            {empleados.map(emp => (
+                                                <div
+                                                    key={emp.idempleado}
+                                                    onClick={() => handleEmployeeToggle(emp.idempleado)}
+                                                    className={`emp-item ${eventFormData.empleados_target.includes(emp.idempleado) ? 'selected' : ''}`}
+                                                >
+                                                    {emp.nombre_completo_empleado}
+                                                    {eventFormData.empleados_target.includes(emp.idempleado) && <span className="check">✓</span>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button type="submit" disabled={isSaving} className="btn-primary-strat submit-btn">
+                                    {isSaving ? <FaSpinner className="spin" /> : <FaSave />} Publicar Evento
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="card-title">
+                                <FaUmbrellaBeach style={{ color: 'var(--color-accent)' }} /> Nuevo Día Festivo
+                            </h3>
+                            <form onSubmit={handleFestivoSubmit} className="admin-form-clean">
+                                <div className="form-group-clean">
+                                    <label>Nombre del Festivo</label>
+                                    <input
+                                        type="text"
+                                        name="nombre"
+                                        value={festivoFormData.nombre}
+                                        onChange={handleFestivoFormChange}
+                                        required
+                                        placeholder="Ej: Día de la Independencia"
+                                    />
+                                </div>
+
+                                <div className="form-group-clean">
+                                    <label>Fecha</label>
+                                    <input type="date" name="fecha" value={festivoFormData.fecha} onChange={handleFestivoFormChange} required />
+                                </div>
+
+                                <div className="form-row-2col">
+                                    <div className="form-group-clean">
+                                        <label>Tipo de Ley</label>
+                                        <select name="tipo_ley" value={festivoFormData.tipo_ley} onChange={handleFestivoFormChange}>
+                                            <option value="Obligatorio">Ley (Obligatorio)</option>
+                                            <option value="Opcional">Opcional / Empresa</option>
+                                            <option value="Medio Día">Medio Día</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group-clean checkbox-group">
+                                        <label>Impacto Nómina</label>
+                                        <div className="checkbox-wrapper">
+                                            <input 
+                                                type="checkbox" 
+                                                name="paga_doble" 
+                                                id="paga_doble"
+                                                checked={festivoFormData.paga_doble} 
+                                                onChange={handleFestivoFormChange} 
+                                            />
+                                            <label htmlFor="paga_doble">¿Paga Doble/Triple?</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="form-group-clean">
+                                    <label>Notas de la Ley / Descripción</label>
+                                    <textarea 
+                                        name="nota_ley" 
+                                        value={festivoFormData.nota_ley} 
+                                        onChange={handleFestivoFormChange}
+                                        placeholder="Referencia al artículo de la LFT o motivo interno..."
+                                        rows={3}
+                                    ></textarea>
+                                </div>
+
+                                <button type="submit" disabled={isSaving} className="btn-primary-strat submit-btn">
+                                    {isSaving ? <FaSpinner className="spin" /> : <FaSave />} Registrar Festivo
+                                </button>
+                            </form>
+                        </>
+                    )}
                 </div>
 
                 {/* List Section */}
                 <div className="admin-card list-card">
                     <div className="list-header">
-                        <h3>Eventos Programados</h3>
+                        <h3>{activeTab === 'eventos' ? 'Eventos Programados' : 'Días Festivos Registrados'}</h3>
                     </div>
                     <div className="events-list-container">
                         {loading ? (
                             <div className="list-loading"><FaSpinner className="spin" /> Cargando...</div>
-                        ) : eventos.length === 0 ? (
-                            <div className="empty-state">
-                                <FaExclamationCircle className="empty-icon" />
-                                <p>No hay eventos registrados.</p>
-                            </div>
+                        ) : activeTab === 'eventos' ? (
+                            eventos.length === 0 ? (
+                                <div className="empty-state">
+                                    <FaExclamationCircle className="empty-icon" />
+                                    <p>No hay eventos registrados.</p>
+                                </div>
+                            ) : (
+                                <div className="events-stack">
+                                    {eventos.map(ev => {
+                                        const areaName = ev.target_type === 'DEPARTAMENTO' ? areas.find(a => a.idarea === ev.idarea_target)?.nombre_area : null;
+                                        return (
+                                            <div key={ev.id} className="event-item-card">
+                                                <div className="event-info">
+                                                    <div className="event-title-row">
+                                                        <h4 className="event-title">{ev.titulo}</h4>
+                                                        <div className="badge-row">
+                                                            <span className="badge-type">{ev.tipo}</span>
+                                                            <span className="badge-target">
+                                                                {ev.target_type === 'TODOS' ? '🌍 GLOBAL' : ev.target_type === 'DEPARTAMENTO' ? `📂 ${areaName || 'Depto'}` : '👤 PRIVADO'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="event-meta">
+                                                        <span className="meta-date">📅 {new Date(ev.fecha_inicio).toLocaleDateString()} al {new Date(ev.fecha_fin).toLocaleDateString()}</span>
+                                                        {ev.hora_inicio && <span className="meta-time">⏰ {ev.hora_inicio}{ev.hora_fin ? ` - ${ev.hora_fin}` : ''}</span>}
+                                                    </div>
+                                                    {ev.descripcion && <p className="event-desc">"{ev.descripcion}"</p>}
+                                                </div>
+                                                <button onClick={() => handleDeleteEvent(ev.id)} className="btn-delete-event">
+                                                    <FaTrash />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )
                         ) : (
-                            <div className="events-stack">
-                                {eventos.map(ev => {
-                                    const areaName = ev.target_type === 'DEPARTAMENTO' ? areas.find(a => a.idarea === ev.idarea_target)?.nombre_area : null;
-                                    return (
-                                        <div key={ev.id} className="event-item-card" style={{ borderLeft: `5px solid ${ev.color}` }}>
+                            festivos.length === 0 ? (
+                                <div className="empty-state">
+                                    <FaExclamationCircle className="empty-icon" />
+                                    <p>No hay días festivos registrados.</p>
+                                </div>
+                            ) : (
+                                <div className="events-stack">
+                                    {festivos.map(fest => (
+                                        <div key={fest.id} className="event-item-card">
                                             <div className="event-info">
                                                 <div className="event-title-row">
-                                                    <h4 className="event-title">{ev.titulo}</h4>
+                                                    <h4 className="event-title">{fest.nombre}</h4>
                                                     <div className="badge-row">
-                                                        <span className="badge-type">{ev.tipo}</span>
-                                                        <span className="badge-target">
-                                                            {ev.target_type === 'TODOS' ? '🌍 GLOBAL' : ev.target_type === 'DEPARTAMENTO' ? `📂 ${areaName || 'Depto'}` : '👤 PRIVADO'}
+                                                        <span className="badge-type" style={{ background: 'rgba(167, 49, 58, 0.1)', color: 'var(--color-accent)' }}>
+                                                            {fest.tipo_ley}
                                                         </span>
+                                                        {fest.paga_doble && (
+                                                            <span className="badge-target" style={{ background: '#dcfce7', color: '#15803d' }}>
+                                                                💰 PAGO DOBLE
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="event-meta">
-                                                    <span className="meta-date">📅 {new Date(ev.fecha_inicio).toLocaleDateString()} al {new Date(ev.fecha_fin).toLocaleDateString()}</span>
-                                                    {ev.hora_inicio && <span className="meta-time">⏰ {ev.hora_inicio}{ev.hora_fin ? ` - ${ev.hora_fin}` : ''}</span>}
+                                                    <span className="meta-date">📅 {new Date(fest.fecha).toLocaleDateString()}</span>
                                                 </div>
-                                                {ev.descripcion && <p className="event-desc">"{ev.descripcion}"</p>}
+                                                {fest.nota_ley && (
+                                                    <p className="event-desc" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                        <FaBalanceScale size={10} /> {fest.nota_ley}
+                                                    </p>
+                                                )}
                                             </div>
-                                            <button
-                                                onClick={() => handleDelete(ev.id)}
-                                                className="btn-delete-event"
-                                            >
+                                            <button onClick={() => handleDeleteFestivo(fest.id)} className="btn-delete-event">
                                                 <FaTrash />
                                             </button>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    ))}
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
@@ -317,12 +497,21 @@ const EventAdmin: React.FC = () => {
                 .admin-card { background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; }
                 .card-title { padding: 25px 25px 0 25px; margin: 0; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; color: #1e293b; }
                 
+                .tabs-container-strat { display: flex; gap: 10px; margin-top: 20px; }
+                .tab-strat { padding: 10px 20px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; color: #64748b; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+                .tab-strat.active { background: var(--color-accent); color: white; border-color: var(--color-accent); box-shadow: 0 4px 12px rgba(167, 49, 58, 0.2); }
+                
                 .admin-form-clean { padding: 25px; display: flex; flex-direction: column; gap: 20px; }
                 .form-group-clean { display: flex; flex-direction: column; gap: 8px; }
                 .form-group-clean label { font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
                 .form-group-clean input, .form-group-clean select, .form-group-clean textarea { padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; background: #f8fafc; transition: all 0.2s; }
                 .form-group-clean input:focus { outline: none; border-color: var(--color-accent); background: white; }
                 
+                .checkbox-group { justify-content: center; }
+                .checkbox-wrapper { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; }
+                .checkbox-wrapper input { width: 18px; height: 18px; cursor: pointer; }
+                .checkbox-wrapper label { margin: 0; text-transform: none; font-size: 0.9rem; cursor: pointer; }
+
                 .form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
                 .color-input { height: 45px; padding: 5px !important; cursor: pointer; }
                 
