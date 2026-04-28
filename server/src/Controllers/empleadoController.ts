@@ -196,8 +196,12 @@ export const createEmpleado = async (req: Request, res: Response) => {
             // Crear credenciales usando el helper del modelo:
             // - genera username único basado en el nombre
             // - usa la contraseña configurable por env (DEFAULT_EMPLOYEE_PASSWORD)
-            const passwordInicial = process.env.DEFAULT_EMPLOYEE_PASSWORD ?? 'Bienvenido1!';
-            await crearCredenciales(emp.idempleado, nombre_completo_empleado, passwordInicial, tx);
+                        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let passwordInicial = '';
+            for (let i = 0; i < 8; i++) {
+                passwordInicial += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const usernameGenerado = await crearCredenciales(emp.idempleado, nombre_completo_empleado, passwordInicial, tx, email_empleado);
 
             if (idvacante) {
                 const vacanteId = parseInt(idvacante);
@@ -214,7 +218,7 @@ export const createEmpleado = async (req: Request, res: Response) => {
                 }
             }
 
-            return emp;
+            return { ...emp, _credencialesGeneradas: { username: usernameGenerado, password: passwordInicial } };
         });
 
         if (nuevoEmpleado.idpuesto) {

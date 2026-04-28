@@ -41,9 +41,33 @@ async function generarUsername(nombreCompleto: string, tx?: any): Promise<string
  * @param passwordPlano Contraseña sin encriptar.
  * @returns El username generado.
  */
-export async function crearCredenciales(idempleado: number, nombreCompleto: string, passwordPlano: string, tx?: any): Promise<string> {
+export async function crearCredenciales(idempleado: number, nombreCompleto: string, passwordPlano: string, tx?: any, email?: string | null): Promise<string> {
     const db = tx || prisma;
-    const username = await generarUsername(nombreCompleto, db);
+    let username = '';
+    
+    if (email && email.trim() !== '') {
+        // Usar email como username. Verificar que sea único (por si acaso).
+        let contador = 0;
+        let esUnico = false;
+        username = email.toLowerCase().trim();
+        const baseUsername = username;
+
+        while (!esUnico) {
+            const count = await db.credenciales.count({
+                where: { username: username }
+            });
+
+            if (count === 0) {
+                esUnico = true;
+            } else {
+                contador++;
+                username = `${baseUsername}${contador}`;
+            }
+        }
+    } else {
+        username = await generarUsername(nombreCompleto, db);
+    }
+    
     const passwordHash = await bcrypt.hash(passwordPlano, 10);
 
     await db.credenciales.create({

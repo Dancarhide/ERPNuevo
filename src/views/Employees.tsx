@@ -28,6 +28,8 @@ const Employees: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'view' | 'edit'>('edit');
   const [selectedEmpleado, setSelectedEmpleado] = useState<any>(null);
+  const [isCredsModalOpen, setIsCredsModalOpen] = useState<boolean>(false);
+  const [generatedCreds, setGeneratedCreds] = useState<{username: string, password: string} | null>(null);
 
   // Simulando obtención del rol del usuario
   const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -136,6 +138,11 @@ const Employees: React.FC = () => {
 
 
       if (response.ok) {
+        const responseData = await response.json();
+        if (isNew && responseData._credencialesGeneradas) {
+            setGeneratedCreds(responseData._credencialesGeneradas);
+            setIsCredsModalOpen(true);
+        }
         fetchEmpleados(); // Refresh the list
       } else {
         alert('Error al actualizar el empleado');
@@ -425,6 +432,39 @@ const Employees: React.FC = () => {
         empleado={selectedEmpleado}
         initialMode={modalMode}
       />
+
+      {isCredsModalOpen && generatedCreds && (
+        <div className="modal-overlay" style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999}}>
+          <div className="modal-content" style={{background: 'white', padding: '30px', borderRadius: '12px', maxWidth: '400px', width: '90%', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'}}>
+            <FaCheckCircle style={{fontSize: '3.5rem', color: '#10b981', margin: '0 auto 15px'}} />
+            <h2 style={{margin: '0 0 10px 0', color: '#1e293b'}}>Empleado Registrado</h2>
+            <p style={{marginBottom: '20px', color: '#64748b', fontSize: '0.95rem'}}>Se han generado las siguientes credenciales para el nuevo empleado. Por favor guárdalas o envíaselas, ya que no se volverán a mostrar.</p>
+            
+            <div style={{background: '#f8fafc', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'left', border: '1px solid #e2e8f0'}}>
+              <p style={{margin: '0 0 10px 0', color: '#334155'}}><strong>Usuario:</strong> {generatedCreds.username}</p>
+              <p style={{margin: 0, color: '#334155'}}><strong>Contraseña:</strong> {generatedCreds.password}</p>
+            </div>
+
+            <button 
+              className="btn-modern outline" 
+              style={{width: '100%', marginBottom: '10px', background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe'}}
+              onClick={() => {
+                navigator.clipboard.writeText(`Usuario: ${generatedCreds.username}\nContraseña: ${generatedCreds.password}`);
+                alert('¡Credenciales copiadas al portapapeles!');
+              }}
+            >
+              Copiar Credenciales
+            </button>
+            <button 
+              className="btn-modern" 
+              style={{width: '100%', background: '#A7313A', color: 'white', border: 'none'}}
+              onClick={() => setIsCredsModalOpen(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
