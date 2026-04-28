@@ -39,7 +39,7 @@ export const getPreviaNomina = async (req: Request, res: Response) => {
                 sueldo_base: sueldoBase,
                 sueldo_fiscal: sueldoFiscal,
                 fondo_ahorro: fondoAhorro,
-                vales_despensa: vales_despensa,
+                vales_despensa: valesDespensa,
                 infonavit: infonavit,
                 total_pagado: totalPagado
             };
@@ -115,7 +115,7 @@ export const getNominasPorLote = async (req: Request, res: Response) => {
     const { idlote } = req.params;
     try {
         const nominas = await prisma.nominas.findMany({
-            where: { lote_id: idlote },
+            where: { lote_id: idlote as string },
             include: { empleados: true }
         });
         res.json(nominas);
@@ -150,7 +150,7 @@ export const descargarPDFNomina = async (req: Request, res: Response) => {
     try {
         console.log('Solicitando PDF para ID:', idnomina);
         const nomina = await prisma.nominas.findUnique({
-            where: { idnomina: parseInt(idnomina) },
+            where: { idnomina: parseInt(idnomina as string) },
             include: { empleados: true, lotes_nomina: true }
         });
 
