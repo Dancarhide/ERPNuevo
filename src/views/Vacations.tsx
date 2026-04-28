@@ -26,7 +26,7 @@ const Vacations: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [view, setView] = useState<'month' | 'week' | 'day'>('month');
-    const [selectedDayInfo, setSelectedDayInfo] = useState<{ date: Date, events: any[], vacations: any[] } | null>(null);
+    const [selectedDayInfo, setSelectedDayInfo] = useState<{ date: Date, events: any[], vacations: any[], festivos?: any[] } | null>(null);
     const [formData, setFormData] = useState({
         fecha_inicio: '',
         fecha_fin: '',
