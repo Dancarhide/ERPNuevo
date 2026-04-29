@@ -43,29 +43,44 @@ const RESOURCES = [
     { key: 'inventory',   name: 'Inventario RH' },
     { key: 'events',      name: 'Eventos' },
     { key: 'kpis',        name: 'KPIs y Reportes' },
+    { key: 'clima',       name: 'Clima Laboral' },
 ];
 
 // ─── Permisos del sistema ─────────────────────────────────────────────────────
 // Datos estructurales — catálogo de acciones posibles por módulo
 
 const PERMISSIONS_DATA = [
+    // Estructura y Organigrama
+    { resource_key: 'orgchart', action: 'view', slug: 'orgchart.view', name: 'Ver Organigrama y Estructura' },
     // Empleados
-    { resource_key: 'employees', action: 'view',   slug: 'employees.view',   name: 'Ver empleados' },
-    { resource_key: 'employees', action: 'create', slug: 'employees.create', name: 'Crear empleados' },
-    { resource_key: 'employees', action: 'edit',   slug: 'employees.edit',   name: 'Editar empleados' },
-    { resource_key: 'employees', action: 'delete', slug: 'employees.delete', name: 'Eliminar empleados' },
+    { resource_key: 'employees', action: 'view',        slug: 'employees.view',        name: 'Ver empleados' },
+    { resource_key: 'employees', action: 'create',      slug: 'employees.create',      name: 'Crear empleados' },
+    { resource_key: 'employees', action: 'edit',        slug: 'employees.edit',        name: 'Editar empleados' },
+    { resource_key: 'employees', action: 'delete',      slug: 'employees.delete',      name: 'Eliminar empleados' },
+    { resource_key: 'employees', action: 'export',      slug: 'employees.export',      name: 'Exportar datos (Excel/CSV)' },
+    { resource_key: 'employees', action: 'permissions', slug: 'employees.permissions', name: 'Gestionar excepciones de permisos' },
     // Nómina
-    { resource_key: 'payroll', action: 'view',    slug: 'payroll.view',    name: 'Ver nóminas' },
-    { resource_key: 'payroll', action: 'create',  slug: 'payroll.create',  name: 'Crear nóminas' },
-    { resource_key: 'payroll', action: 'stamp',   slug: 'payroll.stamp',   name: 'Timbrar nóminas' },
-    { resource_key: 'payroll', action: 'history', slug: 'payroll.history', name: 'Historial de nóminas' },
+    { resource_key: 'payroll', action: 'view',      slug: 'payroll.view',      name: 'Ver nóminas' },
+    { resource_key: 'payroll', action: 'create',    slug: 'payroll.create',    name: 'Crear nuevas nóminas' },
+    { resource_key: 'payroll', action: 'calculate', slug: 'payroll.calculate', name: 'Calcular montos de nómina' },
+    { resource_key: 'payroll', action: 'stamp',     slug: 'payroll.stamp',     name: 'Timbrar nóminas (Fiscal)' },
+    { resource_key: 'payroll', action: 'history',   slug: 'payroll.history',   name: 'Ver historial de pagos' },
     // Vacaciones
     { resource_key: 'vacations', action: 'view',    slug: 'vacations.view',    name: 'Ver vacaciones' },
     { resource_key: 'vacations', action: 'approve', slug: 'vacations.approve', name: 'Aprobar/rechazar vacaciones' },
     // Roles y permisos
-    { resource_key: 'roles', action: 'manage', slug: 'roles.manage', name: 'Gestionar roles y permisos' },
+    { resource_key: 'roles', action: 'manage',   slug: 'roles.manage',   name: 'Gestionar roles y permisos' },
+    { resource_key: 'roles', action: 'delegate', slug: 'roles.delegate', name: 'Delegar roles temporalmente' },
     // Áreas
     { resource_key: 'areas', action: 'manage', slug: 'areas.manage', name: 'Gestionar áreas' },
+    // Inventario y Activos
+    { resource_key: 'inventory', action: 'view',   slug: 'inventory.view',   name: 'Ver Inventario de activos' },
+    { resource_key: 'inventory', action: 'manage', slug: 'inventory.manage', name: 'Gestionar Inventario de activos' },
+    // Clima y Encuestas
+    { resource_key: 'clima',   action: 'view',   slug: 'clima.view',   name: 'Ver Clima Laboral' },
+    { resource_key: 'surveys', action: 'manage', slug: 'surveys.manage', name: 'Gestionar Encuestas' },
+    // Eventos
+    { resource_key: 'events', action: 'manage', slug: 'events.manage', name: 'Gestionar Eventos corporativos' },
     // Admin
     { resource_key: 'admin', action: 'config', slug: 'admin.config', name: 'Configuración del sistema' },
     // Reclutamiento
@@ -74,8 +89,6 @@ const PERMISSIONS_DATA = [
     // Incidencias
     { resource_key: 'incidents', action: 'view',   slug: 'incidents.view',   name: 'Ver incidencias' },
     { resource_key: 'incidents', action: 'manage', slug: 'incidents.manage', name: 'Gestionar incidencias' },
-    // Encuestas
-    { resource_key: 'surveys', action: 'admin', slug: 'surveys.admin', name: 'Administrar encuestas de clima' },
     // Dashboard
     { resource_key: 'dashboard', action: 'view', slug: 'dashboard.view', name: 'Ver dashboard' },
     // Organigrama
@@ -200,6 +213,25 @@ async function main() {
     } else {
         console.log(`   ℹ️  Admin ya existe (${adminEmail}) — credenciales sin cambios`);
     }
+
+    // ── 6. Conceptos de Nómina Base ──────────────────────────────────────────
+    console.log('💰 Registrando conceptos de nómina base...');
+    const CONCEPTOS = [
+        { clave: 'P001', nombre: 'Sueldo Base',       tipo: 'Percepcion', fiscal: true },
+        { clave: 'P002', nombre: 'Vales de Despensa', tipo: 'Percepcion', fiscal: false },
+        { clave: 'P003', nombre: 'Bonos/Premios',     tipo: 'Percepcion', fiscal: true },
+        { clave: 'D001', nombre: 'ISR (Retención)',   tipo: 'Deduccion',  fiscal: true },
+        { clave: 'D002', nombre: 'IMSS (Retención)',  tipo: 'Deduccion',  fiscal: true },
+    ];
+
+    for (const c of CONCEPTOS) {
+        await prisma.conceptos_nomina.upsert({
+            where:  { clave: c.clave },
+            update: { nombre_concepto: c.nombre, tipo: c.tipo, es_fiscal: c.fiscal },
+            create: { clave: c.clave, nombre_concepto: c.nombre, tipo: c.tipo, es_fiscal: c.fiscal, monto_defecto: 0 },
+        });
+    }
+    console.log(`   ✅ ${CONCEPTOS.length} conceptos de nómina registrados`);
 
     // ── Resumen ───────────────────────────────────────────────────────────
     console.log('\n' + '═'.repeat(55));

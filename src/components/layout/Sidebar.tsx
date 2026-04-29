@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
         { path: '/empleados', label: 'Capital Humano', icon: <FaUsers />, permission: 'employees.view' },
         { path: '/hr-config', label: 'Config. Recursos Humanos', icon: <FaBuilding />, permission: 'areas.manage' },
         { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacations.view' },
-        { path: '/organigrama', label: 'Estructura Organizacional', icon: <FaSitemap />, permission: 'ALL' },
+        { path: '/organigrama', label: 'Estructura Organizacional', icon: <FaSitemap />, permission: 'orgchart.view' },
         { path: '/quienes-somos', label: 'Quienes Somos', icon: <FaInfoCircle />, permission: 'ALL' },
         { path: '/reports', label: 'KPIS & Reportes', icon: <FaChartBar />, permission: 'kpis.view' },
         { path: '/payroll', label: 'Gestión Nómina', icon: <FaMoneyBillWave />, permission: 'payroll.view' },
@@ -40,9 +40,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
 
         { path: '/estructura', label: 'Gestión Talento', icon: <FaShieldAlt />, permission: 'recruitment.manage' },
         { path: '/incidencias', label: 'Inicidencias', icon: <FaExclamationTriangle />, permission: 'incidents.view' },
-        { path: '/hr-inventory', label: 'Inventario de RH', icon: <FaUserEdit />, permission: 'ALL' },
-        { path: '/clima-laboral', label: 'Clima Laboral', icon: <FaPoll />, permission: 'ALL' },
-        { path: '/admin-encuestas', label: 'Control Encuestas', icon: <FaChartBar />, permission: 'surveys.admin' },
+        { path: '/hr-inventory', label: 'Inventario de RH', icon: <FaUserEdit />, permission: 'inventory.view' },
+        { path: '/clima-laboral', label: 'Clima Laboral', icon: <FaPoll />, permission: 'clima.view' },
+        { path: '/admin-encuestas', label: 'Control Encuestas', icon: <FaChartBar />, permission: 'surveys.manage' },
         { path: '/admin-eventos', label: 'Crear Eventos', icon: <FaCalendarAlt />, permission: 'events.manage' },
         { path: '/admin-config', label: 'Ajustes Maestros', icon: <FaCogs />, permission: 'admin.config' },
     ];

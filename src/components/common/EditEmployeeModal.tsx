@@ -16,6 +16,7 @@ interface Empleado {
   estatus_empleado: string | null;
   puesto: string | null;
   idrol: number | null;
+  roles?: { hierarchy_level: number | null; nombre_rol: string | null } | null;
   idarea: number | null;
   idvacante?: number | null;
   id_jefe_directo?: number | null;
@@ -379,7 +380,16 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                             }}
                           >
                             <option value="">Automático por Área (Sin Jefe Específico)</option>
-                            {empleadosData.filter(e => e.idempleado !== formData.idempleado).map(emp => <option key={emp.idempleado} value={emp.idempleado}>{emp.nombre_completo_empleado} - {emp.puesto || 'Sin puesto'}</option>)}
+                             {empleadosData
+                               .filter(e => 
+                                 e.idempleado !== formData.idempleado && 
+                                 e.roles?.hierarchy_level !== 0
+                               )
+                               .map(emp => (
+                                 <option key={emp.idempleado} value={emp.idempleado}>
+                                   {emp.nombre_completo_empleado} - {emp.puesto || 'Sin puesto'}
+                                 </option>
+                               ))}
                           </select>
                         </div>
                         <div className="form-group-clean"><label>Email</label><input type="email" name="email_empleado" value={formData.email_empleado || ''} onChange={handleChange} maxLength={50} /></div>

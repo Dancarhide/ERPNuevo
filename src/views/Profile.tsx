@@ -7,7 +7,7 @@ const Profile: React.FC = () => {
   const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
   const sessionData = userDataStr ? JSON.parse(userDataStr) : null;
   const initialUserData = sessionData?.user || sessionData;
-  const idEmpleado = initialUserData?.idempleado || 0;
+  const idEmpleado = initialUserData?.id || initialUserData?.idempleado || 0;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -225,15 +225,15 @@ const Profile: React.FC = () => {
                 <div className="cv-grid">
                     <div className="cv-field big">
                         <span className="field-label">Nombre del Familiar</span>
-                        <span className="field-value">{currentUser.familiar?.nombre || 'No registrado'}</span>
+                        <span className="field-value">{currentUser.familiar?.nombre_completo_familiar || 'No registrado'}</span>
                     </div>
                     <div className="cv-field">
                         <span className="field-label">Parentesco</span>
-                        <span className="field-value">{currentUser.familiar?.parentesco || 'N/A'}</span>
+                        <span className="field-value">{currentUser.familiar?.parentesco_familiar || 'N/A'}</span>
                     </div>
                     <div className="cv-field">
                         <span className="field-label">Teléfono</span>
-                        <span className="field-value">{currentUser.familiar?.telefono || 'N/A'}</span>
+                        <span className="field-value">{currentUser.familiar?.telefono_familiar || 'N/A'}</span>
                     </div>
                 </div>
             </section>

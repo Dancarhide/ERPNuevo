@@ -94,3 +94,73 @@ export const deleteRol = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: 'Error al eliminar el rol' });
     }
 };
+
+/**
+ * Obtiene todos los permisos del sistema y marca cuáles tiene el rol solicitado.
+ */
+export const getRolePermissions = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const idrol = parseInt(id as string);
+
+        // 1. Obtener todos los recursos y permisos disponibles
+        const allPermissions = await prisma.resources.findMany({
+            include: {
+                permissions: true
+            }
+        });
+
+        // 2. Obtener los IDs de permisos que ya tiene este rol
+        const rolePerms = await prisma.role_permissions.findMany({
+            where: { role_id: idrol },
+            select: { permission_id: true }
+        });
+
+        const activePermIds = rolePerms.map(rp => rp.permission_id);
+
+        res.json({
+            catalog: allPermissions,
+            activeIds: activePermIds
+        });
+    } catch (error) {
+        console.error('Error al obtener permisos del rol:', error);
+        res.status(500).json({ error: 'Error al obtener el catálogo de permisos' });
+    }
+};
+
+/**
+ * Sincroniza los permisos de un rol (borra los actuales y crea los nuevos).
+ */
+export const updateRolePermissions = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const idrol = parseInt(id as string);
+        const { permissionIds } = req.body; // Array de números
+
+        if (!Array.isArray(permissionIds)) {
+            res.status(400).json({ error: 'permissionIds debe ser un arreglo' });
+            return;
+        }
+
+        // Usamos una transacción para asegurar que no se quede a medias
+        await prisma.$transaction([
+            // 1. Eliminar permisos actuales
+            prisma.role_permissions.deleteMany({
+                where: { role_id: idrol }
+            }),
+            // 2. Crear los nuevos vínculos
+            prisma.role_permissions.createMany({
+                data: permissionIds.map(pid => ({
+                    role_id: idrol,
+                    permission_id: pid,
+                    scope: 'global'
+                }))
+            })
+        ]);
+
+        res.json({ message: 'Permisos actualizados correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar permisos:', error);
+        res.status(500).json({ error: 'Error al sincronizar permisos' });
+    }
+};

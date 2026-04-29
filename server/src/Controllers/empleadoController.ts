@@ -3,6 +3,42 @@ import { prisma } from '../prisma';
 import { recountPuesto } from '../Services/puestoService';
 import { crearCredenciales } from '../models/credenciales';
 
+/**
+ * Valida que el jefe directo tenga un nivel jerárquico superior al del empleado.
+ * @returns true si es válido, lanza error si no lo es.
+ */
+async function validarJerarquia(idRolEmpleado: number | null, idJefe: number | null) {
+    if (!idJefe || !idRolEmpleado) return true;
+
+    // 1. Obtener nivel del rol del empleado
+    const rolEmp = await prisma.roles.findUnique({
+        where: { idrol: idRolEmpleado },
+        select: { hierarchy_level: true, nombre_rol: true }
+    });
+
+    // 2. Obtener nivel del rol del jefe
+    const jefe = await prisma.empleados.findUnique({
+        where: { idempleado: idJefe },
+        include: { roles: { select: { hierarchy_level: true, nombre_rol: true } } }
+    });
+
+    if (!rolEmp || !jefe || !jefe.roles) return true;
+
+    const nivelEmp = rolEmp.hierarchy_level ?? 99;
+    const nivelJefe = jefe.roles.hierarchy_level ?? 99;
+
+    // Si el nivel del jefe es igual o mayor (ej: jefe 2, emp 2), bloqueamos.
+    // Entre más bajo el número, más autoridad tiene.
+    if (nivelJefe >= nivelEmp) {
+        throw new Error(
+            `Conflicto de Jerarquía: El jefe (${jefe.roles.nombre_rol}, Nivel ${nivelJefe}) ` +
+            `no puede supervisar a alguien de nivel igual o superior (${rolEmp.nombre_rol}, Nivel ${nivelEmp}).`
+        );
+    }
+
+    return true;
+}
+
 export const getEmpleados = async (req: Request, res: Response) => {
     try {
         const empleados = await prisma.empleados.findMany({
@@ -77,6 +113,13 @@ export const updateEmpleado = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
+        if (id_jefe_directo && idrol) {
+            try {
+                await validarJerarquia(parseInt(idrol as string), parseInt(id_jefe_directo as string));
+            } catch (err: any) {
+                return res.status(400).json({ error: err.message });
+            }
+        }
         const updated = await prisma.empleados.update({
             where: { idempleado: parseInt(id as string) },
             data: {
@@ -153,6 +196,13 @@ export const createEmpleado = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
+        if (id_jefe_directo && idrol) {
+            try {
+                await validarJerarquia(parseInt(idrol as string), parseInt(id_jefe_directo as string));
+            } catch (err: any) {
+                return res.status(400).json({ error: err.message });
+            }
+        }
         const nuevoEmpleado = await prisma.$transaction(async (tx) => {
             const emp = await (tx.empleados as any).create({
                 data: {

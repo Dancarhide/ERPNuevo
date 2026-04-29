@@ -129,6 +129,10 @@ model empleados {
   id_jefe_directo                                          Int?
   jefe_directo                                             empleados?                   @relation("JefeDirecto", fields: [id_jefe_directo], references: [idempleado])
   subordinados                                             empleados[]                  @relation("JefeDirecto")
+  empleado_roles                                           empleado_roles[]
+  empleado_permissions                                     empleado_permissions[]
+  roles_delegados                                          delegacion_roles[]           @relation("DelegadorRoles")
+  roles_recibidos                                          delegacion_roles[]           @relation("DelegadoRoles")
 
   @@index([idarea], map: "ix_empleados_idarea")
   @@index([idrol], map: "ix_empleados_idrol")
@@ -176,7 +180,8 @@ model field_permissions {
   role_id      Int?
   resource_key String   @db.VarChar(50)
   field_key    String   @db.VarChar(50)
-  is_hidden    Boolean? @default(true)
+  can_read     Boolean? @default(true)
+  can_write    Boolean? @default(false)
   roles        roles?   @relation(fields: [role_id], references: [idrol], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([role_id, resource_key, field_key])
@@ -220,6 +225,7 @@ model permissions {
   name             String             @db.VarChar(100)
   resources        resources?         @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   role_permissions role_permissions[]
+  empleado_permissions empleado_permissions[]
 }
 
 model resources {
@@ -262,6 +268,8 @@ model roles {
   empleados         empleados[]
   field_permissions field_permissions[]
   role_permissions  role_permissions[]
+  empleado_roles    empleado_roles[]
+  delegacion_roles  delegacion_roles[]
   areas             areas?              @relation(fields: [idarea], references: [idarea], onDelete: NoAction, onUpdate: NoAction)
   vacantes          vacantes[]
 }
@@ -508,4 +516,37 @@ model notificaciones {
   link           String?  @db.VarChar(255)
 
   @@index([idempleado])
+}
+
+model empleado_roles {
+  idempleado Int
+  idrol      Int
+  empleados  empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade)
+  roles      roles     @relation(fields: [idrol], references: [idrol], onDelete: Cascade)
+
+  @@id([idempleado, idrol])
+}
+
+model empleado_permissions {
+  idempleado    Int
+  permission_id Int
+  scope         String?     @default("global") @db.VarChar(20)
+  concedido     Boolean     @default(true)
+  empleados     empleados   @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([idempleado, permission_id])
+}
+
+model delegacion_roles {
+  id           Int       @id @default(autoincrement())
+  delegador_id Int
+  delegado_id  Int
+  rol_id       Int
+  fecha_inicio DateTime  @db.Date
+  fecha_fin    DateTime  @db.Date
+  estatus      String    @default("Activa") @db.VarChar(20)
+  delegador    empleados @relation("DelegadorRoles", fields: [delegador_id], references: [idempleado], onDelete: Cascade)
+  delegado     empleados @relation("DelegadoRoles", fields: [delegado_id], references: [idempleado], onDelete: Cascade)
+  roles        roles     @relation(fields: [rol_id], references: [idrol], onDelete: Cascade)
 }

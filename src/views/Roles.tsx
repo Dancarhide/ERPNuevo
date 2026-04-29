@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { FaShieldAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaShieldAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaCheck, FaKey, FaLock } from 'react-icons/fa';
 import client from '../api/client';
 import './styles/Roles.css';
 
@@ -16,6 +16,20 @@ interface Rol {
 interface Area {
     idarea: number;
     nombre_area: string | null;
+}
+
+interface Permission {
+    id: number;
+    slug: string;
+    name: string;
+    action: string;
+}
+
+interface Resource {
+    id: number;
+    key: string;
+    name: string;
+    permissions: Permission[];
 }
 
 interface ModalData {
@@ -46,6 +60,13 @@ const Roles: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
+    // Permissions state
+    const [permModalOpen, setPermModalOpen] = useState(false);
+    const [selectedRol, setSelectedRol] = useState<Rol | null>(null);
+    const [allResources, setAllResources] = useState<Resource[]>([]);
+    const [activePermIds, setActivePermIds] = useState<number[]>([]);
+    const [updatingPerms, setUpdatingPerms] = useState(false);
+
     const showSuccess = (msg: string) => {
         setSuccess(msg);
         setTimeout(() => setSuccess(''), 3000);
@@ -58,7 +79,8 @@ const Roles: React.FC = () => {
                 client.get('/roles'),
                 client.get('/areas')
             ]);
-            setRoles(rolesRes.data);
+            // Filtrar para no mostrar roles de sistema (Admin) en la gestión
+            setRoles(rolesRes.data.filter((r: Rol) => !r.is_system));
             setAreas(areasRes.data);
         } catch {
             setError('Error al cargar los roles');
@@ -104,6 +126,46 @@ const Roles: React.FC = () => {
             setError(e.response?.data?.error || 'Error al guardar el rol');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleOpenPermissions = async (rol: Rol) => {
+        setSelectedRol(rol);
+        setError('');
+        try {
+            setLoading(true);
+            const res = await client.get(`/roles/${rol.idrol}/permissions`);
+            setAllResources(res.data.catalog);
+            setActivePermIds(res.data.activeIds);
+            setPermModalOpen(true);
+        } catch {
+            setError('Error al cargar catálogo de permisos');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const togglePermission = (id: number) => {
+        setActivePermIds(current => 
+            current.includes(id) 
+                ? current.filter(pid => pid !== id) 
+                : [...current, id]
+        );
+    };
+
+    const handleUpdatePermissions = async () => {
+        if (!selectedRol) return;
+        setUpdatingPerms(true);
+        try {
+            await client.post(`/roles/${selectedRol.idrol}/permissions`, {
+                permissionIds: activePermIds
+            });
+            showSuccess('Permisos actualizados correctamente');
+            setPermModalOpen(false);
+        } catch {
+            setError('Error al guardar permisos');
+        } finally {
+            setUpdatingPerms(false);
         }
     };
 
@@ -168,6 +230,15 @@ const Roles: React.FC = () => {
                                     </td>
                                     <td>
                                         <div className="action-btns">
+                                            {!rol.is_system && (
+                                                <button
+                                                    className="action-btn permissions"
+                                                    onClick={() => handleOpenPermissions(rol)}
+                                                    title="Gestionar Permisos"
+                                                >
+                                                    <FaKey />
+                                                </button>
+                                            )}
                                             <button
                                                 className="action-btn edit"
                                                 onClick={() => openEdit(rol)}
@@ -258,6 +329,49 @@ const Roles: React.FC = () => {
                             <button className="btn-secondary" onClick={() => setModalOpen(false)}>Cancelar</button>
                             <button className="btn-primary" onClick={handleSave} disabled={saving}>
                                 {saving ? 'Guardando...' : editingRol ? 'Guardar Cambios' : 'Crear Rol'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de Permisos */}
+            {permModalOpen && (
+                <div className="modal-overlay" onClick={() => setPermModalOpen(false)}>
+                    <div className="permissions-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-head">
+                            <h2><FaLock /> Permisos: {selectedRol?.nombre_rol}</h2>
+                            <button className="modal-close" onClick={() => setPermModalOpen(false)}><FaTimes /></button>
+                        </div>
+                        <div className="modal-body scrollable">
+                            <p className="perm-info">Marca los módulos y acciones a los que este rol tendrá acceso.</p>
+                            <div className="permissions-grid">
+                                {allResources.map(res => (
+                                    <div key={res.id} className="resource-block">
+                                        <h3>{res.name}</h3>
+                                        <div className="perms-list">
+                                            {res.permissions.map(perm => (
+                                                <label key={perm.id} className="perm-item">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={activePermIds.includes(perm.id)}
+                                                        onChange={() => togglePermission(perm.id)}
+                                                    />
+                                                    <span className="checkmark"></span>
+                                                    <div className="perm-text">
+                                                        <span className="perm-name">{perm.name}</span>
+                                                        <span className="perm-slug">{perm.slug}</span>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn-secondary" onClick={() => setPermModalOpen(false)}>Cancelar</button>
+                            <button className="btn-primary" onClick={handleUpdatePermissions} disabled={updatingPerms}>
+                                {updatingPerms ? 'Guardando...' : 'Actualizar Permisos'}
                             </button>
                         </div>
                     </div>

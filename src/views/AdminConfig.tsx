@@ -52,7 +52,8 @@ const AdminConfig: React.FC = () => {
                 client.get('/admin/config/roles-permissions'),
                 client.get('/admin/config/permissions-list'),
             ]);
-            setRoles(resRoles.data);
+            // Filtrar para no mostrar el rol de Administrador en el editor de permisos
+            setRoles(resRoles.data.filter((r: RoleWithPerms) => r.hierarchy_level !== 0));
             setAllPermissions(resPerms.data);
         } catch {
             showToast('Error al cargar la configuración', 'error');

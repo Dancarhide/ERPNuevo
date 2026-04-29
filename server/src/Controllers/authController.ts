@@ -32,7 +32,14 @@ export async function loginController(req: Request, res: Response) {
         }
 
         const token = jwt.sign(
-            { id: empleado.id, email: empleado.email, rol: empleado.rol, idrol: empleado.idrol },
+            { 
+                id: empleado.id, 
+                email: empleado.email, 
+                rol: empleado.rol, 
+                idrol: empleado.idrol, 
+                idroles: empleado.idroles,
+                permissions: empleado.permissions // <--- Crucial para el middleware
+            },
             secret,
             { expiresIn: '8h' }
         );
