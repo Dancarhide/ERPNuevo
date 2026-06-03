@@ -394,7 +394,59 @@ const AdminConfig: React.FC = () => {
                                 />
                             </ConfigRow>
 
+                            {/* ── Datos de empresa para nómina ──────────────────── */}
+                            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '2px solid #f1f5f9' }}>
+                                <h4 style={{ margin: '0 0 4px', color: '#1e293b', fontSize: '1rem' }}>📄 Datos de Empresa — Recibos de Nómina</h4>
+                                <p style={{ margin: '0 0 16px', fontSize: '0.8rem', color: '#94a3b8' }}>
+                                    Estos datos aparecen en el encabezado del PDF de nómina generado por el sistema.
+                                </p>
+                            </div>
+
+                            <ConfigRow
+                                title="RFC de la Empresa"
+                                subtitle="Registro Federal de Contribuyentes del patrón."
+                            >
+                                <input
+                                    id="input-rfc-empresa"
+                                    type="text"
+                                    value={sysConfig.RFC_EMPRESA || ''}
+                                    onChange={e => handleConfigChange('RFC_EMPRESA', e.target.value.toUpperCase())}
+                                    placeholder="XAXX010101000"
+                                    style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase' }}
+                                    maxLength={13}
+                                />
+                            </ConfigRow>
+
+                            <ConfigRow
+                                title="Domicilio Fiscal"
+                                subtitle="Dirección completa que aparece en el encabezado del recibo."
+                            >
+                                <input
+                                    id="input-domicilio-empresa"
+                                    type="text"
+                                    value={sysConfig.DOMICILIO_EMPRESA || ''}
+                                    onChange={e => handleConfigChange('DOMICILIO_EMPRESA', e.target.value)}
+                                    placeholder="Calle #123, Col. Centro, CDMX"
+                                    style={inputStyle}
+                                />
+                            </ConfigRow>
+
+                            <ConfigRow
+                                title="Registro Patronal IMSS"
+                                subtitle="Número de registro ante el Instituto Mexicano del Seguro Social."
+                            >
+                                <input
+                                    id="input-registro-patronal"
+                                    type="text"
+                                    value={sysConfig.REGISTRO_PATRONAL || ''}
+                                    onChange={e => handleConfigChange('REGISTRO_PATRONAL', e.target.value)}
+                                    placeholder="B0000000000"
+                                    style={{ ...inputStyle, fontFamily: 'monospace' }}
+                                />
+                            </ConfigRow>
+
                         </div>
+
                     </div>
                 </div>
             )}

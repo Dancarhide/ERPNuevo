@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma';
+import path from 'path';
+import fs from 'fs';
 
 const INITIAL_CYI_STAGES = [
     'perfil_puesto',
@@ -168,5 +170,40 @@ export const updateCandidatoStatus = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error updating candidato:', error);
         res.status(500).json({ error: 'Error al actualizar candidato' });
+    }
+};
+
+export const uploadCvCandidato = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const file = (req as any).file as Express.Multer.File | undefined;
+
+    if (!file) {
+        res.status(400).json({ error: 'No se recibió ningún archivo' });
+        return;
+    }
+
+    try {
+        // Eliminar CV anterior si existe en disco
+        const candidato = await (prisma as any).candidatos.findUnique({
+            where: { idcandidato: parseInt(String(id)) },
+            select: { cv_url: true }
+        });
+        if (candidato?.cv_url && candidato.cv_url.startsWith('/storage/')) {
+            const oldPath = path.join(process.cwd(), candidato.cv_url);
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+        }
+
+        const cvUrl = `/storage/cvs/${file.filename}`;
+        const updated = await (prisma as any).candidatos.update({
+            where: { idcandidato: parseInt(String(id)) },
+            data: { cv_url: cvUrl }
+        });
+
+        res.json({ cv_url: updated.cv_url });
+    } catch (error) {
+        console.error('Error al subir CV:', error);
+        res.status(500).json({ error: 'Error al subir CV del candidato' });
     }
 };

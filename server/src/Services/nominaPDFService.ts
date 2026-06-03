@@ -2,12 +2,28 @@ import PDFDocument from 'pdfkit';
 import { Response } from 'express';
 import { prisma } from '../prisma';
 
+// Obtiene la configuración de empresa desde sys_config
+async function getEmpresaConfig() {
+    const configs = await prisma.sys_config.findMany({
+        where: {
+            key: { in: ['COMPANY_NAME', 'RFC_EMPRESA', 'DOMICILIO_EMPRESA', 'REGISTRO_PATRONAL', 'REGISTRO_IMSS'] }
+        }
+    });
+    const map: Record<string, string> = {};
+    for (const c of configs) map[c.key] = c.value;
+    return {
+        nombre: map['COMPANY_NAME'] || 'STARTIA',
+        rfc: map['RFC_EMPRESA'] || 'RFC no configurado',
+        domicilio: map['DOMICILIO_EMPRESA'] || 'Domicilio no configurado',
+        registro_patronal: map['REGISTRO_PATRONAL'] || 'No configurado',
+        registro_imss: map['REGISTRO_IMSS'] || 'No configurado'
+    };
+}
+
 export const generatePayrollPDF = (res: Response, data: any): Promise<void> => {
     return new Promise(async (resolve, reject) => {
         try {
-            // Fetch Company Name from DB
-            const config = await prisma.sys_config.findUnique({ where: { key: 'COMPANY_NAME' } });
-            const companyName = config?.value || 'STARTIA';
+            const empresa = await getEmpresaConfig();
 
             const doc = new PDFDocument({ 
                 margin: 40, 
@@ -21,13 +37,13 @@ export const generatePayrollPDF = (res: Response, data: any): Promise<void> => {
             doc.pipe(res);
 
             // --- Header Section ---
-            doc.fillColor('#1e293b').fontSize(22).font('Helvetica-Bold').text(companyName.toUpperCase(), 40, 40);
+            doc.fillColor('#1e293b').fontSize(22).font('Helvetica-Bold').text(empresa.nombre.toUpperCase(), 40, 40);
             
             doc.fillColor('#64748b').fontSize(8).font('Helvetica');
-            doc.text('RFC: STR1240325A1B | Calle Principal #123, Ciudad de México', 40, 65);
-            doc.text('Registro Patronal IMSS: A12-34567-89-0', 40, 77);
+            doc.text(`RFC: ${empresa.rfc} | ${empresa.domicilio}`, 40, 65);
+            doc.text(`Registro Patronal IMSS: ${empresa.registro_patronal}`, 40, 77);
 
-            doc.fillColor('#A7313A').fontSize(16).font('Helvetica-Bold').text('RECIBO DE PAGO (NÓMINA REAL)', 40, 100);
+            doc.fillColor('#A7313A').fontSize(16).font('Helvetica-Bold').text('RECIBO DE PAGO', 40, 100);
 
             doc.moveTo(40, 125).lineTo(572, 125).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
 
@@ -51,6 +67,9 @@ export const generatePayrollPDF = (res: Response, data: any): Promise<void> => {
             doc.text(`Folio: #${String(data.idnomina).padStart(6, '0')}`, 350, infoY + 46);
 
             // --- Concepts Table ---
+            // Usar detalles_nomina si existen, fallback a datos base
+            const detalles = data.detalles_nomina as any[] | undefined;
+            
             const tableTop = 230;
             doc.rect(40, tableTop, 532, 22).fill('#A7313A');
             doc.fillColor('#FFFFFF').fontSize(9).font('Helvetica-Bold');
@@ -61,11 +80,21 @@ export const generatePayrollPDF = (res: Response, data: any): Promise<void> => {
             let currentY = tableTop + 22;
             doc.fillColor('#000000').font('Helvetica').fontSize(9);
 
-            const rows = [
-                { label: 'Sueldo Base', p: Number(data.sueldo_base), d: 0 },
-                { label: 'Compensaciones y Bonos', p: Number(data.bonos), d: 0 },
-                { label: 'Deducciones Generales', p: 0, d: Number(data.deducciones) }
-            ];
+            let rows: { label: string; p: number; d: number }[];
+
+            if (detalles && detalles.length > 0) {
+                rows = detalles.map((d: any) => ({
+                    label: d.conceptos_nomina?.nombre_concepto || 'Concepto',
+                    p: d.conceptos_nomina?.tipo === 'Percepcion' ? Number(d.monto_aplicado) : 0,
+                    d: d.conceptos_nomina?.tipo === 'Deduccion' ? Number(d.monto_aplicado) : 0
+                }));
+            } else {
+                rows = [
+                    { label: 'Sueldo Base', p: Number(data.sueldo_base), d: 0 },
+                    { label: 'Compensaciones y Bonos', p: Number(data.bonos), d: 0 },
+                    { label: 'Deducciones Generales', p: 0, d: Number(data.deducciones) }
+                ];
+            }
 
             rows.forEach((row, i) => {
                 if (row.p > 0 || row.d > 0) {
@@ -93,7 +122,6 @@ export const generatePayrollPDF = (res: Response, data: any): Promise<void> => {
 
             doc.end();
 
-            // Wait for the stream to finish
             res.on('finish', () => resolve());
             
         } catch (error) {

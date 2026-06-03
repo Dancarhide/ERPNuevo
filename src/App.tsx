@@ -22,6 +22,8 @@ import SurveyAdmin from './views/SurveyAdmin';
 import EventAdmin from './views/EventAdmin';
 import AdminConfig from './views/AdminConfig';
 import KPIs from './views/KPIs';
+import Asistencia from './views/Asistencia';
+import EvaluacionesDesempeno from './views/EvaluacionesDesempeno';
 import { SysConfigProvider } from './contexts/SysConfigContext';
 
 // Constantes de roles del sistema — centralizar para evitar strings hardcodeados dispersos
@@ -137,6 +139,14 @@ function App() {
 
                         <Route element={<ProtectedRoute requiredPermission="payroll.view" />}>
                             <Route path="/payroll" element={<Payroll />} />
+                        </Route>
+
+                        <Route element={<ProtectedRoute requiredPermission="employees.view" />}>
+                            <Route path="/asistencia" element={<Asistencia />} />
+                        </Route>
+
+                        <Route element={<ProtectedRoute requiredPermission="employees.view" />}>
+                            <Route path="/evaluaciones-desempeno" element={<EvaluacionesDesempeno />} />
                         </Route>
 
                         <Route path="/mis-comprobantes" element={<MisComprobantes />} />

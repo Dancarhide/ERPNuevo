@@ -100,9 +100,9 @@ export async function resetearPasswordCredenciales(idempleado: number, passwordP
  * Verifica las credenciales de un usuario.
  * @param email El correo electrónico del empleado.
  * @param passwordPlano La contraseña sin encriptar.
- * @returns El ID del empleado si las credenciales son válidas, de lo contrario null.
+ * @returns Objeto con ID y flag de cambio si las credenciales son válidas, de lo contrario null.
  */
-export async function verificarCredenciales(email: string, passwordPlano: string): Promise<number | null> {
+export async function verificarCredenciales(email: string, passwordPlano: string): Promise<{ idempleado: number, requiereCambio: boolean } | null> {
     // Buscar empleado por email
     const empleado = await prisma.empleados.findFirst({
         where: { email_empleado: email },
@@ -111,27 +111,33 @@ export async function verificarCredenciales(email: string, passwordPlano: string
         }
     });
 
-    // Validar si existe empleado y si tiene credenciales asociadas
-    // Nota: Como es relación 1-1 o 1-N, credenciales podría ser un array o un objeto único dependiendo del esquema.
-    // Según introspección previa, credenciales parece ser 1-1 o 1-N inversa.
-    // Asumiremos que credenciales es un array si la relación no es única, o objeto si lo es.
-    // En 'schema.prisma' generado, 'credenciales' suele ser un array [] si no se definió @unique.
-    // PERO, en el SQL original: `FROM empleados e LEFT JOIN credenciales c ON c.idempleado = e.idempleado`
-    // Si credenciales es un array en Prisma client (relation One-to-Many), tomamos el primero.
-
     if (!empleado) {
         return null;
     }
 
-    // Adaptación: si `credenciales` es un array, tomamos el primer elemento. 
-    // Si es un objeto (relación 1-1), lo usamos directo.
-    // TypeScript nos dirá el tipo, pero para ser seguros en runtime:
-    const creds = Array.isArray(empleado.credenciales) ? empleado.credenciales[0] : empleado.credenciales;
+    const creds = Array.isArray(empleado.credenciales) ? empleado.credenciales[0] : (empleado.credenciales as any);
 
     if (!creds || !creds.user_password) {
         return null;
     }
 
     const passwordValido = await bcrypt.compare(passwordPlano, creds.user_password);
-    return passwordValido ? empleado.idempleado : null;
+    return passwordValido ? { idempleado: empleado.idempleado, requiereCambio: creds.requiere_cambio_password ?? false } : null;
+}
+
+/**
+ * Cambia la contraseña y marca que ya no se requiere cambio en el primer inicio.
+ * @param idempleado ID del empleado.
+ * @param passwordPlano Nueva contraseña sin encriptar.
+ */
+export async function cambiarPasswordYMarcarComoCambiado(idempleado: number, passwordPlano: string): Promise<boolean> {
+    const passwordHash = await bcrypt.hash(passwordPlano, 10);
+    const result = await prisma.credenciales.updateMany({
+        where: { idempleado: idempleado },
+        data: { 
+            user_password: passwordHash,
+            requiere_cambio_password: false
+        }
+    });
+    return result.count > 0;
 }

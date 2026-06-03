@@ -1,8 +1,28 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma';
-import { Prisma } from '@prisma/client';
 import { generatePayrollPDF } from '../Services/nominaPDFService';
 
+// ── Tablas de cuotas estimadas (configurable) ──────────────────────────────
+// IMSS cuota obrera: ~6.25% sobre sueldo fiscal (simplificado)
+// ISR: tabla progresiva simplificada (estimación para sueldo mensual)
+function calcularImssObrero(sueldoFiscal: number): number {
+    return +(sueldoFiscal * 0.0625).toFixed(2);
+}
+
+function calcularISREstimado(sueldoMensual: number): number {
+    // Tabla ISR mensual 2025 — rangos principales (aproximación)
+    if (sueldoMensual <= 746.04) return 0;
+    if (sueldoMensual <= 6332.05) return +((sueldoMensual - 746.04) * 0.0640).toFixed(2);
+    if (sueldoMensual <= 11128.01) return +((sueldoMensual - 6332.05) * 0.1088 + 357.44).toFixed(2);
+    if (sueldoMensual <= 12935.82) return +((sueldoMensual - 11128.01) * 0.1600 + 879.18).toFixed(2);
+    if (sueldoMensual <= 15487.71) return +((sueldoMensual - 12935.82) * 0.1792 + 1168.50).toFixed(2);
+    if (sueldoMensual <= 31236.49) return +((sueldoMensual - 15487.71) * 0.2136 + 1624.98).toFixed(2);
+    if (sueldoMensual <= 62473.38) return +((sueldoMensual - 31236.49) * 0.2352 + 5044.52).toFixed(2);
+    if (sueldoMensual <= 83333.33) return +((sueldoMensual - 62473.38) * 0.3000 + 12393.74).toFixed(2);
+    return +((sueldoMensual - 83333.33) * 0.3200 + 18651.74).toFixed(2);
+}
+
+// ── GET /api/nominas/previa ────────────────────────────────────────────────
 export const getPreviaNomina = async (req: Request, res: Response) => {
     try {
         const empleados = await prisma.empleados.findMany({
@@ -28,9 +48,13 @@ export const getPreviaNomina = async (req: Request, res: Response) => {
             
             const fondoAhorro = sueldoBase * (Number(emp.fondo_ahorro_pct || 0) / 100);
             const valesDespensa = sueldoBase * (Number(emp.vales_despensa_pct || 0) / 100);
-            const infonavit = Number(emp.infonavit_mensual || 0) / 2; 
-            
-            const totalPagado = sueldoBase + valesDespensa - fondoAhorro - infonavit;
+            const infonavit = Number(emp.infonavit_mensual || 0) / 2; // quincenal
+            const imssObrero = calcularImssObrero(sueldoFiscal) / 2; // quincenal
+            const isr = calcularISREstimado(sueldoFiscal) / 2; // quincenal
+
+            const totalDeducciones = fondoAhorro + infonavit + imssObrero + isr;
+            const totalPercep = sueldoBase + valesDespensa;
+            const totalPagado = totalPercep - totalDeducciones;
 
             return {
                 idempleado: emp.idempleado,
@@ -38,10 +62,17 @@ export const getPreviaNomina = async (req: Request, res: Response) => {
                 rfc: emp.rfc,
                 sueldo_base: sueldoBase,
                 sueldo_fiscal: sueldoFiscal,
-                fondo_ahorro: fondoAhorro,
-                vales_despensa: valesDespensa,
-                infonavit: infonavit,
-                total_pagado: totalPagado
+                fondo_ahorro: +fondoAhorro.toFixed(2),
+                vales_despensa: +valesDespensa.toFixed(2),
+                infonavit: +infonavit.toFixed(2),
+                imss_obrero: +imssObrero.toFixed(2),
+                isr_estimado: +isr.toFixed(2),
+                total_percepciones: +totalPercep.toFixed(2),
+                total_deducciones: +totalDeducciones.toFixed(2),
+                total_pagado: +totalPagado.toFixed(2),
+                // Para manipulación en frontend
+                bonos: 0,
+                deducciones_extra: 0
             };
         });
 
@@ -52,13 +83,37 @@ export const getPreviaNomina = async (req: Request, res: Response) => {
     }
 };
 
+// ── POST /api/nominas/lote ─────────────────────────────────────────────────
 export const crearLoteNomina = async (req: Request, res: Response) => {
     const { periodo_inicio, periodo_fin, tipo_nomina, nominas } = req.body;
     
     try {
+        // Obtener o crear los conceptos estándar
+        const conceptosSeed = [
+            { clave: 'P001', nombre_concepto: 'Sueldo Base', tipo: 'Percepcion', es_fiscal: true },
+            { clave: 'P002', nombre_concepto: 'Vales de Despensa', tipo: 'Percepcion', es_fiscal: false },
+            { clave: 'P003', nombre_concepto: 'Bonos y Compensaciones', tipo: 'Percepcion', es_fiscal: true },
+            { clave: 'D001', nombre_concepto: 'Fondo de Ahorro', tipo: 'Deduccion', es_fiscal: false },
+            { clave: 'D002', nombre_concepto: 'INFONAVIT', tipo: 'Deduccion', es_fiscal: false },
+            { clave: 'D003', nombre_concepto: 'IMSS Obrero', tipo: 'Deduccion', es_fiscal: true },
+            { clave: 'D004', nombre_concepto: 'ISR Estimado', tipo: 'Deduccion', es_fiscal: true },
+            { clave: 'D005', nombre_concepto: 'Otras Deducciones', tipo: 'Deduccion', es_fiscal: false },
+        ];
+
+        // Upsert de conceptos base
+        for (const c of conceptosSeed) {
+            await prisma.conceptos_nomina.upsert({
+                where: { clave: c.clave },
+                update: {},
+                create: { ...c }
+            });
+        }
+
+        const conceptos = await prisma.conceptos_nomina.findMany();
+        const cMap = new Map(conceptos.map(c => [c.clave, c.idconcepto]));
+
         const result = await (prisma as any).$transaction(async (tx: any) => {
             const loteId = `LOTE-${Date.now()}`;
-            
             const totalLote = nominas.reduce((acc: number, curr: any) => acc + curr.total_pagado, 0);
 
             const lote = await tx.lotes_nomina.create({
@@ -72,22 +127,44 @@ export const crearLoteNomina = async (req: Request, res: Response) => {
                 }
             });
 
-            const nominasData = nominas.map((n: any) => ({
-                idempleado: n.idempleado,
-                lote_id: loteId,
-                fecha_emision: new Date(),
-                fecha_inicio: new Date(periodo_inicio),
-                fecha_fin: new Date(periodo_fin),
-                sueldo_base: n.sueldo_base,
-                bonos: n.bonos || 0,
-                deducciones: n.deducciones || 0,
-                total_pagado: n.total_pagado,
-                estado: 'Pagado'
-            }));
+            for (const n of nominas) {
+                const nomina = await tx.nominas.create({
+                    data: {
+                        idempleado: n.idempleado,
+                        lote_id: loteId,
+                        fecha_emision: new Date(),
+                        fecha_inicio: new Date(periodo_inicio),
+                        fecha_fin: new Date(periodo_fin),
+                        sueldo_base: n.sueldo_base,
+                        bonos: (n.bonos || 0) + (n.vales_despensa || 0),
+                        deducciones: (n.fondo_ahorro || 0) + (n.infonavit || 0) + (n.imss_obrero || 0) + (n.isr_estimado || 0) + (n.deducciones_extra || 0),
+                        total_pagado: n.total_pagado,
+                        estado: 'Pagado'
+                    }
+                });
 
-            await tx.nominas.createMany({
-                data: nominasData
-            });
+                // Guardar detalles por concepto
+                const detalles = [
+                    { clave: 'P001', monto: n.sueldo_base },
+                    { clave: 'P002', monto: n.vales_despensa || 0 },
+                    { clave: 'P003', monto: n.bonos || 0 },
+                    { clave: 'D001', monto: n.fondo_ahorro || 0 },
+                    { clave: 'D002', monto: n.infonavit || 0 },
+                    { clave: 'D003', monto: n.imss_obrero || 0 },
+                    { clave: 'D004', monto: n.isr_estimado || 0 },
+                    { clave: 'D005', monto: n.deducciones_extra || 0 },
+                ].filter(d => d.monto > 0);
+
+                if (detalles.length > 0) {
+                    await tx.detalles_nomina.createMany({
+                        data: detalles.map(d => ({
+                            idnomina: nomina.idnomina,
+                            idconcepto: cMap.get(d.clave)!,
+                            monto_aplicado: d.monto
+                        }))
+                    });
+                }
+            }
 
             return lote;
         });
@@ -99,6 +176,7 @@ export const crearLoteNomina = async (req: Request, res: Response) => {
     }
 };
 
+// ── GET /api/nominas/lotes ─────────────────────────────────────────────────
 export const getLotesNomina = async (req: Request, res: Response) => {
     try {
         const lotes = await prisma.lotes_nomina.findMany({
@@ -111,12 +189,13 @@ export const getLotesNomina = async (req: Request, res: Response) => {
     }
 };
 
+// ── GET /api/nominas/lote/:idlote ─────────────────────────────────────────
 export const getNominasPorLote = async (req: Request, res: Response) => {
     const { idlote } = req.params;
     try {
         const nominas = await prisma.nominas.findMany({
             where: { lote_id: idlote as string },
-            include: { empleados: true }
+            include: { empleados: true, detalles_nomina: { include: { conceptos_nomina: true } } }
         });
         res.json(nominas);
     } catch (error) {
@@ -125,6 +204,7 @@ export const getNominasPorLote = async (req: Request, res: Response) => {
     }
 };
 
+// ── GET /api/nominas/mis-nominas ──────────────────────────────────────────
 export const getMisNominas = async (req: Request, res: Response) => {
     const idempleado = (req as any).user?.id;
     
@@ -145,13 +225,18 @@ export const getMisNominas = async (req: Request, res: Response) => {
     }
 };
 
+// ── GET /api/nominas/:idnomina/pdf ────────────────────────────────────────
 export const descargarPDFNomina = async (req: Request, res: Response) => {
     const { idnomina } = req.params;
     try {
         console.log('Solicitando PDF para ID:', idnomina);
         const nomina = await prisma.nominas.findUnique({
             where: { idnomina: parseInt(idnomina as string) },
-            include: { empleados: true, lotes_nomina: true }
+            include: { 
+                empleados: true, 
+                lotes_nomina: true,
+                detalles_nomina: { include: { conceptos_nomina: true } }
+            }
         });
 
         if (!nomina) {
@@ -172,6 +257,7 @@ export const descargarPDFNomina = async (req: Request, res: Response) => {
     }
 };
 
+// ── GET /api/nominas/config/company-name ──────────────────────────────────
 export const getCompanyName = async (req: Request, res: Response) => {
     try {
         const config = await prisma.sys_config.findUnique({ where: { key: 'COMPANY_NAME' } });
@@ -181,6 +267,7 @@ export const getCompanyName = async (req: Request, res: Response) => {
     }
 };
 
+// ── PUT /api/nominas/config/company-name ──────────────────────────────────
 export const updateCompanyName = async (req: Request, res: Response) => {
     const { companyName } = req.body;
     try {

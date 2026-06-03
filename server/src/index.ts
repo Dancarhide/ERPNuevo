@@ -24,6 +24,8 @@ import encuestasRouter from './routes/encuestas';
 import notificationRouter from './routes/notificationRoutes';
 import eventosRouter from './routes/eventos';
 import adminConfigRouter from './routes/adminConfig';
+import asistenciaRouter from './routes/asistencia';
+import evaluacionesDesempenoRouter from './routes/evaluacionesDesempeno';
 
 // Fix para serialización de BigInt y Decimal (Prisma)
 (BigInt.prototype as any).toJSON = function () {
@@ -37,9 +39,12 @@ const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http:
 if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
 
 // Seguridad: headers HTTP seguros
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10mb' }));
+
+// Servir archivos estáticos de storage (fotos, CVs)
+app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
 
 // Logging estructurado: NO imprime headers completos ni body para evitar filtrar tokens
 app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -78,6 +83,8 @@ app.use('/api/admin/config', adminConfigRouter);
 app.use('/api/kpis', kpisRouter);
 app.use('/api/festivos', festivosRouter);
 app.use('/api/nominas', nominasRouter);
+app.use('/api/asistencia', asistenciaRouter);
+app.use('/api/evaluaciones-desempeno', evaluacionesDesempenoRouter);
 
 // Health check
 app.get('/api/ping', (_req: Request, res: Response) => {

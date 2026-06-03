@@ -4,7 +4,7 @@ import {
     FaHome, FaUsers, FaChartBar, FaTimes, FaCalendarAlt, FaSitemap,
     FaInfoCircle, FaMoneyBillWave, FaFileInvoiceDollar, FaShieldAlt,
     FaExclamationTriangle, FaLayerGroup, FaUserEdit, FaPoll, FaCogs, FaSpinner,
-    FaBuilding, FaUserCircle, FaSignOutAlt
+    FaBuilding, FaUserCircle, FaSignOutAlt, FaClipboardList, FaStar
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
@@ -32,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
         { path: '/empleados', label: 'Capital Humano', icon: <FaUsers />, permission: 'employees.view' },
         { path: '/hr-config', label: 'Config. Recursos Humanos', icon: <FaBuilding />, permission: 'areas.manage' },
         { path: '/vacaciones', label: 'Vacaciones Calendario', icon: <FaCalendarAlt />, permission: 'vacations.view' },
+        { path: '/asistencia', label: 'Control de Asistencia', icon: <FaClipboardList />, permission: 'employees.view' },
         { path: '/organigrama', label: 'Estructura Organizacional', icon: <FaSitemap />, permission: 'orgchart.view' },
         { path: '/quienes-somos', label: 'Quienes Somos', icon: <FaInfoCircle />, permission: 'ALL' },
         { path: '/reports', label: 'KPIS & Reportes', icon: <FaChartBar />, permission: 'kpis.view' },
@@ -39,7 +40,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
         { path: '/mis-comprobantes', label: 'Mis Comprobantes', icon: <FaFileInvoiceDollar />, permission: 'ALL' },
 
         { path: '/estructura', label: 'Gestión Talento', icon: <FaShieldAlt />, permission: 'recruitment.manage' },
-        { path: '/incidencias', label: 'Inicidencias', icon: <FaExclamationTriangle />, permission: 'incidents.view' },
+        { path: '/evaluaciones-desempeno', label: 'Evaluaciones Desempeño', icon: <FaStar />, permission: 'employees.view' },
+        { path: '/incidencias', label: 'Incidencias', icon: <FaExclamationTriangle />, permission: 'incidents.view' },
         { path: '/hr-inventory', label: 'Inventario de RH', icon: <FaUserEdit />, permission: 'inventory.view' },
         { path: '/clima-laboral', label: 'Clima Laboral', icon: <FaPoll />, permission: 'clima.view' },
         { path: '/admin-encuestas', label: 'Control Encuestas', icon: <FaChartBar />, permission: 'surveys.manage' },

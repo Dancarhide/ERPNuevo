@@ -52,11 +52,12 @@ model conversaciones {
 }
 
 model credenciales {
-  idcredencial  Int       @id @default(autoincrement())
-  idempleado    Int
-  username      String    @unique @db.VarChar(50)
-  user_password String
-  empleados     empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction, map: "fk_empleado_cred")
+  idcredencial            Int       @id @default(autoincrement())
+  idempleado              Int
+  username                String    @unique @db.VarChar(50)
+  user_password           String
+  requiere_cambio_password Boolean   @default(true)
+  empleados               empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction, map: "fk_empleado_cred")
 
   @@index([idempleado], map: "ix_cred_idempleado")
 }
@@ -133,6 +134,7 @@ model empleados {
   empleado_permissions                                     empleado_permissions[]
   roles_delegados                                          delegacion_roles[]           @relation("DelegadorRoles")
   roles_recibidos                                          delegacion_roles[]           @relation("DelegadoRoles")
+  asistencia                                               asistencia[]
 
   @@index([idarea], map: "ix_empleados_idarea")
   @@index([idrol], map: "ix_empleados_idrol")
@@ -301,6 +303,22 @@ model tareas {
   asignado_por      Int?
   assigned_by       empleados? @relation("tareas_creadas", fields: [asignado_por], references: [idempleado], onDelete: NoAction, onUpdate: NoAction)
   empleados         empleados  @relation("tareas_asignadas", fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model asistencia {
+  idasistencia  Int       @id @default(autoincrement())
+  idempleado    Int
+  fecha         DateTime  @db.Date
+  hora_entrada  String?   @db.VarChar(5)
+  hora_salida   String?   @db.VarChar(5)
+  tipo          String    @default("Normal") @db.VarChar(20)
+  justificacion String?
+  registrado_por Int?
+  empleados     empleados @relation(fields: [idempleado], references: [idempleado], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([idempleado, fecha])
+  @@index([idempleado])
+  @@index([fecha])
 }
 
 model nominas {

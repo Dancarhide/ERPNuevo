@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { prisma } from '../prisma';
 import { recountPuesto } from '../Services/puestoService';
 import { crearCredenciales } from '../models/credenciales';
+import path from 'path';
+import fs from 'fs';
 
 /**
  * Valida que el jefe directo tenga un nivel jerárquico superior al del empleado.
@@ -279,6 +281,41 @@ export const createEmpleado = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error al crear empleado:', error);
         res.status(500).json({ error: 'Error al crear empleado' });
+    }
+};
+
+export const updateFotoEmpleado = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const file = (req as any).file as Express.Multer.File | undefined;
+
+    if (!file) {
+        res.status(400).json({ error: 'No se recibió ningún archivo' });
+        return;
+    }
+
+    try {
+        // Eliminar foto anterior si existe
+        const emp = await prisma.empleados.findUnique({
+            where: { idempleado: parseInt(String(id)) },
+            select: { foto: true }
+        });
+        if (emp?.foto) {
+            const oldPath = path.join(process.cwd(), 'storage', emp.foto.replace('/storage/', ''));
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+        }
+
+        const fotoUrl = `/storage/fotos/${file.filename}`;
+        const updated = await prisma.empleados.update({
+            where: { idempleado: parseInt(String(id)) },
+            data: { foto: fotoUrl }
+        });
+
+        res.json({ foto: updated.foto });
+    } catch (error) {
+        console.error('Error al actualizar foto:', error);
+        res.status(500).json({ error: 'Error al actualizar foto del empleado' });
     }
 };
 

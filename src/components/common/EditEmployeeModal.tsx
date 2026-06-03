@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FaTimes, FaCheckCircle, FaExclamationCircle, FaUserEdit, FaIdBadge, FaBalanceScale, FaUserShield, FaStethoscope, FaPhone, FaMapMarkerAlt, FaEnvelope, FaAddressBook, FaArrowRight, FaArrowLeft, FaSave, FaEye, FaFilePdf } from 'react-icons/fa';
+import { FaTimes, FaCheckCircle, FaExclamationCircle, FaUserEdit, FaIdBadge, FaBalanceScale, FaUserShield, FaStethoscope, FaPhone, FaMapMarkerAlt, FaEnvelope, FaAddressBook, FaArrowRight, FaArrowLeft, FaSave, FaEye, FaFilePdf, FaCamera } from 'react-icons/fa';
 import { jsPDF } from 'jspdf';
 import { validarRFC, validarCURP, calcularDiasVacaciones } from '../../utils/PayrollUtils';
 import './styles/EditEmployeeModal.css';
@@ -65,6 +65,9 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(initialMode === 'edit');
   const [currentStep, setCurrentStep] = useState(1);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +89,8 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
             discapacidad: sal?.discapacidad || false
           }
         });
+        // Set foto preview if employee has photo
+        setFotoPreview(empAny.foto || null);
         setIsEditing(initialMode === 'edit');
       } else {
         setFormData({
@@ -159,6 +164,35 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
   const getInitials = (name: string) => {
     if (!name) return '??';
     return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !formData?.idempleado) return;
+
+    // Preview inmediato
+    const reader = new FileReader();
+    reader.onload = (ev) => setFotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    setUploadingFoto(true);
+    try {
+      const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const token = userDataStr ? JSON.parse(userDataStr)?.token : null;
+      const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+      const fd = new FormData();
+      fd.append('foto', file);
+      const res = await fetch(`${base}/api/empleados/${formData.idempleado}/foto`, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      if (!res.ok) throw new Error('Upload failed');
+    } catch {
+      alert('Error al subir la foto. Inténtalo de nuevo.');
+    } finally {
+      setUploadingFoto(false);
+    }
   };
 
   const renderViewField = (label: string, value: string | number | null | undefined) => (
@@ -273,7 +307,13 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {!isEditing ? (
                 <div className="profile-view-dashboard step-content-fade">
                   <div className="view-profile-header">
-                    <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #A7313A, #8F2930)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800', boxShadow: '0 8px 16px rgba(167, 49, 58, 0.2)' }}>{getInitials(formData.nombre_completo_empleado)}</div>
+                    <div style={{ position: 'relative', width: 100, height: 100, flexShrink: 0 }}>
+                      {fotoPreview && fotoPreview.startsWith('/storage') ? (
+                        <img src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}${fotoPreview}`} alt="Foto" style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 8px 16px rgba(0,0,0,0.15)' }} />
+                      ) : (
+                        <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #A7313A, #8F2930)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800', boxShadow: '0 8px 16px rgba(167, 49, 58, 0.2)' }}>{getInitials(formData.nombre_completo_empleado)}</div>
+                      )}
+                    </div>
                     <div className="view-profile-main-info" style={{ flex: 1 }}>
                       <h2 style={{ margin: '0 0 8px 0', fontSize: '1.8rem', fontWeight: '800', color: '#1e293b' }}>{formData.nombre_completo_empleado}</h2>
                       <div style={{ display: 'flex', gap: '12px' }}>
@@ -343,6 +383,42 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                   {currentStep === 1 && (
                     <div className="form-section-modern step-content-fade">
                       <h4 className="section-title-modern">1. Identidad</h4>
+
+                      {/* Avatar / Foto upload */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                        <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => formData.idempleado && fotoInputRef.current?.click()}>
+                          {fotoPreview && (fotoPreview.startsWith('/storage') || fotoPreview.startsWith('data:')) ? (
+                            <img
+                              src={fotoPreview.startsWith('/storage') ? `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'}${fotoPreview}` : fotoPreview}
+                              alt="Foto"
+                              style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid #A7313A' }}
+                            />
+                          ) : (
+                            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #A7313A, #8F2930)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800 }}>
+                              {getInitials(formData.nombre_completo_empleado)}
+                            </div>
+                          )}
+                          {formData.idempleado > 0 && (
+                            <div style={{ position: 'absolute', bottom: 0, right: 0, background: '#A7313A', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <FaCamera size={11} color="#fff" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          {formData.idempleado > 0 ? (
+                            <>
+                              <button type="button" onClick={() => fotoInputRef.current?.click()} style={{ padding: '6px 14px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 7, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, color: '#475569', display: 'flex', alignItems: 'center', gap: 6 }} disabled={uploadingFoto}>
+                                <FaCamera />{uploadingFoto ? 'Subiendo...' : 'Cambiar Foto'}
+                              </button>
+                              <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '4px 0 0' }}>JPG, PNG o WebP · Máx 5 MB</p>
+                              <input ref={fotoInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleFotoUpload} id="input-foto-empleado" />
+                            </>
+                          ) : (
+                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>Podrás agregar una foto después de guardar el empleado.</p>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="form-grid-clean">
                         <div className="form-group-clean full-width"><label>Nombre Completo</label><input type="text" name="nombre_completo_empleado" value={formData.nombre_completo_empleado} onChange={handleChange} required maxLength={255} /></div>
                         <div className="form-group-clean"><label>Área</label>
