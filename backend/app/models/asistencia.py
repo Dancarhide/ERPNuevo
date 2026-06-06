@@ -1,7 +1,28 @@
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.models.base import AuditoriaMixin, Base
+
+
+class RegistroChecador(Base, AuditoriaMixin):
+    """
+    Guarda los 'punches' o checadas crudas (raw) provenientes del checador biométrico o de la web.
+    """
+
+    __tablename__ = "registros_checador"
+
+    id = Column(Integer, primary_key=True, index=True)
+    empleado_id = Column(
+        Integer, ForeignKey("empleados.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    timestamp_checada = Column(DateTime, nullable=False, index=True)
+    metodo = Column(String(50), default="Web")  # Huella, Rostro, Tarjeta, Web, Importacion
+    dispositivo_ip = Column(String(50), nullable=True)  # IP o ID del reloj checador
+    procesado = Column(
+        Boolean, default=False
+    )  # Para saber si ya se usó para calcular hora_entrada/salida
+
+    empleado = relationship("Empleado", foreign_keys=[empleado_id])
 
 
 class Asistencia(Base, AuditoriaMixin):

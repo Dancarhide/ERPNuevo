@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/components/auth-provider';
 import {
   LayoutDashboard,
   Users,
@@ -26,10 +27,31 @@ import {
 
 const MENU_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/dashboard/empleados', label: 'Empleados', icon: Users },
-  { path: '/dashboard/hr-config', label: 'Estructura Organizacional', icon: Building },
-  { path: '/dashboard/vacaciones', label: 'Vacaciones', icon: Calendar },
-  { path: '/dashboard/asistencia', label: 'Asistencias', icon: ClipboardList },
+  {
+    path: '/dashboard/empleados',
+    label: 'Empleados',
+    icon: Users,
+    requiredPermission: 'ver_empleados',
+  },
+  {
+    path: '/dashboard/hr-config',
+    label: 'Estructura Organizacional',
+    icon: Building,
+    requiredPermission: 'ver_configuracion',
+  },
+  {
+    path: '/dashboard/vacaciones',
+    label: 'Vacaciones',
+    icon: Calendar,
+    requiredPermission: 'ver_vacaciones',
+  },
+  { path: '/dashboard/mis-asistencias', label: 'Mis Asistencias', icon: ClipboardList },
+  {
+    path: '/dashboard/asistencia',
+    label: 'Gestión Asistencias',
+    icon: ClipboardList,
+    requiredPermission: 'ver_asistencia',
+  },
   { path: '/dashboard/organigrama', label: 'Organigrama', icon: Network },
   { path: '/dashboard/quienes-somos', label: 'Quienes Somos', icon: Info },
   { path: '/dashboard/reports', label: 'Reportes y KPIs', icon: BarChart },
@@ -42,12 +64,23 @@ const MENU_ITEMS = [
   { path: '/dashboard/clima-laboral', label: 'Clima Laboral', icon: PieChart },
   { path: '/dashboard/admin-encuestas', label: 'Gestión de Encuestas', icon: BarChart },
   { path: '/dashboard/admin-eventos', label: 'Comunicados y Eventos', icon: Calendar },
-  { path: '/dashboard/admin-config', label: 'Configuración del Sistema', icon: Settings },
+  {
+    path: '/dashboard/admin-config',
+    label: 'Configuración del Sistema',
+    icon: Settings,
+    requiredPermission: 'ver_configuracion',
+  },
 ];
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const filteredMenuItems = MENU_ITEMS.filter((item) => {
+    if (!item.requiredPermission) return true;
+    return user?.permisos?.includes(item.requiredPermission);
+  });
 
   return (
     <aside
@@ -65,27 +98,29 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 py-6 flex flex-col gap-1.5 overflow-y-auto px-0 custom-scrollbar">
-        {MENU_ITEMS.map((item) => {
-          const isActive = pathname === item.path;
-          const Icon = item.icon;
+        <ul className="space-y-1">
+          {filteredMenuItems.map((item) => {
+            const isActive = pathname === item.path;
+            const Icon = item.icon;
 
-          return (
-            <div key={item.path} className="px-4">
-              <Link
-                href={item.path}
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg font-medium transition-all duration-200
+            return (
+              <div key={item.path} className="px-4">
+                <Link
+                  href={item.path}
+                  className={`flex items-center gap-4 px-4 py-3 rounded-lg font-medium transition-all duration-200
                     ${isActive ? 'bg-[#A7313A] text-white' : 'text-[#E1DFE0] hover:bg-white/10'}
                 `}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <Icon size={20} className="shrink-0" />
-                {!isCollapsed && (
-                  <span className="text-[0.95rem] whitespace-nowrap">{item.label}</span>
-                )}
-              </Link>
-            </div>
-          );
-        })}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <Icon size={20} className="shrink-0" />
+                  {!isCollapsed && (
+                    <span className="text-[0.95rem] whitespace-nowrap">{item.label}</span>
+                  )}
+                </Link>
+              </div>
+            );
+          })}
+        </ul>
       </nav>
 
       {/* Footer Mobile Only from original CSS */}

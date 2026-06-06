@@ -6,9 +6,11 @@ import { authApi } from '@/lib/api';
 
 type User = {
   id: number;
+  nombre_completo: string;
   email: string;
-  is_active: boolean;
-  is_superuser: boolean;
+  rol: string | null;
+  requiere_cambio_contrasena: boolean;
+  permisos: string[];
 };
 
 type AuthContextType = {

@@ -22,7 +22,9 @@ export function Topbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const userName = user?.email?.split('@')[0] || 'Administrador';
-  const userRole = user?.is_superuser ? 'Súper Administrador' : 'Empleado';
+  const userRole = (user as { is_superuser?: boolean })?.is_superuser
+    ? 'Súper Administrador'
+    : 'Empleado';
   const initials = userName.substring(0, 2).toUpperCase();
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export function Topbar() {
               >
                 <UserCircle size={18} /> Mi Perfil
               </button>
-              {user?.is_superuser && (
+              {(user as { is_superuser?: boolean })?.is_superuser && (
                 <button
                   onClick={() => router.push('/dashboard/roles')}
                   className="flex items-center gap-3 px-5 py-2.5 text-[0.95rem] font-medium text-[#44474A] hover:bg-[#E1DFE0] hover:text-[#A7313A] transition-colors w-full text-left"

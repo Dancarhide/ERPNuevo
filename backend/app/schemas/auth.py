@@ -12,6 +12,7 @@ class LoginResponse(BaseModel):
     email: str
     rol: str | None
     requiere_cambio_contrasena: bool
+    permisos: list[str] = []
 
 
 class ChangePasswordRequest(BaseModel):

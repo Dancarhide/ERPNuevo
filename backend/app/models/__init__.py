@@ -1,5 +1,6 @@
-from .asistencia import Asistencia, DiaFestivo, Incidencia, Vacacion
+from .asistencia import Asistencia, DiaFestivo, Incidencia, RegistroChecador, Vacacion
 from .base import AuditoriaMixin, Base
+from .checador import DispositivoBiometrico
 from .comunicacion import (
     Conversacion,
     ConversacionParticipante,
@@ -67,4 +68,6 @@ __all__ = [
     "Notificacion",
     "EventoEmpresa",
     "EventoParticipante",
+    "RegistroChecador",
+    "DispositivoBiometrico",
 ]

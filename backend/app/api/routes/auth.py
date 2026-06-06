@@ -56,12 +56,38 @@ async def login(
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
+    # Calcular permisos
+    permisos_slugs = set()
+    if empleado.rol_id:
+        from app.models.seguridad import Permiso, RolPermiso
+
+        result_rol_perm = await session.execute(
+            select(Permiso.slug).join(RolPermiso).where(RolPermiso.rol_id == empleado.rol_id)
+        )
+        for slug in result_rol_perm.scalars().all():
+            permisos_slugs.add(slug)
+
+    # Excepciones
+    from app.models.seguridad import EmpleadoPermiso, Permiso
+
+    result_emp_perm = await session.execute(
+        select(Permiso.slug, EmpleadoPermiso.concedido)
+        .join(EmpleadoPermiso)
+        .where(EmpleadoPermiso.empleado_id == empleado.id)
+    )
+    for slug, concedido in result_emp_perm.all():
+        if concedido:
+            permisos_slugs.add(slug)
+        elif slug in permisos_slugs:
+            permisos_slugs.remove(slug)
+
     return LoginResponse(
         id=int(empleado.id),
         nombre_completo=str(empleado.nombre_completo),
         email=str(empleado.email),
         rol=None,  # Todo: Cargar rol si es necesario para el frontend
         requiere_cambio_contrasena=bool(credencial.requiere_cambio_contrasena),
+        permisos=list(permisos_slugs),
     )
 
 
@@ -106,10 +132,36 @@ async def read_users_me(
     )
     credencial = cred_result.scalar_one()
 
+    # Calcular permisos
+    permisos_slugs = set()
+    if current_user.rol_id:
+        from app.models.seguridad import Permiso, RolPermiso
+
+        result_rol_perm = await session.execute(
+            select(Permiso.slug).join(RolPermiso).where(RolPermiso.rol_id == current_user.rol_id)
+        )
+        for slug in result_rol_perm.scalars().all():
+            permisos_slugs.add(slug)
+
+    # Excepciones
+    from app.models.seguridad import EmpleadoPermiso, Permiso
+
+    result_emp_perm = await session.execute(
+        select(Permiso.slug, EmpleadoPermiso.concedido)
+        .join(EmpleadoPermiso)
+        .where(EmpleadoPermiso.empleado_id == current_user.id)
+    )
+    for slug, concedido in result_emp_perm.all():
+        if concedido:
+            permisos_slugs.add(slug)
+        elif slug in permisos_slugs:
+            permisos_slugs.remove(slug)
+
     return LoginResponse(
         id=int(current_user.id),
         nombre_completo=str(current_user.nombre_completo),
         email=str(current_user.email),
         rol=None,
         requiere_cambio_contrasena=bool(credencial.requiere_cambio_contrasena),
+        permisos=list(permisos_slugs),
     )
