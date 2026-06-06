@@ -46,10 +46,26 @@ export const puestosApi = {
 };
 
 export const empleadosApi = {
-  getAll: (page: number = 1, size: number = 20, search: string = '', estatus: string = '') => {
+  getAll: (
+    page: number = 1,
+    size: number = 20,
+    search: string = '',
+    estatus: string = '',
+    area_id: number | '' = '',
+    puesto_id: number | '' = '',
+    jefe_directo_id: number | '' = '',
+    fecha_ingreso_inicio: string = '',
+    fecha_ingreso_fin: string = ''
+  ) => {
     const params = new URLSearchParams({ page: String(page), size: String(size) });
     if (search) params.append('search', search);
     if (estatus && estatus !== 'Todos') params.append('estatus', estatus);
+    if (area_id !== '') params.append('area_id', String(area_id));
+    if (puesto_id !== '') params.append('puesto_id', String(puesto_id));
+    if (jefe_directo_id !== '') params.append('jefe_directo_id', String(jefe_directo_id));
+    if (fecha_ingreso_inicio) params.append('fecha_ingreso_inicio', fecha_ingreso_inicio);
+    if (fecha_ingreso_fin) params.append('fecha_ingreso_fin', fecha_ingreso_fin);
+
     return fetchApi(`/empleados/?${params.toString()}`);
   },
   getById: (id: number) => fetchApi(`/empleados/${id}`),

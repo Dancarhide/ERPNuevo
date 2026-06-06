@@ -73,11 +73,38 @@ class EmpleadoUpdate(EmpleadoBase):
     datos_salud: EmpleadoSaludCreate | None = None
 
 
+class AreaMin(BaseModel):
+    id: int
+    nombre_area: str
+
+    class Config:
+        from_attributes = True
+
+
+class PuestoMin(BaseModel):
+    id: int
+    nombre_puesto: str
+
+    class Config:
+        from_attributes = True
+
+
+class EmpleadoMin(BaseModel):
+    id: int
+    nombre_completo: str
+
+    class Config:
+        from_attributes = True
+
+
 class EmpleadoResponse(EmpleadoBase):
     id: int
     familiares: Optional[List[EmpleadoFamiliarCreate]] = []
     datos_salud: Optional[EmpleadoSaludCreate] = None
     password_temporal: Optional[str] = None
+    area: Optional[AreaMin] = None
+    puesto: Optional[PuestoMin] = None
+    jefe_directo: Optional[EmpleadoMin] = None
 
     class Config:
         from_attributes = True

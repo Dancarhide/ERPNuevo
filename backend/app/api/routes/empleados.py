@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -29,9 +30,18 @@ async def read_empleados(
     size: int = Query(20, ge=1, le=100),
     search: str = Query(None, description="Búsqueda por nombre o correo"),
     estatus: str = Query(None, description="Filtro por estatus"),
+    area_id: int | None = Query(None, description="Filtro por área"),
+    puesto_id: int | None = Query(None, description="Filtro por puesto"),
+    jefe_directo_id: int | None = Query(None, description="Filtro por jefe directo"),
+    fecha_ingreso_inicio: date | None = Query(None, description="Ingreso desde"),
+    fecha_ingreso_fin: date | None = Query(None, description="Ingreso hasta"),
 ) -> Any:
     query = select(Empleado).options(
-        selectinload(Empleado.familiares), selectinload(Empleado.datos_salud)
+        selectinload(Empleado.familiares),
+        selectinload(Empleado.datos_salud),
+        selectinload(Empleado.area),
+        selectinload(Empleado.puesto),
+        selectinload(Empleado.jefe_directo),
     )
 
     if search:
@@ -39,8 +49,23 @@ async def read_empleados(
             (Empleado.nombre_completo.ilike(f"%{search}%")) | (Empleado.email.ilike(f"%{search}%"))
         )
 
-    if estatus:
+    if estatus and estatus != "Todos":
         query = query.where(Empleado.estatus == estatus)
+
+    if area_id:
+        query = query.where(Empleado.area_id == area_id)
+
+    if puesto_id:
+        query = query.where(Empleado.puesto_id == puesto_id)
+
+    if jefe_directo_id:
+        query = query.where(Empleado.jefe_directo_id == jefe_directo_id)
+
+    if fecha_ingreso_inicio:
+        query = query.where(Empleado.fecha_ingreso >= fecha_ingreso_inicio)
+
+    if fecha_ingreso_fin:
+        query = query.where(Empleado.fecha_ingreso <= fecha_ingreso_fin)
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())
@@ -68,6 +93,9 @@ async def create_empleado(
             raise HTTPException(status_code=400, detail="El correo ya está registrado")
 
     empleado_data = empleado_in.model_dump(exclude={"familiares", "datos_salud"})
+    if not empleado_data.get("fecha_ingreso"):
+        empleado_data["fecha_ingreso"] = date.today()
+
     nuevo_empleado = Empleado(**empleado_data)
 
     session.add(nuevo_empleado)
@@ -98,12 +126,24 @@ async def create_empleado(
         session.add(salud)
 
     await session.commit()
-    await session.refresh(nuevo_empleado)
+    # Cargar relaciones para la respuesta
+    result_emp = await session.execute(
+        select(Empleado)
+        .options(
+            selectinload(Empleado.familiares),
+            selectinload(Empleado.datos_salud),
+            selectinload(Empleado.area),
+            selectinload(Empleado.puesto),
+            selectinload(Empleado.jefe_directo),
+        )
+        .where(Empleado.id == nuevo_empleado.id)
+    )
+    nuevo_empleado_loaded = result_emp.scalar_one()
 
     # Inyectar password temporal para que lo vea el Frontend
-    setattr(nuevo_empleado, "password_temporal", password_temporal)
+    setattr(nuevo_empleado_loaded, "password_temporal", password_temporal)
 
-    return nuevo_empleado
+    return nuevo_empleado_loaded
 
 
 @router.get("/{empleado_id}", response_model=EmpleadoResponse)
@@ -114,7 +154,13 @@ async def read_empleado(
 ) -> Any:
     result = await session.execute(
         select(Empleado)
-        .options(selectinload(Empleado.familiares), selectinload(Empleado.datos_salud))
+        .options(
+            selectinload(Empleado.familiares),
+            selectinload(Empleado.datos_salud),
+            selectinload(Empleado.area),
+            selectinload(Empleado.puesto),
+            selectinload(Empleado.jefe_directo),
+        )
         .where(Empleado.id == empleado_id)
     )
     empleado = result.scalar_one_or_none()
@@ -132,7 +178,13 @@ async def update_empleado(
 ) -> Any:
     result = await session.execute(
         select(Empleado)
-        .options(selectinload(Empleado.familiares), selectinload(Empleado.datos_salud))
+        .options(
+            selectinload(Empleado.familiares),
+            selectinload(Empleado.datos_salud),
+            selectinload(Empleado.area),
+            selectinload(Empleado.puesto),
+            selectinload(Empleado.jefe_directo),
+        )
         .where(Empleado.id == empleado_id)
     )
     empleado = result.scalar_one_or_none()
