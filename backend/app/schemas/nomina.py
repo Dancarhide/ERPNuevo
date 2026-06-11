@@ -101,14 +101,14 @@ class EmpleadoMinNomina(BaseModel):
     @field_validator("area", mode="before")
     def extract_area_name(cls, v: Any) -> Optional[str]:
         if v and hasattr(v, "nombre_area"):
-            return v.nombre_area
-        return v
+            return str(v.nombre_area)
+        return str(v) if isinstance(v, str) else None
 
     @field_validator("puesto", mode="before")
     def extract_puesto_name(cls, v: Any) -> Optional[str]:
         if v and hasattr(v, "nombre_puesto"):
-            return v.nombre_puesto
-        return v
+            return str(v.nombre_puesto)
+        return str(v) if isinstance(v, str) else None
 
     class Config:
         from_attributes = True

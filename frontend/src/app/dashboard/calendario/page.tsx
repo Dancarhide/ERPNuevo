@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { fetchApi } from '@/lib/api';
+import React from 'react';
 
 interface Evento {
   id: number;
@@ -37,11 +38,7 @@ export default function CalendarioPage() {
     color: '#3B82F6',
   });
 
-  useEffect(() => {
-    loadEventos();
-  }, [currentDate]);
-
-  const loadEventos = async () => {
+  const loadEventos = React.useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchApi('/eventos');
@@ -51,7 +48,12 @@ export default function CalendarioPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const run = async () => await loadEventos();
+    run();
+  }, [currentDate, loadEventos]);
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();

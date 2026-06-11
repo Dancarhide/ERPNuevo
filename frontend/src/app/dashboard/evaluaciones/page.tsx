@@ -108,27 +108,49 @@ export default function EvaluacionesPage() {
     }
   }, [tipoActivo, campanias]);
 
+  const loadResultados = React.useCallback(async () => {
+    setLoadingResultados(true);
+    setResultadoEmp(null);
+    try {
+      const url = campaniaSelec
+        ? `/evaluaciones-desempeno/resultados-globales?campania_id=${campaniaSelec}`
+        : `/evaluaciones-desempeno/resultados-globales`;
+      const data = await fetchApi(url);
+      setResultadoEmp(data);
+    } catch (e) {
+      console.error('Error', e);
+    } finally {
+      setLoadingResultados(false);
+    }
+  }, [campaniaSelec]);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadPreguntas();
+    const run = async () => await loadPreguntas();
+    run();
   }, [tipoActivo, loadPreguntas]);
 
   useEffect(() => {
-    void loadCampanias();
+    const run = async () => await loadCampanias();
+    run();
   }, [loadCampanias]);
 
   useEffect(() => {
-    if (tab === 'resultados') {
-      void loadResultados();
-    } else if (tab === 'evaluar') {
-      void loadEmpleados();
-    }
-  }, [tab, loadEmpleados, campaniaSelec]);
+    const run = async () => {
+      if (tab === 'resultados') {
+        await loadResultados();
+      } else if (tab === 'evaluar') {
+        await loadEmpleados();
+      }
+    };
+    run();
+  }, [tab, loadEmpleados, loadResultados, campaniaSelec]);
 
   useEffect(() => {
-    setEnviado(false);
-    setEmpleadoSelec('');
-    setRespuestas({});
+    setTimeout(() => {
+      setEnviado(false);
+      setEmpleadoSelec('');
+      setRespuestas({});
+    }, 0);
   }, [tab, tipoActivo, campanias]);
 
   const handleEnviar = async () => {
@@ -237,22 +259,6 @@ export default function EvaluacionesPage() {
     }
   };
 
-  const loadResultados = async () => {
-    setLoadingResultados(true);
-    setResultadoEmp(null);
-    try {
-      const url = campaniaSelec
-        ? `/evaluaciones-desempeno/resultados-globales?campania_id=${campaniaSelec}`
-        : `/evaluaciones-desempeno/resultados-globales`;
-      const data = await fetchApi(url);
-      setResultadoEmp(data);
-    } catch (e) {
-      console.error('Error', e);
-    } finally {
-      setLoadingResultados(false);
-    }
-  };
-
   const getChartsData = () => {
     if (!resultadoEmp) return {};
     const groupedByType: Record<string, Record<string, { suma: number; count: number }>> = {};
@@ -267,7 +273,10 @@ export default function EvaluacionesPage() {
       }
     });
 
-    const chartsData: Record<string, any[]> = {};
+    const chartsData: Record<
+      string,
+      { name: string; preguntaCompleta: string; Puntaje: number }[]
+    > = {};
     Object.entries(groupedByType).forEach(([tipo, agrupado]) => {
       chartsData[tipo] = Object.entries(agrupado).map(([pregunta, stats]) => ({
         name: pregunta.length > 20 ? pregunta.substring(0, 20) + '...' : pregunta,
@@ -709,7 +718,7 @@ export default function EvaluacionesPage() {
                                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                                 }}
                                 cursor={{ fill: '#F8F9FA' }}
-                                formatter={(value: any) => [`${value} / 5`, 'Puntaje Promedio']}
+                                formatter={(value) => [`${value} / 5`, 'Puntaje Promedio']}
                                 labelFormatter={(label, payload) => {
                                   if (payload && payload.length > 0) {
                                     return payload[0].payload.preguntaCompleta;

@@ -123,10 +123,11 @@ export default function ClimaLaboralPage() {
 
   useEffect(() => {
     let active = true;
-    if (tab === 'configuracion') {
-      void loadConfigData();
-    } else if (tab === 'resultados') {
-      loadConfigData().then(() => {
+    const run = async () => {
+      if (tab === 'configuracion') {
+        await loadConfigData();
+      } else if (tab === 'resultados') {
+        await loadConfigData();
         // Only set the default if not already set, avoiding the loop
         setCampaniaSelec((prev) => {
           if (!prev && campanias.length > 0) {
@@ -138,8 +139,9 @@ export default function ClimaLaboralPage() {
           }
           return prev;
         });
-      });
-    }
+      }
+    };
+    run();
     return () => {
       active = false;
     };
@@ -218,12 +220,6 @@ export default function ClimaLaboralPage() {
   };
 
   // --- CHARTS DATA ---
-  const radarData =
-    stats?.promedios_por_categoria?.map((p: { categoria: string; promedio: number }) => ({
-      subject: p.categoria,
-      A: p.promedio,
-      fullMark: 4,
-    })) || [];
 
   const barData =
     stats?.promedios_por_categoria?.map((p: { categoria: string; promedio: number }) => ({
@@ -244,28 +240,31 @@ export default function ClimaLaboralPage() {
           <div className="flex p-1 bg-slate-100 rounded-lg w-full md:w-auto overflow-hidden">
             <button
               onClick={() => setTab('encuesta')}
-              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === 'encuesta'
+              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                tab === 'encuesta'
                   ? 'bg-white shadow-sm text-red-700'
                   : 'text-slate-600 hover:text-slate-900'
-                }`}
+              }`}
             >
               Mi Encuesta
             </button>
             <button
               onClick={() => setTab('resultados')}
-              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === 'resultados'
+              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                tab === 'resultados'
                   ? 'bg-white shadow-sm text-red-700'
                   : 'text-slate-600 hover:text-slate-900'
-                }`}
+              }`}
             >
               Resultados
             </button>
             <button
               onClick={() => setTab('configuracion')}
-              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === 'configuracion'
+              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                tab === 'configuracion'
                   ? 'bg-white shadow-sm text-red-700'
                   : 'text-slate-600 hover:text-slate-900'
-                }`}
+              }`}
             >
               Configuración
             </button>
@@ -358,10 +357,11 @@ export default function ClimaLaboralPage() {
                             onClick={() =>
                               setDemographics({ ...demographics, nivel_jerarquico: opt })
                             }
-                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${demographics.nivel_jerarquico === opt
+                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${
+                              demographics.nivel_jerarquico === opt
                                 ? 'border-red-700 bg-red-50 text-red-700'
                                 : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                              }`}
+                            }`}
                           >
                             {opt}
                           </button>
@@ -378,10 +378,11 @@ export default function ClimaLaboralPage() {
                           <button
                             key={opt}
                             onClick={() => setDemographics({ ...demographics, ubicacion: opt })}
-                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${demographics.ubicacion === opt
+                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${
+                              demographics.ubicacion === opt
                                 ? 'border-red-700 bg-red-50 text-red-700'
                                 : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                              }`}
+                            }`}
                           >
                             {opt}
                           </button>
@@ -444,12 +445,13 @@ export default function ClimaLaboralPage() {
                               <button
                                 key={opt.v}
                                 onClick={() => setRespuestas({ ...respuestas, [q.id]: opt.v })}
-                                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all ${respuestas[q.id] === opt.v
+                                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                                  respuestas[q.id] === opt.v
                                     ? opt.v <= 2
                                       ? 'border-amber-500 bg-amber-50'
                                       : 'border-emerald-500 bg-emerald-50'
                                     : 'border-slate-100 hover:border-slate-300 bg-slate-50 hover:bg-slate-100'
-                                  }`}
+                                }`}
                               >
                                 <span className="text-3xl mb-2 grayscale-[0.2]">{opt.e}</span>
                                 <span

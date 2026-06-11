@@ -61,7 +61,7 @@ async def crear_notificacion_masiva(
     Crea notificaciones para todos los empleados activos y las envía por WS.
     """
     # Obtener todos los empleados
-    result = await session.execute(select(Empleado).where(Empleado.is_active))
+    result = await session.execute(select(Empleado).where(Empleado.estatus == "Activo"))
     empleados = result.scalars().all()
 
     notificaciones = []
