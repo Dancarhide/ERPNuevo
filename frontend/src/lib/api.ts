@@ -25,6 +25,7 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
 export const authApi = {
   getMe: () => fetchApi('/auth/me'),
   logout: () => fetchApi('/auth/logout', { method: 'POST' }),
+  getWsToken: () => fetchApi('/auth/ws-token'),
 };
 
 type ApiData = Record<string, unknown>;
@@ -96,11 +97,22 @@ export const vacacionesApi = {
 };
 
 export const asistenciasApi = {
-  getAll: (mes?: number, year?: number, idarea?: number) => {
-    const params = new URLSearchParams();
-    if (mes) params.append('mes', String(mes));
-    if (year) params.append('year', String(year));
-    if (idarea) params.append('idarea', String(idarea));
+  getAll: (
+    page: number = 1,
+    size: number = 20,
+    search: string = '',
+    tipo: string = '',
+    area_id: number | '' = '',
+    fecha_inicio: string = '',
+    fecha_fin: string = ''
+  ) => {
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    if (search) params.append('search', search);
+    if (tipo && tipo !== 'Todos') params.append('tipo', tipo);
+    if (area_id !== '') params.append('area_id', String(area_id));
+    if (fecha_inicio) params.append('fecha_inicio', fecha_inicio);
+    if (fecha_fin) params.append('fecha_fin', fecha_fin);
+
     return fetchApi(`/asistencias?${params.toString()}`);
   },
   bulkUpdate: (registros: Array<{ idempleado: number; fecha: string; tipo: string }>) =>
@@ -132,4 +144,95 @@ export const dispositivosApi = {
     fetchApi('/dispositivos', { method: 'POST', body: JSON.stringify(data) }),
   delete: (id: number) => fetchApi(`/dispositivos/${id}`, { method: 'DELETE' }),
   ping: (id: number) => fetchApi(`/dispositivos/${id}/ping`, { method: 'POST' }),
+};
+
+export const empresaApi = {
+  getInfo: () => fetchApi('/empresa/info'),
+  updateInfo: (data: Record<string, unknown>) =>
+    fetchApi('/empresa/info', { method: 'PUT', body: JSON.stringify(data) }),
+};
+export const kpiApi = {
+  getHeadcount: () => fetchApi('/kpis/headcount'),
+  getPayroll: () => fetchApi('/kpis/payroll'),
+  getIncidencias: () => fetchApi('/kpis/incidencias'),
+};
+
+export const dashboardApi = {
+  getConfig: () => fetchApi('/dashboard/config'),
+  saveConfig: (layout_json: unknown) =>
+    fetchApi('/dashboard/config', { method: 'PUT', body: JSON.stringify({ layout_json }) }),
+};
+
+export const nominaApi = {
+  // Catálogo de conceptos
+  getConceptos: (tipo?: string) => fetchApi(`/nomina/conceptos${tipo ? `?tipo=${tipo}` : ''}`),
+  createConcepto: (data: Record<string, unknown>) =>
+    fetchApi('/nomina/conceptos', { method: 'POST', body: JSON.stringify(data) }),
+  updateConcepto: (id: number, data: ApiData) =>
+    fetchApi(`/nomina/conceptos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteConcepto: (id: number) => fetchApi(`/nomina/conceptos/${id}`, { method: 'DELETE' }),
+  seedConceptos: () =>
+    fetchApi('/nomina/conceptos/seed', { method: 'POST', body: JSON.stringify({}) }),
+
+  // Lotes
+  getLotes: (params?: { año?: number; estatus?: string; periodicidad?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.año) q.append('año', String(params.año));
+    if (params?.estatus) q.append('estatus', params.estatus);
+    if (params?.periodicidad) q.append('periodicidad', params.periodicidad);
+    return fetchApi(`/nomina/lotes?${q.toString()}`);
+  },
+  createLote: (data: Record<string, unknown>) =>
+    fetchApi('/nomina/lotes', { method: 'POST', body: JSON.stringify(data) }),
+  getLote: (loteId: string) => fetchApi(`/nomina/lotes/${loteId}`),
+  procesarLote: (loteId: string) =>
+    fetchApi(`/nomina/lotes/${loteId}/procesar`, {
+      method: 'POST',
+      body: JSON.stringify({ aplicar_conceptos_obligatorios: true }),
+    }),
+  cerrarLote: (loteId: string) => fetchApi(`/nomina/lotes/${loteId}/cerrar`, { method: 'PUT' }),
+
+  // Recibos
+  getRecibo: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}`),
+  updateRecibo: (nominaId: number, data: ApiData) =>
+    fetchApi(`/nomina/recibos/${nominaId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  createRecibo: (data: Record<string, unknown>) =>
+    fetchApi('/nomina/recibos', { method: 'POST', body: JSON.stringify(data) }),
+  getMisRecibos: () => fetchApi('/nomina/mis-recibos'),
+  getReciboXML: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}/xml`),
+  getReciboPDF: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}/pdf`),
+};
+
+export const incidenciasApi = {
+  getAll: (estatus?: string) => {
+    const q = new URLSearchParams();
+    if (estatus) q.append('estatus', estatus);
+    return fetchApi(`/incidencias/?${q.toString()}`);
+  },
+  create: (data: Record<string, unknown>) =>
+    fetchApi('/incidencias/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: ApiData) =>
+    fetchApi(`/incidencias/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => fetchApi(`/incidencias/${id}`, { method: 'DELETE' }),
+};
+
+export const notificacionesApi = {
+  getAll: () => fetchApi('/notificaciones/'),
+  marcarLeida: (id: number) => fetchApi(`/notificaciones/${id}/leida`, { method: 'PUT' }),
+  marcarTodasLeidas: () => fetchApi('/notificaciones/leidas', { method: 'PUT' }),
+};
+
+export const tareasApi = {
+  getAll: () => fetchApi('/tareas'),
+  create: (data: Record<string, unknown>) =>
+    fetchApi('/tareas', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: ApiData) =>
+    fetchApi(`/tareas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => fetchApi(`/tareas/${id}`, { method: 'DELETE' }),
+};
+
+export const chatApi = {
+  getMensajes: (destinatario_id: number) => fetchApi(`/chat/conversacion/${destinatario_id}`),
+  sendMensaje: (data: Record<string, unknown>) =>
+    fetchApi('/chat', { method: 'POST', body: JSON.stringify(data) }),
 };

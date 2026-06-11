@@ -14,6 +14,7 @@ import {
   Building2,
   Calendar,
   UserCheck,
+  Eye,
 } from 'lucide-react';
 
 type Area = { id: number; nombre_area: string };
@@ -407,7 +408,15 @@ export default function EmpleadosPage() {
                           <Trash2 size={18} />
                         </button>
                         <button
+                          onClick={() => router.push(`/dashboard/empleados/${emp.id}/expediente`)}
+                          title="Ver Expediente"
+                          className="p-2 text-[#3b82f6] hover:bg-blue-50 rounded-xl border border-transparent hover:border-blue-100 transition-all shadow-sm"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
                           onClick={() => router.push(`/dashboard/empleados/${emp.id}/editar`)}
+                          title="Editar"
                           className="p-2 text-[#858789] hover:text-[#A7313A] rounded-xl hover:bg-[#A7313A]/10 border border-transparent hover:border-[#A7313A]/20 transition-all shadow-sm"
                         >
                           <Edit2 size={18} />

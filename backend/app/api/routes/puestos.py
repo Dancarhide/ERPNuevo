@@ -1,6 +1,7 @@
 from typing import Annotated, Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -17,8 +18,23 @@ async def read_puestos(
     session: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Empleado, Depends(get_current_user)],
 ) -> Any:
+    # Get all puestos
     result = await session.execute(select(Puesto))
-    return result.scalars().all()
+    puestos = list(result.scalars().all())
+
+    # Get active employees count per puesto
+    count_stmt = (
+        select(Empleado.puesto_id, func.count(Empleado.id))
+        .where(Empleado.estatus == "Activo")
+        .group_by(Empleado.puesto_id)
+    )
+    count_result = await session.execute(count_stmt)
+    counts: dict[int | None, int] = dict(count_result.all())
+
+    for p in puestos:
+        p.personal_actual = counts.get(int(p.id), 0)
+
+    return puestos
 
 
 @router.post("", response_model=PuestoResponse, status_code=status.HTTP_201_CREATED)
@@ -37,6 +53,7 @@ async def create_puesto(
         sueldo_min=puesto_in.sueldo_min,
         sueldo_max=puesto_in.sueldo_max,
         reporta_a_puesto_id=puesto_in.reporta_a_puesto_id,
+        cupo_maximo=puesto_in.cupo_maximo,
     )
     session.add(new_puesto)
     await session.commit()

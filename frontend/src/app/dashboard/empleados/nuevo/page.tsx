@@ -23,6 +23,7 @@ export default function NuevoEmpleadoPage() {
     rfc: '',
     telefono: '',
     curp: '',
+    sexo: '',
     area_id: '',
     puesto_id: '',
     sueldo: '',
@@ -68,6 +69,7 @@ export default function NuevoEmpleadoPage() {
         rfc: formData.rfc,
         telefono: formData.telefono,
         curp: formData.curp,
+        sexo: formData.sexo || null,
         area_id: formData.area_id ? parseInt(formData.area_id) : null,
         puesto_id: formData.puesto_id ? parseInt(formData.puesto_id) : null,
         sueldo: formData.sueldo || '0.00',
@@ -248,6 +250,20 @@ export default function NuevoEmpleadoPage() {
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all"
             />
+          </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">Sexo</label>
+            <select
+              name="sexo"
+              value={formData.sexo}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            >
+              <option value="">Selecciona...</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+              <option value="Otro">Otro</option>
+            </select>
           </div>
         </div>
 

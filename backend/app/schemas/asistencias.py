@@ -59,3 +59,10 @@ class BulkAsistenciaItem(BaseModel):
 
 class BulkAsistenciaRequest(BaseModel):
     registros: list[BulkAsistenciaItem]
+
+
+class AsistenciasListResponse(BaseModel):
+    items: list[AsistenciaResponse]
+    total: int
+    page: int
+    size: int

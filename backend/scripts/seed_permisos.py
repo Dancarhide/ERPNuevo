@@ -33,6 +33,21 @@ MODULOS_PERMISOS = {
         "gestionar_areas": "Administrar el catálogo de Áreas",
         "gestionar_puestos": "Administrar el catálogo de Puestos",
         "asignar_permisos": "Asignar permisos a roles o usuarios específicos",
+        "configurar_empresa": "Configurar identidad y Misión/Visión de la empresa",
+    },
+    "Incidencias": {
+        "ver_incidencias": "Ver lista de incidencias",
+        "crear_incidencias": "Levantar incidencias a otros empleados",
+        "gestionar_incidencias": "Cambiar estatus o eliminar incidencias",
+    },
+    "Nomina": {
+        "ver_nomina": "Ver lista de nóminas de la empresa",
+        "gestionar_nomina": "Crear y procesar lotes de nómina",
+    },
+    "Evaluaciones": {
+        "ver_evaluaciones": "Ver el módulo de evaluaciones",
+        "configurar_evaluaciones": "Crear y eliminar preguntas de evaluación",
+        "ver_resultados_evaluaciones": "Ver resultados de desempeño de otros empleados",
     },
 }
 
@@ -72,6 +87,29 @@ async def seed_permisos():
                     if permiso.nombre != nombre_descriptivo:
                         permiso.nombre = nombre_descriptivo
                         session.add(permiso)
+
+        await session.flush()
+
+        # Asegurar que el rol Superadmin tenga todos los permisos
+        from app.models.seguridad import Rol, RolPermiso
+
+        result_rol = await session.execute(select(Rol).where(Rol.nombre_rol == "Superadmin"))
+        superadmin = result_rol.scalar_one_or_none()
+
+        if superadmin:
+            print("=> Asignando permisos faltantes al rol Superadmin...")
+            result_all_perms = await session.execute(select(Permiso))
+            all_perms = result_all_perms.scalars().all()
+
+            result_current_rp = await session.execute(
+                select(RolPermiso).where(RolPermiso.rol_id == superadmin.id)
+            )
+            current_rp = {rp.permiso_id for rp in result_current_rp.scalars().all()}
+
+            for p in all_perms:
+                if p.id not in current_rp:
+                    session.add(RolPermiso(rol_id=superadmin.id, permiso_id=p.id))
+                    print(f"    + Asignado permiso {p.slug} a Superadmin")
 
         await session.commit()
         print("=> ¡Sincronización terminada exitosamente!")

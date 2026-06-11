@@ -1,0 +1,31 @@
+from . import (
+    areas,
+    asistencias,
+    auth,
+    dashboard,
+    dispositivos,
+    empleados,
+    empresa,
+    kpis,
+    nomina,
+    organigrama,
+    puestos,
+    roles,
+    vacaciones,
+)
+
+__all__ = [
+    "areas",
+    "asistencias",
+    "auth",
+    "dashboard",
+    "dispositivos",
+    "empleados",
+    "empresa",
+    "kpis",
+    "nomina",
+    "organigrama",
+    "puestos",
+    "roles",
+    "vacaciones",
+]

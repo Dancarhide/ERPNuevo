@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   FaClipboardList,
   FaCheckCircle,
@@ -10,8 +10,14 @@ import {
   FaPlug,
   FaTrash,
 } from 'react-icons/fa';
-import { asistenciasApi, dispositivosApi } from '@/lib/api';
+import { Search, Filter, Building2, Calendar, Loader2 } from 'lucide-react';
+import { asistenciasApi, dispositivosApi, areasApi } from '@/lib/api';
 import { useAuth } from '@/components/auth-provider';
+
+interface Area {
+  id: number;
+  nombre_area: string;
+}
 
 interface Asistencia {
   id: number;
@@ -43,6 +49,18 @@ export default function GestionAsistenciaPage() {
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
   const [dispositivos, setDispositivos] = useState<Dispositivo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [refreshKey] = useState(0);
+
+  // Filtros Asistencias
+  const [search, setSearch] = useState('');
+  const [tipoFilter, setTipoFilter] = useState('Todos');
+  const [areaFilter, setAreaFilter] = useState<number | ''>('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [page, setPage] = useState(1);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [areasList, setAreasList] = useState<Area[]>([]);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -54,30 +72,78 @@ export default function GestionAsistenciaPage() {
     puerto: 4370,
   });
 
-  const fetchData = async () => {
+  // Load Catalogs
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      try {
+        const areasData = await areasApi.getAll();
+        setAreasList(Array.isArray(areasData) ? areasData : areasData.items || []);
+      } catch (error) {
+        console.error('Error al cargar catálogos', error);
+      }
+    };
+    if (user?.permisos?.includes('ver_asistencia')) {
+      loadCatalogs();
+    }
+  }, [user]);
+
+  const fetchAsistencias = useCallback(async () => {
     setLoading(true);
     try {
-      if (viewMode === 'asistencias') {
-        const data = await asistenciasApi.getAll();
-        setAsistencias(data);
-      } else {
-        const data = await dispositivosApi.getAll();
-        setDispositivos(data);
-      }
+      const res = await asistenciasApi.getAll(
+        page,
+        20,
+        search,
+        tipoFilter,
+        areaFilter,
+        fechaInicio,
+        fechaFin
+      );
+      setAsistencias(res.items || []);
+      setTotal(res.total || 0);
     } catch (error) {
-      console.error('Error fetching data', error);
+      console.error('Error fetching asistencias', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, tipoFilter, areaFilter, fechaInicio, fechaFin]);
+
+  const fetchDispositivos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await dispositivosApi.getAll();
+      setDispositivos(data);
+    } catch (error) {
+      console.error('Error fetching dispositivos', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (user && user.permisos.includes('ver_asistencia')) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchData();
+      if (viewMode === 'asistencias') {
+        const delayDebounce = setTimeout(() => {
+          fetchAsistencias();
+        }, 500);
+        return () => clearTimeout(delayDebounce);
+      } else {
+        const delay = setTimeout(() => {
+          fetchDispositivos();
+        }, 0);
+        return () => clearTimeout(delay);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, viewMode]);
+  }, [user, viewMode, fetchAsistencias, fetchDispositivos, refreshKey]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setTipoFilter('Todos');
+    setAreaFilter('');
+    setFechaInicio('');
+    setFechaFin('');
+    setPage(1);
+  };
 
   if (authLoading) return <div className="p-8 text-center text-gray-500">Cargando...</div>;
 
@@ -96,7 +162,7 @@ export default function GestionAsistenciaPage() {
     try {
       await dispositivosApi.create(newDevice);
       setShowModal(false);
-      fetchData();
+      fetchDispositivos();
     } catch {
       alert('Error al crear dispositivo');
     }
@@ -106,7 +172,7 @@ export default function GestionAsistenciaPage() {
     if (confirm('¿Seguro que deseas eliminar este dispositivo?')) {
       try {
         await dispositivosApi.delete(id);
-        fetchData();
+        fetchDispositivos();
       } catch {
         alert('Error al eliminar');
       }
@@ -152,60 +218,212 @@ export default function GestionAsistenciaPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {viewMode === 'asistencias' ? (
-          /* VISTA ASISTENCIAS */
-          loading ? (
-            <div className="p-12 text-center text-gray-500">Cargando historial global...</div>
-          ) : asistencias.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No hay registros de asistencia.</div>
-          ) : (
+          <div className="flex flex-col">
+            {/* Main Toolbar */}
+            <div className="p-5 border-b border-[#F3F4F6] flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white gap-4">
+              <div className="relative w-full xl:max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={18} className="text-[#858789]" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre de empleado..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-10 pr-4 py-2 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] text-[#44474A] transition-all"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                <select
+                  value={tipoFilter}
+                  onChange={(e) => {
+                    setTipoFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="px-4 py-2 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] text-[#44474A] transition-all bg-white"
+                >
+                  <option value="Todos">Todos los tipos</option>
+                  <option value="Normal">Normal</option>
+                  <option value="Retardo">Retardo</option>
+                  <option value="Falta">Falta</option>
+                </select>
+
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${showAdvancedFilters ? 'bg-[#A7313A]/10 border-[#A7313A]/30 text-[#A7313A]' : 'bg-white border-[#E1DFE0] text-[#44474A] hover:bg-gray-50'}`}
+                >
+                  <Filter size={18} />
+                  Filtros Avanzados
+                </button>
+              </div>
+            </div>
+
+            {/* Advanced Filters Drawer */}
+            {showAdvancedFilters && (
+              <div className="p-5 bg-gray-50 border-b border-[#F3F4F6] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200">
+                <div>
+                  <label className="block text-xs font-semibold text-[#858789] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Building2 size={14} /> Área
+                  </label>
+                  <select
+                    value={areaFilter}
+                    onChange={(e) => {
+                      setAreaFilter(e.target.value ? Number(e.target.value) : '');
+                      setPage(1);
+                    }}
+                    className="w-full px-3 py-2 border border-[#E1DFE0] rounded-lg text-sm focus:outline-none focus:border-[#A7313A] bg-white text-[#44474A]"
+                  >
+                    <option value="">Todas las Áreas</option>
+                    {areasList.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.nombre_area}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2 lg:col-span-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#858789] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Calendar size={14} /> Desde
+                    </label>
+                    <input
+                      type="date"
+                      value={fechaInicio}
+                      onChange={(e) => {
+                        setFechaInicio(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full px-3 py-2 border border-[#E1DFE0] rounded-lg text-sm focus:outline-none focus:border-[#A7313A] bg-white text-[#44474A]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#858789] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Calendar size={14} /> Hasta
+                    </label>
+                    <input
+                      type="date"
+                      value={fechaFin}
+                      onChange={(e) => {
+                        setFechaFin(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full px-3 py-2 border border-[#E1DFE0] rounded-lg text-sm focus:outline-none focus:border-[#A7313A] bg-white text-[#44474A]"
+                    />
+                  </div>
+                </div>
+                <div className="md:col-span-2 lg:col-span-3 flex justify-end">
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm font-semibold text-[#858789] hover:text-[#A7313A] underline-offset-4 hover:underline"
+                  >
+                    Limpiar Filtros
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="bg-gray-50 text-gray-500 text-sm">
-                    <th className="p-4 font-medium border-b border-gray-100">Empleado</th>
-                    <th className="p-4 font-medium border-b border-gray-100">Fecha</th>
-                    <th className="p-4 font-medium border-b border-gray-100">Entrada</th>
-                    <th className="p-4 font-medium border-b border-gray-100">Salida</th>
-                    <th className="p-4 font-medium border-b border-gray-100">Estatus</th>
+                  <tr className="bg-[#F8F9FA] text-[#858789] text-[0.85rem] uppercase tracking-wider border-b border-[#E1DFE0]">
+                    <th className="px-6 py-4 font-semibold">Empleado</th>
+                    <th className="px-6 py-4 font-semibold">Fecha</th>
+                    <th className="px-6 py-4 font-semibold">Entrada</th>
+                    <th className="px-6 py-4 font-semibold">Salida</th>
+                    <th className="px-6 py-4 font-semibold">Estatus</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {asistencias.map((a) => (
-                    <tr
-                      key={a.id}
-                      className="hover:bg-gray-50 border-b border-gray-50 last:border-0"
-                    >
-                      <td className="p-4 font-bold text-gray-800">{a.empleado_nombre}</td>
-                      <td className="p-4 font-medium text-gray-600">
-                        {new Date(a.fecha + 'T12:00:00').toLocaleDateString('es-MX')}
-                      </td>
-                      <td className="p-4">
-                        {a.hora_entrada || (
-                          <span className="text-gray-400 text-sm italic">Sin registro</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {a.hora_salida || (
-                          <span className="text-gray-400 text-sm italic">Sin registro</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        {a.tipo === 'Normal' ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
-                            <FaCheckCircle /> Normal
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold">
-                            <FaExclamationCircle /> {a.tipo}
-                          </span>
-                        )}
+                <tbody className="divide-y divide-[#F3F4F6]">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-16 text-center">
+                        <Loader2 size={36} className="animate-spin text-[#A7313A] mx-auto mb-4" />
+                        <p className="text-[#858789] font-medium">Cargando registros...</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : asistencias.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-16 text-center text-[#858789]">
+                        <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Search size={24} className="text-gray-400" />
+                        </div>
+                        <p className="font-semibold text-[#44474A] text-lg mb-1">Sin Resultados</p>
+                        <p className="text-sm">
+                          No se encontraron asistencias que coincidan con los filtros aplicados.
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    asistencias.map((a) => (
+                      <tr key={a.id} className="hover:bg-[#F8F9FA] transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-[#44474A]">{a.empleado_nombre}</div>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-[#858789]">
+                          {new Date(a.fecha + 'T12:00:00').toLocaleDateString('es-MX')}
+                        </td>
+                        <td className="px-6 py-4">
+                          {a.hora_entrada ? (
+                            <span className="text-[#44474A] font-medium">{a.hora_entrada}</span>
+                          ) : (
+                            <span className="text-gray-400 text-sm italic">Sin registro</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {a.hora_salida ? (
+                            <span className="text-[#44474A] font-medium">{a.hora_salida}</span>
+                          ) : (
+                            <span className="text-gray-400 text-sm italic">Sin registro</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {a.tipo === 'Normal' ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[0.75rem] font-bold tracking-wide uppercase shadow-sm">
+                              <FaCheckCircle /> Normal
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[0.75rem] font-bold tracking-wide uppercase shadow-sm">
+                              <FaExclamationCircle /> {a.tipo}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-          )
+
+            {/* Pagination Footer */}
+            {!loading && asistencias.length > 0 && (
+              <div className="p-4 border-t border-[#F3F4F6] flex items-center justify-between bg-gray-50 text-[0.9rem] text-[#858789]">
+                <div>
+                  Mostrando <span className="font-bold text-[#44474A]">{asistencias.length}</span>{' '}
+                  de <span className="font-bold text-[#44474A]">{total}</span> asistencias
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-[#F8F9FA] hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    disabled={asistencias.length < 20}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-[#F8F9FA] hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           /* VISTA DISPOSITIVOS */
           <div className="p-6">

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -165,3 +165,14 @@ async def read_users_me(
         requiere_cambio_contrasena=bool(credencial.requiere_cambio_contrasena),
         permisos=list(permisos_slugs),
     )
+
+
+@router.get("/ws-token")
+async def get_ws_token(
+    request: Request, current_user: Annotated[Empleado, Depends(get_current_user)]
+) -> Any:
+    # Retorna el token actual para que el frontend lo use en el WebSocket
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="No token")
+    return {"access_token": token}

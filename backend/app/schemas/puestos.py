@@ -15,6 +15,7 @@ class PuestoBase(BaseModel):
     sueldo_max: Optional[Decimal] = None
     reporta_a_puesto_id: Optional[int] = None
     reporta_matricialmente_a_id: Optional[int] = None
+    cupo_maximo: Optional[int] = 1
     es_rol_staff: bool = False
 
 

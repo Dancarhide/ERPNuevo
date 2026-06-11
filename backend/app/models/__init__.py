@@ -10,7 +10,9 @@ from .comunicacion import (
     Notificacion,
     Tarea,
 )
+from .dashboard import ConfiguracionDashboard
 from .empleados import Area, Empleado, EmpleadoFamiliar, EmpleadoSalud, Puesto
+from .empresa import InfoEmpresa
 from .nomina import ConceptoNomina, DetalleNomina, LoteNomina, Nomina, Prestamo
 from .seguridad import (
     Credencial,
@@ -22,7 +24,16 @@ from .seguridad import (
     Rol,
     RolPermiso,
 )
-from .talento import Candidato, CyiProgreso, EncuestaClima, Evaluacion, RespuestaEvaluacion, Vacante
+from .talento import (
+    CampaniaClima,
+    Candidato,
+    CyiProgreso,
+    Evaluacion,
+    PreguntaClima,
+    RespuestaClima,
+    RespuestaEvaluacion,
+    Vacante,
+)
 
 __all__ = [
     "Base",
@@ -59,7 +70,9 @@ __all__ = [
     "CyiProgreso",
     "Evaluacion",
     "RespuestaEvaluacion",
-    "EncuestaClima",
+    "CampaniaClima",
+    "PreguntaClima",
+    "RespuestaClima",
     # Comunicacion
     "Conversacion",
     "ConversacionParticipante",
@@ -70,4 +83,6 @@ __all__ = [
     "EventoParticipante",
     "RegistroChecador",
     "DispositivoBiometrico",
+    "InfoEmpresa",
+    "ConfiguracionDashboard",
 ]

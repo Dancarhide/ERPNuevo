@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.core.config import settings
-from app.models.base import Base
+from app.models import Base
 
 target_metadata = Base.metadata
 config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)

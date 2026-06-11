@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -13,6 +14,7 @@ from app.models.empleados import Empleado
 from app.schemas.asistencias import (
     AsistenciaCreate,
     AsistenciaResponse,
+    AsistenciasListResponse,
     AsistenciaUpdate,
     BulkAsistenciaRequest,
     RegistroChecadorCreate,
@@ -22,36 +24,55 @@ from app.schemas.asistencias import (
 router = APIRouter()
 
 
-@router.get("", response_model=list[AsistenciaResponse])
+@router.get("", response_model=AsistenciasListResponse)
 async def get_asistencias(
     session: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Empleado, Depends(RequirePermission("ver_asistencia"))],
-    mes: int | None = None,
-    year: int | None = None,
-    idarea: int | None = None,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    search: str = Query(None, description="Búsqueda por nombre de empleado"),
+    tipo: str = Query(None, description="Filtro por tipo de asistencia"),
+    area_id: int | None = Query(None, description="Filtro por área"),
+    fecha_inicio: date | None = Query(None, description="Fecha desde"),
+    fecha_fin: date | None = Query(None, description="Fecha hasta"),
 ) -> Any:
-    query = select(Asistencia).options(selectinload(Asistencia.empleado))
+    base_query = select(Asistencia).outerjoin(Empleado, Asistencia.empleado_id == Empleado.id)
 
-    if idarea is not None:
-        query = query.join(Empleado).where(Empleado.area_id == idarea)
+    if search:
+        base_query = base_query.where(Empleado.nombre_completo.ilike(f"%{search}%"))
 
+    if tipo and tipo != "Todos":
+        base_query = base_query.where(Asistencia.tipo == tipo)
+
+    if area_id:
+        base_query = base_query.where(Empleado.area_id == area_id)
+
+    if fecha_inicio:
+        base_query = base_query.where(Asistencia.fecha >= fecha_inicio)
+
+    if fecha_fin:
+        base_query = base_query.where(Asistencia.fecha <= fecha_fin)
+
+    base_query = base_query.order_by(Asistencia.fecha.desc())
+
+    # Count total
+    count_query = select(func.count()).select_from(base_query.subquery())
+    total_result = await session.execute(count_query)
+    total = total_result.scalar_one()
+
+    # Paginate
+    query = base_query.options(selectinload(Asistencia.empleado))
+    query = query.offset((page - 1) * size).limit(size)
     result = await session.execute(query)
     asistencias = result.scalars().all()
 
-    # Filter by month and year in memory for simplicity (since we use date field)
-    # A more optimized approach would use DB functions like EXTRACT(MONTH FROM fecha)
     respuestas = []
     for a in asistencias:
-        if mes is not None and a.fecha.month != mes:
-            continue
-        if year is not None and a.fecha.year != year:
-            continue
-
         resp = AsistenciaResponse.model_validate(a)
         resp.empleado_nombre = str(a.empleado.nombre_completo) if a.empleado else "Desconocido"
         respuestas.append(resp)
 
-    return respuestas
+    return {"items": respuestas, "total": total, "page": page, "size": size}
 
 
 @router.post("/bulk", response_model=dict[str, str])

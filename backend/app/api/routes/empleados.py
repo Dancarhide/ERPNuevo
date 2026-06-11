@@ -27,7 +27,7 @@ async def read_empleados(
     session: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Empleado, Depends(get_current_user)],
     page: int = Query(1, ge=1),
-    size: int = Query(20, ge=1, le=100),
+    size: int = Query(20, ge=1, le=1000),
     search: str = Query(None, description="Búsqueda por nombre o correo"),
     estatus: str = Query(None, description="Filtro por estatus"),
     area_id: int | None = Query(None, description="Filtro por área"),
@@ -36,43 +36,44 @@ async def read_empleados(
     fecha_ingreso_inicio: date | None = Query(None, description="Ingreso desde"),
     fecha_ingreso_fin: date | None = Query(None, description="Ingreso hasta"),
 ) -> Any:
-    query = select(Empleado).options(
+    base_query = select(Empleado)
+
+    if search:
+        base_query = base_query.where(
+            (Empleado.nombre_completo.ilike(f"%{search}%")) | (Empleado.email.ilike(f"%{search}%"))
+        )
+
+    if estatus and estatus != "Todos":
+        base_query = base_query.where(Empleado.estatus == estatus)
+
+    if area_id:
+        base_query = base_query.where(Empleado.area_id == area_id)
+
+    if puesto_id:
+        base_query = base_query.where(Empleado.puesto_id == puesto_id)
+
+    if jefe_directo_id:
+        base_query = base_query.where(Empleado.jefe_directo_id == jefe_directo_id)
+
+    if fecha_ingreso_inicio:
+        base_query = base_query.where(Empleado.fecha_ingreso >= fecha_ingreso_inicio)
+
+    if fecha_ingreso_fin:
+        base_query = base_query.where(Empleado.fecha_ingreso <= fecha_ingreso_fin)
+
+    # Count total
+    count_query = select(func.count()).select_from(base_query.subquery())
+    total_result = await session.execute(count_query)
+    total = total_result.scalar_one()
+
+    # Paginate
+    query = base_query.options(
         selectinload(Empleado.familiares),
         selectinload(Empleado.datos_salud),
         selectinload(Empleado.area),
         selectinload(Empleado.puesto),
         selectinload(Empleado.jefe_directo),
     )
-
-    if search:
-        query = query.where(
-            (Empleado.nombre_completo.ilike(f"%{search}%")) | (Empleado.email.ilike(f"%{search}%"))
-        )
-
-    if estatus and estatus != "Todos":
-        query = query.where(Empleado.estatus == estatus)
-
-    if area_id:
-        query = query.where(Empleado.area_id == area_id)
-
-    if puesto_id:
-        query = query.where(Empleado.puesto_id == puesto_id)
-
-    if jefe_directo_id:
-        query = query.where(Empleado.jefe_directo_id == jefe_directo_id)
-
-    if fecha_ingreso_inicio:
-        query = query.where(Empleado.fecha_ingreso >= fecha_ingreso_inicio)
-
-    if fecha_ingreso_fin:
-        query = query.where(Empleado.fecha_ingreso <= fecha_ingreso_fin)
-
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await session.execute(count_query)
-    total = total_result.scalar_one()
-
-    # Paginate
     query = query.offset((page - 1) * size).limit(size)
     result = await session.execute(query)
     empleados = result.scalars().all()

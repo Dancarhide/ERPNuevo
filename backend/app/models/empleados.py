@@ -82,6 +82,10 @@ class Empleado(Base, AuditoriaMixin):
     fondo_ahorro_pct = Column(Numeric(5, 2), default=0.00, nullable=False)
     vales_despensa_pct = Column(Numeric(5, 2), default=0.00, nullable=False)
     foto = Column(String, nullable=True)
+    # Periodicidad de nómina (si es None, se usa la de la empresa)
+    periodicidad_nomina = Column(String(20), nullable=True)
+    # Número de seguro social
+    numero_seguro_social = Column(String(11), nullable=True)
 
     # Demografia
     ciudad = Column(String(100), nullable=True)

@@ -5,12 +5,24 @@ from app.api.routes import (
     areas,
     asistencias,
     auth,
+    candidatos,
+    chat,
+    clima,
+    dashboard,
     dispositivos,
     empleados,
+    empresa,
+    evaluaciones,
+    incidencias,
+    kpis,
+    nomina,
+    notificaciones,
     organigrama,
     puestos,
     roles,
+    tareas,
     vacaciones,
+    vacantes,
 )
 from app.core.config import settings
 from app.core.scheduler import start_scheduler
@@ -26,6 +38,18 @@ app.include_router(vacaciones.router, prefix="/api/vacaciones", tags=["vacacione
 app.include_router(asistencias.router, prefix="/api/asistencias", tags=["asistencias"])
 app.include_router(roles.router, prefix="/api/roles", tags=["roles"])
 app.include_router(dispositivos.router, prefix="/api/dispositivos", tags=["dispositivos"])
+app.include_router(empresa.router, prefix="/api/empresa", tags=["empresa"])
+app.include_router(kpis.router, prefix="/api/kpis", tags=["kpis"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(nomina.router, prefix="/api/nomina", tags=["nomina"])
+app.include_router(incidencias.router, prefix="/api/incidencias", tags=["incidencias"])
+app.include_router(notificaciones.router, prefix="/api/notificaciones", tags=["notificaciones"])
+app.include_router(tareas.router, prefix="/api/tareas", tags=["tareas"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(vacantes.router, prefix="/api/vacantes", tags=["vacantes"])
+app.include_router(candidatos.router, prefix="/api/candidatos", tags=["candidatos"])
+app.include_router(evaluaciones.router, prefix="/api/evaluaciones-desempeno", tags=["evaluaciones"])
+app.include_router(clima.router, prefix="/api/clima", tags=["clima"])
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:

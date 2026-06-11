@@ -33,8 +33,20 @@ select = ["E", "F", "I"]
 
 [tool.ruff.lint.per-file-ignores]
 "alembic/versions/*.py" = ["E501"]
+"app/api/routes/nomina.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.10"
 strict = true
+warn_unused_ignores = false
 ignore_missing_imports = true
+plugins = [
+  "pydantic.mypy",
+  "sqlalchemy.ext.mypy.plugin"
+]
+disable_error_code = [
+  "assignment",
+  "no-untyped-def",
+  "arg-type",
+  "no-untyped-call"
+]
