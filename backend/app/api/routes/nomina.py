@@ -642,6 +642,8 @@ async def get_mis_recibos(
         select(Nomina)
         .where(Nomina.empleado_id == current_user.id)
         .options(
+            selectinload(Nomina.empleado).selectinload(Empleado.area),
+            selectinload(Nomina.empleado).selectinload(Empleado.puesto),
             selectinload(Nomina.detalles).selectinload(DetalleNomina.concepto),
         )
         .order_by(Nomina.fecha_fin.desc())

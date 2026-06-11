@@ -13,6 +13,7 @@ from app.api.routes import (
     empleados,
     empresa,
     evaluaciones,
+    eventos,
     incidencias,
     kpis,
     nomina,
@@ -50,6 +51,7 @@ app.include_router(vacantes.router, prefix="/api/vacantes", tags=["vacantes"])
 app.include_router(candidatos.router, prefix="/api/candidatos", tags=["candidatos"])
 app.include_router(evaluaciones.router, prefix="/api/evaluaciones-desempeno", tags=["evaluaciones"])
 app.include_router(clima.router, prefix="/api/clima", tags=["clima"])
+app.include_router(eventos.router, prefix="/api/eventos", tags=["eventos"])
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:

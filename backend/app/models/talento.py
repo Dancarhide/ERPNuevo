@@ -66,6 +66,20 @@ class CyiProgreso(Base, AuditoriaMixin):
     empleado = relationship("Empleado")
 
 
+class CampaniaEvaluacion(Base, AuditoriaMixin):
+    __tablename__ = "campania_evaluacion"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(100), nullable=False)
+    fecha_inicio = Column(Date, nullable=False)
+    fecha_fin = Column(Date, nullable=False)
+    activa = Column(Boolean, default=True)
+
+    respuestas = relationship(
+        "RespuestaEvaluacion", back_populates="campania", cascade="all, delete-orphan"
+    )
+
+
 class Evaluacion(Base, AuditoriaMixin):
     __tablename__ = "evaluaciones"
 
@@ -82,12 +96,18 @@ class RespuestaEvaluacion(Base, AuditoriaMixin):
     __tablename__ = "respuestas_evaluacion"
 
     id = Column(Integer, primary_key=True, index=True)
+    campania_id = Column(
+        Integer, ForeignKey("campania_evaluacion.id", ondelete="CASCADE"), nullable=True
+    )
     pregunta_id = Column(Integer, ForeignKey("evaluaciones.id", ondelete="CASCADE"), nullable=False)
     empleado_id = Column(Integer, ForeignKey("empleados.id", ondelete="CASCADE"), nullable=False)
+    evaluador_id = Column(Integer, ForeignKey("empleados.id", ondelete="SET NULL"), nullable=True)
     respuesta = Column(String, nullable=True)
 
+    campania = relationship("CampaniaEvaluacion", back_populates="respuestas")
     evaluacion = relationship("Evaluacion", back_populates="respuestas")
-    empleado = relationship("Empleado")
+    empleado = relationship("Empleado", foreign_keys=[empleado_id])
+    evaluador = relationship("Empleado", foreign_keys=[evaluador_id])
 
 
 class CampaniaClima(Base, AuditoriaMixin):

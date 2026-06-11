@@ -49,6 +49,9 @@ MODULOS_PERMISOS = {
         "configurar_evaluaciones": "Crear y eliminar preguntas de evaluación",
         "ver_resultados_evaluaciones": "Ver resultados de desempeño de otros empleados",
     },
+    "Calendario": {
+        "gestionar_calendario": "Crear, editar o eliminar eventos y días festivos en el calendario",
+    },
 }
 
 

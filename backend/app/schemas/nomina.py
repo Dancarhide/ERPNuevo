@@ -1,8 +1,8 @@
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 # ─── Conceptos de Nómina ────────────────────────────────────────────────────
 
@@ -97,6 +97,18 @@ class EmpleadoMinNomina(BaseModel):
     numero_seguro_social: Optional[str] = None
     area: Optional[str] = None
     puesto: Optional[str] = None
+
+    @field_validator("area", mode="before")
+    def extract_area_name(cls, v: Any) -> Optional[str]:
+        if v and hasattr(v, "nombre_area"):
+            return v.nombre_area
+        return v
+
+    @field_validator("puesto", mode="before")
+    def extract_puesto_name(cls, v: Any) -> Optional[str]:
+        if v and hasattr(v, "nombre_puesto"):
+            return v.nombre_puesto
+        return v
 
     class Config:
         from_attributes = True

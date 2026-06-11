@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -19,6 +20,24 @@ class EvaluacionResponse(EvaluacionBase):
         from_attributes = True
 
 
+class CampaniaEvaluacionBase(BaseModel):
+    nombre: str
+    fecha_inicio: date
+    fecha_fin: date
+    activa: bool = True
+
+
+class CampaniaEvaluacionCreate(CampaniaEvaluacionBase):
+    pass
+
+
+class CampaniaEvaluacionResponse(CampaniaEvaluacionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
 class RespuestaItem(BaseModel):
     id_pregunta: int
     respuesta: str
@@ -26,6 +45,8 @@ class RespuestaItem(BaseModel):
 
 class RespuestasCreate(BaseModel):
     id_empleado: int
+    campania_id: Optional[int] = None
+    evaluador_id: Optional[int] = None
     respuestas: List[RespuestaItem]
 
 

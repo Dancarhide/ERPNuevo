@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.models.comunicacion import Tarea
 from app.models.empleados import Empleado
 from app.schemas.tareas import TareaCreate, TareaResponse, TareaUpdate
+from app.services.notificaciones_service import crear_notificacion
 
 router = APIRouter()
 
@@ -39,6 +40,16 @@ async def create_tarea(
     session.add(nueva_tarea)
     await session.commit()
     await session.refresh(nueva_tarea)
+
+    # Solo notificar si la tarea fue asignada por alguien más
+    if nueva_tarea.empleado_id != current_user.id:
+        await crear_notificacion(
+            session=session,
+            empleado_id=nueva_tarea.empleado_id,
+            titulo="Nueva Tarea Asignada",
+            mensaje=f"Te han asignado la tarea: {nueva_tarea.titulo}",
+            tipo="tareas",
+        )
     return nueva_tarea
 
 

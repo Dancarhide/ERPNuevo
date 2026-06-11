@@ -72,7 +72,6 @@ const MENU_ITEMS: MenuItem[] = [
       { path: '/dashboard/estructura', label: 'Reclutamiento' },
       { path: '/dashboard/evaluaciones', label: 'Evaluaciones' },
       { path: '/dashboard/clima-laboral', label: 'Clima Laboral' },
-      { path: '/dashboard/admin-encuestas', label: 'Encuestas' },
     ],
   },
   {
@@ -85,10 +84,9 @@ const MENU_ITEMS: MenuItem[] = [
     ],
   },
   {
-    label: 'Comunicación',
+    path: '/dashboard/calendario',
+    label: 'Calendario',
     icon: Calendar,
-    requiredPermission: 'ver_configuracion',
-    subItems: [{ path: '/dashboard/admin-eventos', label: 'Eventos y Comunicados' }],
   },
   {
     path: '/dashboard/reports',

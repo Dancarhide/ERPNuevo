@@ -17,11 +17,6 @@ import {
   Save,
 } from 'lucide-react';
 import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -127,18 +122,29 @@ export default function ClimaLaboralPage() {
   }, [loadInitialData]);
 
   useEffect(() => {
+    let active = true;
     if (tab === 'configuracion') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       void loadConfigData();
     } else if (tab === 'resultados') {
-      void loadConfigData().then(() => {
-        if (!campaniaSelec && campanias.length > 0) {
-          setCampaniaSelec(campanias[0].id);
-          loadStats(campanias[0].id);
-        }
+      loadConfigData().then(() => {
+        // Only set the default if not already set, avoiding the loop
+        setCampaniaSelec((prev) => {
+          if (!prev && campanias.length > 0) {
+            // We can't safely call loadStats during render loop, so we defer it
+            setTimeout(() => {
+              if (active) loadStats(campanias[0].id);
+            }, 0);
+            return campanias[0].id;
+          }
+          return prev;
+        });
       });
     }
-  }, [tab, loadConfigData, campaniaSelec, campanias, loadStats]);
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, loadConfigData, loadStats, campanias.length]);
 
   // --- HANDLERS: ENCUESTA ---
   const speakText = (text: string) => {
@@ -238,31 +244,28 @@ export default function ClimaLaboralPage() {
           <div className="flex p-1 bg-slate-100 rounded-lg w-full md:w-auto overflow-hidden">
             <button
               onClick={() => setTab('encuesta')}
-              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                tab === 'encuesta'
+              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === 'encuesta'
                   ? 'bg-white shadow-sm text-red-700'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               Mi Encuesta
             </button>
             <button
               onClick={() => setTab('resultados')}
-              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                tab === 'resultados'
+              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === 'resultados'
                   ? 'bg-white shadow-sm text-red-700'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               Resultados
             </button>
             <button
               onClick={() => setTab('configuracion')}
-              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                tab === 'configuracion'
+              className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all ${tab === 'configuracion'
                   ? 'bg-white shadow-sm text-red-700'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               Configuración
             </button>
@@ -355,11 +358,10 @@ export default function ClimaLaboralPage() {
                             onClick={() =>
                               setDemographics({ ...demographics, nivel_jerarquico: opt })
                             }
-                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${
-                              demographics.nivel_jerarquico === opt
+                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${demographics.nivel_jerarquico === opt
                                 ? 'border-red-700 bg-red-50 text-red-700'
                                 : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
                             {opt}
                           </button>
@@ -376,11 +378,10 @@ export default function ClimaLaboralPage() {
                           <button
                             key={opt}
                             onClick={() => setDemographics({ ...demographics, ubicacion: opt })}
-                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${
-                              demographics.ubicacion === opt
+                            className={`p-3 rounded-lg border-2 font-medium transition-colors ${demographics.ubicacion === opt
                                 ? 'border-red-700 bg-red-50 text-red-700'
                                 : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
                             {opt}
                           </button>
@@ -443,13 +444,12 @@ export default function ClimaLaboralPage() {
                               <button
                                 key={opt.v}
                                 onClick={() => setRespuestas({ ...respuestas, [q.id]: opt.v })}
-                                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all ${
-                                  respuestas[q.id] === opt.v
+                                className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 transition-all ${respuestas[q.id] === opt.v
                                     ? opt.v <= 2
                                       ? 'border-amber-500 bg-amber-50'
                                       : 'border-emerald-500 bg-emerald-50'
                                     : 'border-slate-100 hover:border-slate-300 bg-slate-50 hover:bg-slate-100'
-                                }`}
+                                  }`}
                               >
                                 <span className="text-3xl mb-2 grayscale-[0.2]">{opt.e}</span>
                                 <span
@@ -552,25 +552,16 @@ export default function ClimaLaboralPage() {
                   </p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm md:col-span-2">
-                  <h3 className="font-bold text-slate-800 mb-4">Radar Organizacional</h3>
+                  <h3 className="font-bold text-slate-800 mb-4">Métricas por Categoría</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                        <PolarGrid stroke="#e2e8f0" />
-                        <PolarAngleAxis
-                          dataKey="subject"
-                          tick={{ fill: '#64748b', fontSize: 12 }}
-                        />
-                        <PolarRadiusAxis angle={30} domain={[0, 4]} tick={{ fill: '#94a3b8' }} />
-                        <Radar
-                          name="Promedio"
-                          dataKey="A"
-                          stroke="#b91c1c"
-                          fill="#fca5a5"
-                          fillOpacity={0.6}
-                        />
-                        <RechartsTooltip />
-                      </RadarChart>
+                      <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12 }} />
+                        <YAxis domain={[0, 4]} tick={{ fill: '#64748b', fontSize: 12 }} />
+                        <RechartsTooltip cursor={{ fill: '#f8fafc' }} />
+                        <Bar dataKey="Puntaje" fill="#b91c1c" radius={[4, 4, 0, 0]} barSize={40} />
+                      </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>

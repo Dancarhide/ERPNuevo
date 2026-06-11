@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.models.asistencia import Vacacion
 from app.models.empleados import Empleado
 from app.schemas.vacaciones import VacacionCreate, VacacionResponse, VacacionUpdate
+from app.services.notificaciones_service import crear_notificacion
 
 router = APIRouter()
 
@@ -92,4 +93,16 @@ async def update_vacacion_status(
     resp.empleado_nombre = (
         str(vacacion.empleado.nombre_completo) if vacacion.empleado else "Desconocido"
     )
+
+    # Enviar notificación al empleado
+    estado_texto = "Aprobada" if status_update.estatus_vacacion == "Aprobado" else "Rechazada"
+    await crear_notificacion(
+        session=session,
+        empleado_id=vacacion.empleado_id,
+        titulo=f"Solicitud de Vacaciones {estado_texto}",
+        mensaje=f"Tu solicitud del {vacacion.fecha_inicio} al {vacacion.fecha_fin} ha sido {estado_texto.lower()}.",  # noqa: E501
+        tipo="vacaciones",
+        link="/dashboard/mis-asistencias",
+    )
+
     return resp

@@ -7,46 +7,13 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import RequirePermission
-from app.api.websockets.connection_manager import manager
 from app.core.database import get_db
 from app.models.asistencia import Incidencia
-from app.models.comunicacion import Notificacion
 from app.models.empleados import Empleado
 from app.schemas.incidencias import IncidenciaCreate, IncidenciaResponse, IncidenciaUpdate
+from app.services.notificaciones_service import crear_notificacion
 
 router = APIRouter()
-
-
-async def create_notification(
-    session: AsyncSession, empleado_id: int, titulo: str, mensaje: str, tipo: str = "incidencia"
-):
-    # 1. Guardar en BD
-    notif = Notificacion(
-        empleado_id=empleado_id,
-        titulo=titulo,
-        mensaje=mensaje,
-        tipo=tipo,
-        link="/dashboard/incidencias",
-    )
-    session.add(notif)
-    await session.flush()
-
-    # 2. Enviar por WebSocket al empleado (si está conectado)
-    await manager.send_personal_message(
-        {
-            "type": "notification",
-            "payload": {
-                "id": notif.id,
-                "titulo": notif.titulo,
-                "mensaje": notif.mensaje,
-                "tipo": notif.tipo,
-                "leida": False,
-                "creado_en": str(notif.creado_en) if notif.creado_en else None,
-                "link": notif.link,
-            },
-        },
-        empleado_id,
-    )
 
 
 @router.get("", response_model=List[IncidenciaResponse])
@@ -112,14 +79,14 @@ async def create_incidencia(
     await session.refresh(nueva_incidencia)
 
     # Crear notificación para el reportado
-    await create_notification(
+    await crear_notificacion(
         session,
         empleado_id=nueva_incidencia.empleado_reportado_id,
         titulo="Nueva Incidencia",
         mensaje=f"Se ha levantado una incidencia ({nueva_incidencia.tipo}) a tu nombre.",
         tipo="incidencia",
+        link="/dashboard/mis-asistencias",
     )
-    await session.commit()
 
     # Recargar con relaciones
     res = await session.execute(
@@ -158,12 +125,13 @@ async def update_incidencia(
     session.add(incidencia)
 
     if status_changed:
-        await create_notification(
+        await crear_notificacion(
             session,
             empleado_id=incidencia.empleado_reportado_id,
             titulo="Actualización de Incidencia",
             mensaje=f"Tu incidencia ({incidencia.tipo}) ha cambiado a estatus: {incidencia.estatus}.",  # noqa: E501
             tipo="incidencia",
+            link="/dashboard/mis-asistencias",
         )
 
     await session.commit()

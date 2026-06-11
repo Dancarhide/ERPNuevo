@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.models.comunicacion import Conversacion, ConversacionParticipante, Mensaje
 from app.models.empleados import Empleado
 from app.schemas.chat import MensajeCreate, MensajeResponse
+from app.services.notificaciones_service import crear_notificacion
 
 router = APIRouter()
 
@@ -137,6 +138,16 @@ async def send_mensaje(
             },
         },
         mensaje_in.destinatario_id,
+    )
+
+    # Crear notificación persistente para el destinatario
+    await crear_notificacion(
+        session=session,
+        empleado_id=mensaje_in.destinatario_id,
+        titulo="Nuevo Mensaje",
+        mensaje=f"{current_user.nombre_completo} te ha enviado un mensaje",
+        tipo="chat",
+        link="/dashboard",  # Podríamos linkear al chat si tuvieramos ruta directa
     )
 
     return nuevo_mensaje
