@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { authApi } from '@/lib/api';
 
 type WebSocketMessage = {
@@ -6,63 +6,77 @@ type WebSocketMessage = {
   payload: unknown;
 };
 
-export function useWebSocket() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  const ws = useRef<WebSocket | null>(null);
+let wsInstance: WebSocket | null = null;
+let isConnecting = false;
+let connected = false;
+const listeners = new Set<(msg: WebSocketMessage) => void>();
+const connectionListeners = new Set<(status: boolean) => void>();
 
-  useEffect(() => {
-    // Definir la URL basada en el origin actual
+const connectWs = async () => {
+  if (wsInstance || isConnecting) return;
+  isConnecting = true;
+  try {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Asumiendo que el backend corre bajo /api
     const backendHost =
       window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
     const wsUrl = `${protocol}//${backendHost}/api/notificaciones/ws`;
 
-    const connect = async () => {
-      try {
-        // Fetch token first to pass it in query string because WS doesn't send cookies cross-origin
-        const tokenData = await authApi.getWsToken();
-        const finalWsUrl = `${wsUrl}?token=${tokenData.access_token}`;
+    const tokenData = await authApi.getWsToken();
+    const finalWsUrl = `${wsUrl}?token=${tokenData.access_token}`;
 
-        ws.current = new WebSocket(finalWsUrl);
+    const ws = new WebSocket(finalWsUrl);
 
-        ws.current.onopen = () => {
-          setIsConnected(true);
-          console.log('WebSocket connected');
-        };
-
-        ws.current.onclose = () => {
-          setIsConnected(false);
-          console.log('WebSocket disconnected, reconnecting...');
-          // Intentar reconectar
-          setTimeout(connect, 3000);
-        };
-
-        ws.current.onmessage = (event) => {
-          try {
-            const message: WebSocketMessage = JSON.parse(event.data);
-            setLastMessage(message);
-          } catch (error) {
-            console.error('Error parsing WebSocket message', error);
-          }
-        };
-      } catch (err) {
-        console.log('Error obtaining WS token, retrying...', err);
-        setTimeout(connect, 5000);
-      }
+    ws.onopen = () => {
+      connected = true;
+      isConnecting = false;
+      wsInstance = ws;
+      connectionListeners.forEach((l) => l(true));
+      console.log('WebSocket connected');
     };
 
-    connect();
+    ws.onclose = () => {
+      connected = false;
+      isConnecting = false;
+      wsInstance = null;
+      connectionListeners.forEach((l) => l(false));
+      console.log('WebSocket disconnected, reconnecting...');
+      setTimeout(connectWs, 3000);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message: WebSocketMessage = JSON.parse(event.data);
+        listeners.forEach((l) => l(message));
+      } catch (error) {
+        console.error('Error parsing WebSocket message', error);
+      }
+    };
+  } catch (err) {
+    console.log('Error obtaining WS token, retrying...', err);
+    isConnecting = false;
+    setTimeout(connectWs, 5000);
+  }
+};
+
+export function useWebSocket() {
+  const [isConnected, setIsConnected] = useState(connected);
+
+  useEffect(() => {
+    connectWs();
+    const connListener = (status: boolean) => setIsConnected(status);
+    connectionListeners.add(connListener);
 
     return () => {
-      if (ws.current) {
-        // Evitar reconexiones si se desmonta
-        ws.current.onclose = null;
-        ws.current.close();
-      }
+      connectionListeners.delete(connListener);
     };
   }, []);
 
-  return { isConnected, lastMessage };
+  const subscribe = (callback: (msg: WebSocketMessage) => void) => {
+    listeners.add(callback);
+    return () => {
+      listeners.delete(callback);
+    };
+  };
+
+  return { isConnected, subscribe };
 }

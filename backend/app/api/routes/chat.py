@@ -11,7 +11,6 @@ from app.core.database import get_db
 from app.models.comunicacion import Conversacion, ConversacionParticipante, Mensaje
 from app.models.empleados import Empleado
 from app.schemas.chat import MensajeCreate, MensajeResponse
-from app.services.notificaciones_service import crear_notificacion
 
 router = APIRouter()
 
@@ -56,6 +55,34 @@ async def get_or_create_private_conversation(
     session.add_all([p1, p2])
     await session.flush()
     return nueva_conv
+
+
+@router.get("/unread", response_model=List[int])
+async def get_unread_chats(
+    session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Empleado, Depends(get_current_user)],
+) -> Any:
+    q_convs = select(ConversacionParticipante.conversacion_id).where(
+        ConversacionParticipante.empleado_id == current_user.id
+    )
+    res_convs = await session.execute(q_convs)
+    conv_ids = [r for r in res_convs.scalars()]
+
+    if not conv_ids:
+        return []
+
+    q_unread = (
+        select(Mensaje.emisor_id)
+        .where(
+            Mensaje.conversacion_id.in_(conv_ids),
+            Mensaje.emisor_id != current_user.id,
+            Mensaje.leido.is_(False),
+        )
+        .distinct()
+    )
+
+    res_unread = await session.execute(q_unread)
+    return [r for r in res_unread.scalars() if r is not None]
 
 
 @router.get("/conversacion/{destinatario_id}", response_model=List[MensajeResponse])
@@ -138,16 +165,6 @@ async def send_mensaje(
             },
         },
         mensaje_in.destinatario_id,
-    )
-
-    # Crear notificación persistente para el destinatario
-    await crear_notificacion(
-        session=session,
-        empleado_id=mensaje_in.destinatario_id,
-        titulo="Nuevo Mensaje",
-        mensaje=f"{current_user.nombre_completo} te ha enviado un mensaje",
-        tipo="chat",
-        link="/dashboard",  # Podríamos linkear al chat si tuvieramos ruta directa
     )
 
     return nuevo_mensaje

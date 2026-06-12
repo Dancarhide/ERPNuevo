@@ -235,4 +235,5 @@ export const chatApi = {
   getMensajes: (destinatario_id: number) => fetchApi(`/chat/conversacion/${destinatario_id}`),
   sendMensaje: (data: Record<string, unknown>) =>
     fetchApi('/chat', { method: 'POST', body: JSON.stringify(data) }),
+  getUnread: () => fetchApi('/chat/unread'),
 };

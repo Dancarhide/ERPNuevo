@@ -28,7 +28,7 @@ type Props = {
 
 export const ChatDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const { lastMessage } = useWebSocket();
+  const { subscribe } = useWebSocket();
   const [activeContact, setActiveContact] = useState<Empleado | null>(null);
 
   const [contacts, setContacts] = useState<Empleado[]>([]);
@@ -73,6 +73,14 @@ export const ChatDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       fetchContacts();
+      chatApi
+        .getUnread()
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setUnreadContacts(new Set(data));
+          }
+        })
+        .catch(console.error);
     }
   }, [isOpen]);
 
@@ -96,17 +104,21 @@ export const ChatDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
 
   // Handle incoming websocket messages
   useEffect(() => {
-    if (lastMessage?.type === 'chat') {
-      const payload = lastMessage.payload as Mensaje;
-      // If the message is from the active contact, append it
-      if (activeContact && payload.emisor_id === activeContact.id) {
-        setMensajes((prev) => [...prev, payload]);
-      } else if (payload.emisor_id) {
-        // Show unread badge on the contact list
-        setUnreadContacts((prev) => new Set(prev).add(payload.emisor_id as number));
+    const unsubscribe = subscribe((message) => {
+      if (message.type === 'chat') {
+        const payload = message.payload as Mensaje;
+        // If the message is from the active contact, append it
+        if (activeContact && payload.emisor_id === activeContact.id) {
+          setMensajes((prev) => [...prev, payload]);
+        } else if (payload.emisor_id) {
+          // Show unread badge on the contact list
+          setUnreadContacts((prev) => new Set(prev).add(payload.emisor_id as number));
+        }
       }
-    }
-  }, [lastMessage, activeContact]);
+    });
+
+    return unsubscribe;
+  }, [activeContact, subscribe]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

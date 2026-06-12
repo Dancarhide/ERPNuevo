@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { notificacionesApi } from '@/lib/api';
+import { notificacionesApi, chatApi } from '@/lib/api';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { ChatDrawer } from './chat-drawer';
 import { ToDoDrawer } from './todo-drawer';
@@ -36,9 +36,10 @@ export function Topbar() {
   const [chatOpen, setChatOpen] = useState(false);
   const [todoOpen, setTodoOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [hasUnreadChat, setHasUnreadChat] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-  const { lastMessage } = useWebSocket();
+  const { subscribe } = useWebSocket();
 
   const userName = user?.email?.split('@')[0] || 'Administrador';
   const userRole = (user as { is_superuser?: boolean })?.is_superuser
@@ -47,7 +48,7 @@ export function Topbar() {
   const initials = userName.substring(0, 2).toUpperCase();
 
   useEffect(() => {
-    // Cargar historial de notificaciones al inicio
+    // Cargar historial de notificaciones y chats sin leer al inicio
     if (user) {
       notificacionesApi
         .getAll()
@@ -55,16 +56,39 @@ export function Topbar() {
           if (Array.isArray(data)) setNotifications(data);
         })
         .catch(console.error);
+
+      chatApi
+        .getUnread()
+        .then((data: unknown) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setHasUnreadChat(true);
+          }
+        })
+        .catch(console.error);
     }
   }, [user]);
 
   useEffect(() => {
-    if (lastMessage?.type === 'notification') {
-      const payload = lastMessage.payload as Notification;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setNotifications((prev) => [payload, ...prev]);
-    }
-  }, [lastMessage]);
+    const unsubscribe = subscribe((message) => {
+      if (message.type === 'notification') {
+        const payload = message.payload as Notification;
+        setNotifications((prev) => {
+          const exists = prev.some((n) => n.id === payload.id);
+          if (exists) {
+            return prev.map((n) => (n.id === payload.id ? { ...n, ...payload } : n));
+          }
+          return [payload, ...prev];
+        });
+      } else if (message.type === 'chat') {
+        const payload = message.payload as { emisor_id?: number };
+        if (payload.emisor_id && payload.emisor_id !== user?.id && !chatOpen) {
+          setHasUnreadChat(true);
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [user?.id, chatOpen, subscribe]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -170,10 +194,16 @@ export function Topbar() {
         </div>
 
         <button
-          onClick={() => setChatOpen(true)}
-          className="flex items-center justify-center w-[38px] h-[38px] rounded-[10px] bg-[#f8fafc] border border-[#e2e8f0] text-[#858789] hover:text-[#A7313A] hover:bg-white hover:border-[#A7313A] hover:shadow-[0_4px_12px_rgba(167,49,58,0.12)] transition-all"
+          onClick={() => {
+            setChatOpen(true);
+            setHasUnreadChat(false);
+          }}
+          className="relative flex items-center justify-center w-[38px] h-[38px] rounded-[10px] bg-[#f8fafc] border border-[#e2e8f0] text-[#858789] hover:text-[#A7313A] hover:bg-white hover:border-[#A7313A] hover:shadow-[0_4px_12px_rgba(167,49,58,0.12)] transition-all"
         >
           <MessageSquare size={20} />
+          {hasUnreadChat && (
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#A7313A] border-2 border-white"></span>
+          )}
         </button>
 
         <div className="relative flex items-center gap-2 ml-2">
