@@ -36,7 +36,7 @@ async def read_empleados(
     fecha_ingreso_inicio: date | None = Query(None, description="Ingreso desde"),
     fecha_ingreso_fin: date | None = Query(None, description="Ingreso hasta"),
 ) -> Any:
-    base_query = select(Empleado)
+    base_query = select(Empleado).where(Empleado.es_sistema.is_(False))
 
     if search:
         base_query = base_query.where(

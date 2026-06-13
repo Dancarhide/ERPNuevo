@@ -36,7 +36,11 @@ async def get_asistencias(
     fecha_inicio: date | None = Query(None, description="Fecha desde"),
     fecha_fin: date | None = Query(None, description="Fecha hasta"),
 ) -> Any:
-    base_query = select(Asistencia).outerjoin(Empleado, Asistencia.empleado_id == Empleado.id)
+    base_query = (
+        select(Asistencia)
+        .outerjoin(Empleado, Asistencia.empleado_id == Empleado.id)
+        .where(Empleado.es_sistema.is_(False))
+    )
 
     if search:
         base_query = base_query.where(Empleado.nombre_completo.ilike(f"%{search}%"))

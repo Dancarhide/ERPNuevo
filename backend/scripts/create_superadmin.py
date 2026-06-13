@@ -59,6 +59,7 @@ async def create_superadmin(email: str):
             email=email,
             rol_id=superadmin_rol.id,
             estatus="Activo",
+            es_sistema=True,
         )
         session.add(empleado)
         await session.commit()

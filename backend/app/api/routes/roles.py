@@ -39,8 +39,12 @@ async def get_roles(
     current_user: Annotated[Empleado, Depends(RequirePermission("ver_configuracion"))],
 ) -> Any:
     # Obtener roles junto con su área, contar empleados y obtener permisos
-    query = select(Rol).options(
-        selectinload(Rol.area), selectinload(Rol.empleados), selectinload(Rol.rol_permisos)
+    query = (
+        select(Rol)
+        .options(
+            selectinload(Rol.area), selectinload(Rol.empleados), selectinload(Rol.rol_permisos)
+        )
+        .where(Rol.es_sistema.is_(False))
     )
     result = await session.execute(query)
     roles = result.scalars().all()

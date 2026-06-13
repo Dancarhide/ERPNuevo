@@ -75,6 +75,7 @@ class Empleado(Base, AuditoriaMixin):
     # Trabajo
     fecha_ingreso = Column(Date, nullable=True)
     estatus = Column(String(15), default="Activo", nullable=False)
+    es_sistema = Column(Boolean, default=False, nullable=False, server_default="false")
     dias_vacaciones_disponibles = Column(Integer, default=12, nullable=False)
     sueldo = Column(Numeric(10, 2), default=0.00, nullable=False)
     sueldo_fiscal = Column(Numeric(10, 2), default=0.00, nullable=False)

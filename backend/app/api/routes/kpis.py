@@ -27,14 +27,16 @@ async def get_headcount_kpis(
 ):
     # Total activos
     res_total = await session.execute(
-        select(func.count(Empleado.id)).where(Empleado.estatus == "Activo")
+        select(func.count(Empleado.id)).where(
+            Empleado.estatus == "Activo", Empleado.es_sistema.is_(False)
+        )
     )
     total_activos = res_total.scalar_one_or_none() or 0
 
     # Por Género
     res_genero = await session.execute(
         select(Empleado.sexo, func.count(Empleado.id))
-        .where(Empleado.estatus == "Activo")
+        .where(Empleado.estatus == "Activo", Empleado.es_sistema.is_(False))
         .group_by(Empleado.sexo)
     )
     por_genero = [
@@ -46,7 +48,7 @@ async def get_headcount_kpis(
     res_area = await session.execute(
         select(Area.nombre_area, func.count(Empleado.id))
         .outerjoin(Area, Empleado.area_id == Area.id)
-        .where(Empleado.estatus == "Activo")
+        .where(Empleado.estatus == "Activo", Empleado.es_sistema.is_(False))
         .group_by(Area.nombre_area)
     )
     por_area = [
@@ -57,7 +59,9 @@ async def get_headcount_kpis(
     # Antigüedad promedio en años (calculado en Python para agnósticidad de DB)
     res_fechas = await session.execute(
         select(Empleado.fecha_ingreso).where(
-            Empleado.estatus == "Activo", Empleado.fecha_ingreso.isnot(None)
+            Empleado.estatus == "Activo",
+            Empleado.fecha_ingreso.isnot(None),
+            Empleado.es_sistema.is_(False),
         )
     )
     fechas = res_fechas.scalars().all()
@@ -85,7 +89,9 @@ async def get_payroll_kpis(
 ):
     # Nómina Total
     res_nomina = await session.execute(
-        select(func.sum(Empleado.sueldo)).where(Empleado.estatus == "Activo")
+        select(func.sum(Empleado.sueldo)).where(
+            Empleado.estatus == "Activo", Empleado.es_sistema.is_(False)
+        )
     )
     nomina_total = res_nomina.scalar_one_or_none() or 0.0
 
@@ -93,7 +99,7 @@ async def get_payroll_kpis(
     res_avg = await session.execute(
         select(Area.nombre_area, func.avg(Empleado.sueldo))
         .outerjoin(Area, Empleado.area_id == Area.id)
-        .where(Empleado.estatus == "Activo")
+        .where(Empleado.estatus == "Activo", Empleado.es_sistema.is_(False))
         .group_by(Area.nombre_area)
     )
 
