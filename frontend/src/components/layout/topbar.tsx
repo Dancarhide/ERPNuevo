@@ -41,7 +41,7 @@ export function Topbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const { subscribe } = useWebSocket();
 
-  const userName = user?.email?.split('@')[0] || 'Administrador';
+  const userName = user?.nombre_completo || user?.email?.split('@')[0] || 'Administrador';
   const userRole = (user as { is_superuser?: boolean })?.is_superuser
     ? 'Súper Administrador'
     : 'Empleado';

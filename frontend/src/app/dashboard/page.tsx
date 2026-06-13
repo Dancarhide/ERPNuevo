@@ -137,11 +137,11 @@ export default function DashboardPage() {
       style={{ backgroundImage: bgPattern, backgroundRepeat: 'repeat' }}
     >
       <div className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-[1.75rem] font-bold text-[#44474A] tracking-[-0.02em] mb-1">
-            Bienvenido de vuelta, {user?.email?.split('@')[0] || 'Usuario'}
+        <div className="flex flex-col">
+          <h1 className="text-[2rem] font-bold text-[#44474A] tracking-[-0.02em] leading-tight">
+            Bienvenido de vuelta, {user?.nombre_completo || user?.email?.split('@')[0] || 'Usuario'}
           </h1>
-          <p className="text-[#858789] text-[1rem]">Resumen general de las operaciones de hoy.</p>
+          <p className="text-[1rem] text-[#858789]">Aquí tienes un resumen de tu espacio hoy.</p>
         </div>
         {hasChanges && (
           <button

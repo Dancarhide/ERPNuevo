@@ -26,6 +26,8 @@ export const authApi = {
   getMe: () => fetchApi('/auth/me'),
   logout: () => fetchApi('/auth/logout', { method: 'POST' }),
   getWsToken: () => fetchApi('/auth/ws-token'),
+  changePassword: (new_password: string) =>
+    fetchApi('/auth/change-password', { method: 'POST', body: JSON.stringify({ new_password }) }),
 };
 
 type ApiData = Record<string, unknown>;
