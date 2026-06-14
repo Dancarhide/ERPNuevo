@@ -115,15 +115,15 @@ export default function VacacionesPage() {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <header className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 mb-8 w-full">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Vacaciones y Ausencias</h1>
           <p className="text-gray-500">Gestión de días de descanso</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-[#A7313A] text-white rounded-xl hover:bg-[#85252e] transition-colors shadow-md font-medium"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-[#A7313A] text-white rounded-xl hover:bg-[#85252e] transition-colors shadow-md font-medium w-full md:w-auto"
         >
           <FaPlus /> Nueva Solicitud
         </button>
@@ -174,7 +174,7 @@ export default function VacacionesPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-sm">
                   <th className="p-4 font-medium border-b border-gray-100">Empleado</th>

@@ -70,7 +70,7 @@ async def upload_image(
     """
     Subir una imagen (logo o banner) para la empresa.
     """
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="El archivo no es una imagen válida.")
 
     ext = file.filename.split(".")[-1] if file.filename else "img"

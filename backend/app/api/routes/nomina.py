@@ -568,7 +568,7 @@ async def importar_csv_lote(
     res_noms = await session.execute(
         select(Nomina).where(Nomina.lote_id == lote_id).options(selectinload(Nomina.detalles))
     )
-    nominas_db = {n.empleado_id: n for n in res_noms.scalars().all()}
+    nominas_db: dict[int, Nomina] = {int(n.empleado_id): n for n in res_noms.scalars().all()}
 
     # Obtener catálogo de conceptos
     res_conceptos = await session.execute(select(ConceptoNomina))
@@ -697,7 +697,7 @@ async def update_recibo(
     if data.detalles is not None:
         # Eliminar detalles existentes y reemplazar
         for d in nomina.detalles:
-            session.delete(d)
+            await session.delete(d)
         await session.flush()
 
         perc = Decimal("0.00")

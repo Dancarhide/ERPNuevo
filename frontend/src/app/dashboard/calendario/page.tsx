@@ -191,30 +191,38 @@ export default function CalendarioPage() {
         <div
           key={day}
           onClick={() => openModal(dateStr)}
-          className={`min-h-[120px] p-2 border border-slate-100 rounded-lg hover:border-slate-300 transition-colors cursor-pointer flex flex-col gap-1 ${isToday ? 'bg-blue-50/50' : 'bg-white'}`}
+          className={`min-h-[120px] py-2 border border-slate-100 rounded-lg hover:border-slate-300 transition-colors cursor-pointer flex flex-col gap-1 overflow-hidden ${isToday ? 'bg-blue-50/50' : 'bg-white'}`}
         >
-          <div className="flex justify-between items-center mb-1">
+          <div className="flex justify-between items-center mb-1 px-2">
             <span
               className={`text-sm font-medium ${isToday ? 'bg-[#A7313A] text-white w-7 h-7 rounded-full flex items-center justify-center' : 'text-slate-600'}`}
             >
               {day}
             </span>
           </div>
-          <div className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
-            {dayEvents.map((ev) => (
-              <div
-                key={ev.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openModal(dateStr, ev);
-                }}
-                className="text-xs px-2 py-1 rounded truncate text-white shadow-sm"
-                style={{ backgroundColor: ev.color || '#A7313A' }}
-                title={ev.titulo}
-              >
-                {ev.titulo}
-              </div>
-            ))}
+          <div className="flex-1 flex flex-col gap-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+            {dayEvents.map((ev) => {
+              const isStart = dateStr === ev.fecha_inicio;
+              const isEnd = dateStr === ev.fecha_fin;
+              // Stretch them to the edges of the cell (-mx-2 offsets the cell's p-2 padding)
+              return (
+                <div
+                  key={ev.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openModal(dateStr, ev);
+                  }}
+                  className={`text-[9px] md:text-xs px-1 md:px-2 py-0.5 md:py-1 text-white shadow-sm z-10 relative truncate
+                    ${isStart ? 'rounded-l-md ml-1 md:ml-2' : 'rounded-l-none ml-0 border-l border-white/20'}
+                    ${isEnd ? 'rounded-r-md mr-1 md:mr-2' : 'rounded-r-none mr-0'}
+                  `}
+                  style={{ backgroundColor: ev.color || '#A7313A' }}
+                  title={ev.titulo}
+                >
+                  {isStart ? ev.titulo : '\u00A0'}
+                </div>
+              );
+            })}
           </div>
         </div>
       );

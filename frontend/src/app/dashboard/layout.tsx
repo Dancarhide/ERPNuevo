@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { AuthProvider, useAuth } from '@/components/auth-provider';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (loading) {
     return (
@@ -25,10 +27,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       className="flex flex-col min-h-screen bg-[#F8F9FA] text-[#44474A] font-sans"
       style={{ backgroundImage: bgPattern, backgroundRepeat: 'repeat' }}
     >
-      <Topbar />
+      <Topbar onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
       <div className="flex flex-1 pt-[70px]">
-        <Sidebar />
-        <main className="flex-1 transition-all duration-300 relative min-w-0">{children}</main>
+        <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <main className="flex-1 transition-all duration-300 relative min-w-0 max-w-full overflow-x-hidden">
+          {children}
+        </main>
       </div>
     </div>
   );

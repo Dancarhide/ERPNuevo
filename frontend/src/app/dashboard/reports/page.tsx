@@ -13,6 +13,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from 'recharts';
 import { Users, AlertTriangle, Wallet, Clock, Loader2, TrendingUp } from 'lucide-react';
 import { kpiApi } from '@/lib/api';
@@ -247,17 +248,19 @@ export default function ReportsDashboard() {
                   data={headcount?.por_genero || []}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
+                  innerRadius={50}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                  labelLine={false}
+                  label={false}
                 >
                   {(headcount?.por_genero || []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
                 <RechartsTooltip content={<CustomTooltip />} />
+                <Legend verticalAlign="bottom" height={36} />
               </PieChart>
             </ResponsiveContainer>
           </div>

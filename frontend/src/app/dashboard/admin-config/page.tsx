@@ -280,24 +280,24 @@ export default function RolesConfigPage() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <header className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+      <header className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
             <FaShieldAlt className="text-[#A7313A]" /> Roles y Permisos
           </h1>
           <p className="text-gray-500">Gestión de acceso y seguridad del sistema</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <button
             onClick={() => setIsAssignOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm font-medium"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm font-medium w-full sm:w-auto"
           >
             <FaUsers /> Asignar Rol a Empleado
           </button>
           <button
             onClick={openNewRolModal}
-            className="flex items-center gap-2 px-6 py-3 bg-[#A7313A] text-white rounded-xl hover:bg-[#85252e] transition-colors shadow-md font-medium"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#A7313A] text-white rounded-xl hover:bg-[#85252e] transition-colors shadow-md font-medium w-full sm:w-auto"
           >
             <FaPlus /> Crear Rol
           </button>
@@ -360,7 +360,7 @@ export default function RolesConfigPage() {
                       </div>
                     </td>
                     <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => openEditRolModal(rol)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

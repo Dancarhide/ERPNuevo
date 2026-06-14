@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
@@ -183,10 +183,21 @@ function SidebarItem({
   );
 }
 
-export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function Sidebar({
+  mobileMenuOpen,
+  setMobileMenuOpen,
+}: {
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (val: boolean) => void;
+}) {
   const pathname = usePathname();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (mobileMenuOpen && setMobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  }, [pathname]);
 
   const filteredMenuItems = MENU_ITEMS.filter((item) => {
     if (!item.requiredPermission) return true;
@@ -194,38 +205,43 @@ export function Sidebar() {
   });
 
   return (
-    <aside
-      className={`relative flex flex-col shrink-0 bg-[#44474A] text-white shadow-[2px_0_10px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out z-50 overflow-hidden ${
-        isCollapsed ? 'w-[80px]' : 'w-[260px]'
-      }`}
-    >
-      <div className="flex justify-end p-4 hidden md:flex">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-[#E1DFE0] hover:text-[#A7313A] transition-colors"
-        >
-          {isCollapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
-        </button>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[40] md:hidden"
+          onClick={() => setMobileMenuOpen?.(false)}
+        />
+      )}
 
-      <nav className="flex-1 py-6 flex flex-col gap-1.5 overflow-y-auto px-0 custom-scrollbar">
-        <ul className="space-y-1">
-          {filteredMenuItems.map((item) => (
-            <SidebarItem
-              key={item.label}
-              item={item}
-              isActive={pathname === item.path}
-              isCollapsed={isCollapsed}
-              pathname={pathname}
-            />
-          ))}
-        </ul>
-      </nav>
+      <aside
+        className={`fixed md:sticky top-[70px] md:top-[70px] flex flex-col shrink-0 bg-[#44474A] text-white shadow-[2px_0_10px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out z-50 overflow-hidden h-[calc(100vh-70px)]
+          ${mobileMenuOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full w-[260px] md:translate-x-0'}
+        `}
+      >
+        <div className="flex justify-end p-2 hidden md:flex">
+          {/* Spacer to replace button area and keep some top padding */}
+        </div>
 
-      {/* Footer Mobile Only from original CSS */}
-      <div className="hidden md:hidden border-t border-white/10 p-6 bg-black/20">
-        {/* ... user info ... */}
-      </div>
-    </aside>
+        <nav className="flex-1 py-6 flex flex-col gap-1.5 overflow-y-auto px-0 custom-scrollbar">
+          <ul className="space-y-1">
+            {filteredMenuItems.map((item) => (
+              <SidebarItem
+                key={item.label}
+                item={item}
+                isActive={pathname === item.path}
+                isCollapsed={false}
+                pathname={pathname}
+              />
+            ))}
+          </ul>
+        </nav>
+
+        {/* Footer Mobile Only from original CSS */}
+        <div className="hidden md:hidden border-t border-white/10 p-6 bg-black/20">
+          {/* ... user info ... */}
+        </div>
+      </aside>
+    </>
   );
 }

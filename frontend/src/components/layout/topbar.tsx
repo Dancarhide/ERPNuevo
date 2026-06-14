@@ -28,7 +28,7 @@ interface Notification {
   [key: string]: unknown;
 }
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -120,15 +120,19 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-[70px] bg-white border-b border-[#A4A4A4] flex items-center justify-between px-8 shadow-[0_2px_10px_rgba(0,0,0,0.05)] fixed top-0 left-0 right-0 z-[100]">
-      <div className="flex items-center gap-4">
-        <button className="md:hidden text-[#44474A] p-1">
+    <header className="h-[70px] bg-white border-b border-[#A4A4A4] flex items-center justify-between px-4 md:px-8 shadow-[0_2px_10px_rgba(0,0,0,0.05)] fixed top-0 left-0 right-0 z-[100]">
+      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0 min-w-0">
+        <button onClick={onMenuClick} className="md:hidden text-[#44474A] p-1 flex-shrink-0">
           <Menu size={24} />
         </button>
-        <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" />
+        <img
+          src="/logo.png"
+          alt="Logo"
+          className="h-7 sm:h-8 md:h-10 w-auto object-contain flex-shrink-0 max-w-[120px] sm:max-w-[160px] md:max-w-none"
+        />
       </div>
 
-      <div className="flex items-center gap-5" ref={dropdownRef}>
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-5 flex-shrink-0" ref={dropdownRef}>
         <button
           onClick={() => setTodoOpen(true)}
           className="flex items-center justify-center w-[38px] h-[38px] rounded-[10px] bg-[#f8fafc] border border-[#e2e8f0] text-[#858789] hover:text-[#A7313A] hover:bg-white hover:border-[#A7313A] hover:shadow-[0_4px_12px_rgba(167,49,58,0.12)] transition-all"
@@ -207,7 +211,7 @@ export function Topbar() {
           )}
         </button>
 
-        <div className="relative flex items-center gap-2 ml-2">
+        <div className="relative flex items-center gap-1 md:gap-2 ml-1 md:ml-2">
           <div
             className="flex items-center gap-2 p-1.5 rounded-lg cursor-pointer hover:bg-[#E1DFE0] transition-colors"
             onClick={() => setDropdownOpen(!dropdownOpen)}

@@ -119,15 +119,15 @@ export default function IncidenciasPage() {
   };
 
   return (
-    <div className="p-8 h-[calc(100vh-70px)] flex flex-col">
-      <div className="flex justify-between items-center mb-6 shrink-0">
+    <div className="p-4 md:p-8 h-[calc(100vh-70px)] flex flex-col overflow-hidden">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 md:gap-0 mb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-[#44474A]">Incidencias</h1>
           <p className="text-[#858789]">Gestión de incidencias, reportes y reconocimientos.</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#A7313A] text-white rounded-xl font-medium hover:bg-[#8a272f] transition-all shadow-[0_4px_12px_rgba(167,49,58,0.2)]"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#A7313A] text-white rounded-xl font-medium hover:bg-[#8a272f] transition-all shadow-[0_4px_12px_rgba(167,49,58,0.2)] w-full md:w-auto"
         >
           <Plus size={20} /> Nueva Incidencia
         </button>
@@ -144,7 +144,7 @@ export default function IncidenciasPage() {
             return (
               <div
                 key={col}
-                className="w-[320px] shrink-0 flex flex-col bg-transparent border border-[#E1DFE0] rounded-2xl p-4"
+                className="w-[280px] md:w-[320px] shrink-0 flex flex-col bg-transparent border border-[#E1DFE0] rounded-2xl p-4"
                 onDragOver={onDragOver}
                 onDrop={(e) => onDrop(e, col)}
               >

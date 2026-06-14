@@ -35,7 +35,21 @@ async def read_campanias(
     result = await session.execute(
         select(CampaniaClima).order_by(CampaniaClima.fecha_inicio.desc())
     )
-    return result.scalars().all()
+    campanias = result.scalars().all()
+
+    # Auto-cerrar campañas cuya fecha_fin ya pasó
+    hoy = date.today()
+    updated = False
+    for c in campanias:
+        if c.activa and c.fecha_fin < hoy:
+            c.activa = False
+            session.add(c)
+            updated = True
+
+    if updated:
+        await session.commit()
+
+    return campanias
 
 
 @router.post("/campanias", response_model=CampaniaClimaResponse)

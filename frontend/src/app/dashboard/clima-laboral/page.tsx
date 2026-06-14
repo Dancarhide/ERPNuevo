@@ -350,7 +350,7 @@ export default function ClimaLaboralPage() {
                       <label className="block text-sm font-semibold text-slate-700">
                         1. ¿En qué nivel trabajas?
                       </label>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {['Gerencial', 'Administrativo', 'Operativo'].map((opt) => (
                           <button
                             key={opt}
@@ -373,7 +373,7 @@ export default function ClimaLaboralPage() {
                       <label className="block text-sm font-semibold text-slate-700">
                         2. ¿Dónde trabajas?
                       </label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {['Corporativo', 'Sucursal'].map((opt) => (
                           <button
                             key={opt}
@@ -435,7 +435,7 @@ export default function ClimaLaboralPage() {
                             </button>
                           </div>
 
-                          <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                             {[
                               { v: 1, l: 'Total desacuerdo', e: '😞' },
                               { v: 2, l: 'En desacuerdo', e: '😐' },
