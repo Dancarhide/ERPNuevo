@@ -84,8 +84,8 @@ def upgrade() -> None:
 
     # 3. Asegurar que existe el rol Superadmin
     op.execute("""
-    INSERT INTO roles (nombre_rol, descripcion, es_sistema, nivel_jerarquia, creado_en, actualizado_en)
-    SELECT 'Superadmin', 'Administrador Global del ERP', true, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    INSERT INTO roles (nombre_rol, descripcion, es_sistema, nivel_jerarquia, activo, creado_en, actualizado_en)
+    SELECT 'Superadmin', 'Administrador Global del ERP', true, 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
     WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nombre_rol = 'Superadmin');
     """)
 
