@@ -283,7 +283,7 @@ export default function ReclutamientoPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-[#F8F9FA] border-b border-[#F3F4F6]">
+              <thead className="bg-transparent border-b border-[#F3F4F6]">
                 <tr>
                   <th className="px-6 py-4 font-semibold text-[#858789] uppercase tracking-wide text-xs">
                     Puesto
@@ -338,7 +338,7 @@ export default function ReclutamientoPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#F8F9FA] border border-[#E5E7EB] text-[#44474A] font-semibold text-xs shadow-sm">
+                        <div className="inline-flex items-center px-3 py-1.5 rounded-lg bg-transparent border border-[#E5E7EB] text-[#44474A] font-semibold text-xs shadow-sm">
                           ${p.sueldo_min?.toLocaleString() || '0'} - $
                           {p.sueldo_max?.toLocaleString() || '0'}
                         </div>
@@ -405,7 +405,7 @@ export default function ReclutamientoPage() {
                         </p>
 
                         <div className="mt-4 pt-3 border-t border-[#F3F4F6] flex justify-between items-center">
-                          <div className="text-xs font-bold text-[#A4A4A4] bg-[#F8F9FA] px-2 py-1 rounded-md">
+                          <div className="text-xs font-bold text-[#A4A4A4] bg-transparent px-2 py-1 rounded-md">
                             ID: {c.id}
                           </div>
                           <select
@@ -506,7 +506,7 @@ export default function ReclutamientoPage() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#F8F9FA] p-4 rounded-xl border border-[#E5E7EB]">
+                    <div className="bg-transparent p-4 rounded-xl border border-[#E5E7EB]">
                       <p className="text-xs font-bold text-[#858789] uppercase tracking-wider mb-1">
                         Ocupación
                       </p>
@@ -517,7 +517,7 @@ export default function ReclutamientoPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="bg-[#F8F9FA] p-4 rounded-xl border border-[#E5E7EB]">
+                    <div className="bg-transparent p-4 rounded-xl border border-[#E5E7EB]">
                       <p className="text-xs font-bold text-[#858789] uppercase tracking-wider mb-1">
                         ID Puesto
                       </p>

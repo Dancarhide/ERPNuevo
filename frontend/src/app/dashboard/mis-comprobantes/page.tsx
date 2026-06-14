@@ -45,8 +45,8 @@ interface Nomina {
   detalles: Detalle[];
 }
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v);
+const fmt = (v: number | string) =>
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(v) || 0);
 const fmtDate = (d: string) =>
   new Date(d + 'T00:00:00').toLocaleDateString('es-MX', {
     day: '2-digit',
@@ -120,7 +120,7 @@ export default function MisComprobantesPage() {
   // Calcular resumen total
   const totalNeto = nominas
     .filter((n) => n.estado === 'Pagado')
-    .reduce((acc, n) => acc + n.neto_pagar, 0);
+    .reduce((acc, n) => acc + Number(n.neto_pagar || 0), 0);
   const ultimoRecibo = nominas[0];
 
   return (

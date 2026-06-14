@@ -25,7 +25,10 @@ interface Asistencia {
   empleado_nombre: string;
   fecha: string;
   hora_entrada: string | null;
+  hora_salida_descanso: string | null;
+  hora_entrada_descanso: string | null;
   hora_salida: string | null;
+  tiempo_efectivo_minutos: number;
   tipo: string;
   justificacion: string | null;
 }
@@ -329,11 +332,13 @@ export default function GestionAsistenciaPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="bg-[#F8F9FA] text-[#858789] text-[0.85rem] uppercase tracking-wider border-b border-[#E1DFE0]">
+                  <tr className="bg-transparent text-[#858789] text-[0.85rem] uppercase tracking-wider border-b border-[#E1DFE0]">
                     <th className="px-6 py-4 font-semibold">Empleado</th>
                     <th className="px-6 py-4 font-semibold">Fecha</th>
                     <th className="px-6 py-4 font-semibold">Entrada</th>
+                    <th className="px-6 py-4 font-semibold">Descanso (Inicio/Fin)</th>
                     <th className="px-6 py-4 font-semibold">Salida</th>
+                    <th className="px-6 py-4 font-semibold">Hrs. Trabajadas</th>
                     <th className="px-6 py-4 font-semibold">Estatus</th>
                   </tr>
                 </thead>
@@ -359,7 +364,7 @@ export default function GestionAsistenciaPage() {
                     </tr>
                   ) : (
                     asistencias.map((a) => (
-                      <tr key={a.id} className="hover:bg-[#F8F9FA] transition-colors group">
+                      <tr key={a.id} className="hover:bg-transparent transition-colors group">
                         <td className="px-6 py-4">
                           <div className="font-bold text-[#44474A]">{a.empleado_nombre}</div>
                         </td>
@@ -374,11 +379,28 @@ export default function GestionAsistenciaPage() {
                           )}
                         </td>
                         <td className="px-6 py-4">
+                          {a.hora_salida_descanso || a.hora_entrada_descanso ? (
+                            <span className="text-[#858789] text-sm">
+                              {a.hora_salida_descanso || '--:--'} a{' '}
+                              {a.hora_entrada_descanso || '--:--'}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-sm italic">No aplica</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
                           {a.hora_salida ? (
                             <span className="text-[#44474A] font-medium">{a.hora_salida}</span>
                           ) : (
                             <span className="text-gray-400 text-sm italic">Sin registro</span>
                           )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[#44474A] font-semibold text-sm">
+                            {a.tiempo_efectivo_minutos > 0
+                              ? `${(a.tiempo_efectivo_minutos / 60).toFixed(1)} hrs`
+                              : '0 hrs'}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           {a.tipo === 'Normal' ? (
@@ -409,14 +431,14 @@ export default function GestionAsistenciaPage() {
                   <button
                     disabled={page === 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-[#F8F9FA] hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
+                    className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-transparent hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
                   >
                     Anterior
                   </button>
                   <button
                     disabled={asistencias.length < 20}
                     onClick={() => setPage((p) => p + 1)}
-                    className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-[#F8F9FA] hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
+                    className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-transparent hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
                   >
                     Siguiente
                   </button>

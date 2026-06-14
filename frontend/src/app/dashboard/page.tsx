@@ -36,8 +36,6 @@ export default function DashboardPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const bgPattern = `url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.03'%3E%3Ccircle cx='50' cy='50' r='14' fill='%236B7280'/%3E%3Crect x='14' y='14' width='14' height='14' fill='%236B7280'/%3E%3Crect x='72' y='14' width='14' height='14' fill='%236B7280'/%3E%3Crect x='14' y='72' width='14' height='14' fill='%236B7280'/%3E%3Crect x='72' y='72' width='14' height='14' fill='%236B7280'/%3E%3Cpath d='M50 15v14.5M34.5 29.5h31M50 85V70.5M34.5 70.5h31M15 50h14.5M29.5 34.5v31M85 50H70.5M70.5 34.5v31' fill='none' stroke='%2344474A' stroke-width='3.5'/%3E%3C/g%3E%3C/svg%3E")`;
-
   useEffect(() => {
     let mounted = true;
     const fetchConfig = async () => {
@@ -96,7 +94,7 @@ export default function DashboardPage() {
 
   if (loadingConfig) {
     return (
-      <div className="w-full min-h-[calc(100vh-70px)] bg-[#F8F9FA] flex items-center justify-center">
+      <div className="w-full min-h-[calc(100vh-70px)] bg-transparent flex items-center justify-center">
         <Loader2 className="animate-spin text-gray-400" size={32} />
       </div>
     );
@@ -132,10 +130,7 @@ export default function DashboardPage() {
   const panelWidgets = orderedAllowedWidgets.filter((w) => w.type === 'panel');
 
   return (
-    <div
-      className="w-full min-h-[calc(100vh-70px)] bg-[#F8F9FA] p-6 md:p-8"
-      style={{ backgroundImage: bgPattern, backgroundRepeat: 'repeat' }}
-    >
+    <div className="w-full min-h-[calc(100vh-70px)] bg-transparent p-6 md:p-8">
       <div className="mb-6 flex justify-between items-start">
         <div className="flex flex-col">
           <h1 className="text-[2rem] font-bold text-[#44474A] tracking-[-0.02em] leading-tight">

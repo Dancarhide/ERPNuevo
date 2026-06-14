@@ -87,6 +87,22 @@ export default function AdminEmpresaPage() {
     }));
   };
 
+  const handleUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'logo_url' | 'banner_url'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await empresaApi.uploadImage(file);
+      setInfo((prev) => ({ ...prev, [field]: `http://localhost:8000${res.url}` }));
+      showToast('Imagen subida. No olvides guardar cambios.', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al subir imagen', 'error');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-gray-500">
@@ -100,7 +116,7 @@ export default function AdminEmpresaPage() {
     <div className="p-6 max-w-5xl mx-auto">
       {toast && (
         <div
-          className={`fixed top-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-semibold flex items-center gap-2 animate-in slide-in-from-top-4 ${
+          className={`fixed top-24 right-6 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-semibold flex items-center gap-2 animate-in slide-in-from-top-4 ${
             toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
           }`}
         >
@@ -222,27 +238,63 @@ export default function AdminEmpresaPage() {
 
           {/* URLs */}
           <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-            <h3 className="mb-4 text-lg font-bold text-gray-800">Recursos Visuales (URLs)</h3>
-            <div className="flex flex-col gap-4">
+            <h3 className="mb-4 text-lg font-bold text-gray-800">
+              Recursos Visuales (URLs o Subida)
+            </h3>
+            <div className="flex flex-col gap-6">
               <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-600">Logo URL</label>
-                <input
-                  type="text"
-                  value={info.logo_url}
-                  onChange={(e) => setInfo({ ...info, logo_url: e.target.value })}
-                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="https://ejemplo.com/logo.png"
-                />
+                <label className="block mb-2 text-sm font-semibold text-gray-600">
+                  Logo (URL o Archivo)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={info.logo_url}
+                    onChange={(e) => setInfo({ ...info, logo_url: e.target.value })}
+                    className="flex-1 p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    placeholder="https://ejemplo.com/logo.png"
+                  />
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg, image/svg+xml"
+                    onChange={(e) => handleUpload(e, 'logo_url')}
+                    className="hidden"
+                    id="upload-logo"
+                  />
+                  <label
+                    htmlFor="upload-logo"
+                    className="cursor-pointer px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl border border-gray-200 transition-colors flex items-center"
+                  >
+                    Subir
+                  </label>
+                </div>
               </div>
               <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-600">Banner URL</label>
-                <input
-                  type="text"
-                  value={info.banner_url}
-                  onChange={(e) => setInfo({ ...info, banner_url: e.target.value })}
-                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="https://ejemplo.com/banner.jpg"
-                />
+                <label className="block mb-2 text-sm font-semibold text-gray-600">
+                  Banner (URL o Archivo)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={info.banner_url}
+                    onChange={(e) => setInfo({ ...info, banner_url: e.target.value })}
+                    className="flex-1 p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    placeholder="https://ejemplo.com/banner.jpg"
+                  />
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg, image/svg+xml"
+                    onChange={(e) => handleUpload(e, 'banner_url')}
+                    className="hidden"
+                    id="upload-banner"
+                  />
+                  <label
+                    htmlFor="upload-banner"
+                    className="cursor-pointer px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl border border-gray-200 transition-colors flex items-center"
+                  >
+                    Subir
+                  </label>
+                </div>
               </div>
             </div>
           </div>

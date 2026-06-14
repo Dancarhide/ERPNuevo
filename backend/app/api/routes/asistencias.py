@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
+from sqlalchemy import Date, cast, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -160,30 +160,104 @@ async def update_asistencia(
 
 
 async def procesar_checada(session: AsyncSession, empleado_id: int, timestamp: datetime) -> None:
-    # Lógica para consolidar en Asistencia
+    # Lógica para consolidar en Asistencia (4 checadas y tiempo efectivo)
     fecha = timestamp.date()
-    hora_str = timestamp.strftime("%H:%M")
 
-    # Buscar asistencia de ese día
+    # 1. Obtener todas las checadas del día
+    res_checadas = await session.execute(
+        select(RegistroChecador)
+        .where(RegistroChecador.empleado_id == empleado_id)
+        .where(cast(RegistroChecador.timestamp_checada, Date) == fecha)
+        .order_by(RegistroChecador.timestamp_checada.asc())
+    )
+    checadas = res_checadas.scalars().all()
+
+    # 2. Obtener el registro de Asistencia de ese día
     result = await session.execute(
         select(Asistencia).where(Asistencia.empleado_id == empleado_id, Asistencia.fecha == fecha)
     )
     asistencia = result.scalar_one_or_none()
 
     if not asistencia:
-        asistencia = Asistencia(
-            empleado_id=empleado_id, fecha=fecha, hora_entrada=hora_str, tipo="Normal"
-        )
+        asistencia = Asistencia(empleado_id=empleado_id, fecha=fecha, tipo="Normal")
         session.add(asistencia)
-    else:
-        # Si ya existe, actualizamos entrada o salida según convenga
-        if not asistencia.hora_entrada:
-            asistencia.hora_entrada = hora_str  # type: ignore
+
+    # 3. Asignar las 4 checadas según la cantidad
+    cantidad = len(checadas)
+    asistencia.hora_entrada = None
+    asistencia.hora_salida = None
+    asistencia.hora_salida_descanso = None
+    asistencia.hora_entrada_descanso = None
+
+    if cantidad > 0:
+        asistencia.hora_entrada = checadas[0].timestamp_checada.strftime("%H:%M")
+
+    if cantidad == 2:
+        # Decidir si la segunda checada es salida o descanso (umbral de 6 horas)
+        delta = checadas[1].timestamp_checada - checadas[0].timestamp_checada
+        if delta.total_seconds() >= 6 * 3600:
+            asistencia.hora_salida = checadas[1].timestamp_checada.strftime("%H:%M")
         else:
-            asistencia.hora_salida = hora_str  # type: ignore
-            # Aquí podríamos hacer reglas más complejas,
-            # pero por ahora simplemente actualizamos la salida al último toque
-        session.add(asistencia)
+            asistencia.hora_salida_descanso = checadas[1].timestamp_checada.strftime("%H:%M")
+
+    elif cantidad == 3:
+        asistencia.hora_salida_descanso = checadas[1].timestamp_checada.strftime("%H:%M")
+        asistencia.hora_entrada_descanso = checadas[2].timestamp_checada.strftime("%H:%M")
+
+    elif cantidad >= 4:
+        asistencia.hora_salida_descanso = checadas[1].timestamp_checada.strftime("%H:%M")
+        asistencia.hora_entrada_descanso = checadas[2].timestamp_checada.strftime("%H:%M")
+        asistencia.hora_salida = checadas[-1].timestamp_checada.strftime("%H:%M")  # El último toque
+
+    # 4. Calcular tiempo efectivo
+    minutos = 0
+    if cantidad >= 2:
+        delta1 = checadas[1].timestamp_checada - checadas[0].timestamp_checada
+        minutos += int(delta1.total_seconds() / 60)
+    if cantidad >= 4:
+        delta2 = checadas[-1].timestamp_checada - checadas[2].timestamp_checada
+        minutos += int(delta2.total_seconds() / 60)
+
+    asistencia.tiempo_efectivo_minutos = max(0, minutos)
+
+    # 5. Lógica de Incidencias (Retardo)
+    from app.models.asistencia import Incidencia
+    from app.models.empleados import Empleado
+
+    emp = await session.get(Empleado, empleado_id)
+    if emp and emp.turno_entrada and asistencia.hora_entrada:
+        # Convertir a minutos desde medianoche
+        h_ent, m_ent = map(int, asistencia.hora_entrada.split(":"))
+        h_tur, m_tur = map(int, emp.turno_entrada.split(":"))
+
+        mins_ent = h_ent * 60 + m_ent
+        mins_tur = h_tur * 60 + m_tur
+
+        tolerancia = 15  # 15 minutos de tolerancia
+        if mins_ent > (mins_tur + tolerancia):
+            # Verificar si ya tiene incidencia de retardo para ese día
+            res_inc = await session.execute(
+                select(Incidencia).where(
+                    Incidencia.empleado_reportado_id == empleado_id,
+                    Incidencia.fecha_incidencia == fecha,
+                    Incidencia.tipo == "Retardo",
+                )
+            )
+            inc_existente = res_inc.scalar_one_or_none()
+            if not inc_existente:
+                nueva_incidencia = Incidencia(
+                    empleado_reportado_id=empleado_id,
+                    titulo="Retardo Automático",
+                    tipo="Retardo",
+                    fecha_incidencia=fecha,
+                    estatus="Aprobada",
+                    descripcion=(
+                        f"Retardo automático. Llegó a las {asistencia.hora_entrada} "
+                        f"(Turno: {emp.turno_entrada})"
+                    ),
+                )
+                session.add(nueva_incidencia)
+
     await session.commit()
 
 
@@ -194,6 +268,39 @@ async def registrar_checada_web(
 ) -> Any:
     """Endpoint para que el empleado activo registre su asistencia vía web"""
     ahora = datetime.now()
+
+    from app.core.config import settings
+
+    if getattr(settings, "ENVIRONMENT", "dev") == "dev":
+        from datetime import timedelta
+
+        # Simulador de checadas para pruebas
+        res_ultimo = await session.execute(
+            select(RegistroChecador)
+            .where(RegistroChecador.empleado_id == current_user.id)
+            .order_by(RegistroChecador.timestamp_checada.desc())
+            .limit(1)
+        )
+        ultimo = res_ultimo.scalar_one_or_none()
+
+        if ultimo:
+            fecha_ultimo = ultimo.timestamp_checada.date()
+            res_count = await session.execute(
+                select(func.count())
+                .select_from(RegistroChecador)
+                .where(RegistroChecador.empleado_id == current_user.id)
+                .where(cast(RegistroChecador.timestamp_checada, Date) == fecha_ultimo)
+            )
+            count = res_count.scalar_one()
+
+            if count >= 4:
+                # Mover al siguiente día si ya completó el ciclo (4 checadas)
+                ahora = datetime.combine(fecha_ultimo + timedelta(days=1), datetime.now().time())
+            else:
+                # Mantener el día simulado actual, pero usar la hora real
+                # (Quitamos el salto de 2 horas para que sea en tiempo real)
+                ahora = datetime.combine(fecha_ultimo, datetime.now().time())
+
     nuevo_registro = RegistroChecador(
         empleado_id=current_user.id, timestamp_checada=ahora, metodo="Web", procesado=True
     )

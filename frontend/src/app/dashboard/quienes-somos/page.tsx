@@ -67,15 +67,15 @@ export default function QuienesSomosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-transparent pb-20">
       {/* Hero Section */}
-      <div className="relative w-full h-[40vh] min-h-[300px] overflow-hidden bg-slate-900 rounded-b-[3rem] shadow-xl">
+      <div className="relative w-full h-[45vh] min-h-[350px] overflow-hidden bg-slate-900 rounded-b-[3rem] shadow-xl pb-16">
         {info.banner_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={info.banner_url}
             alt="Banner de la empresa"
-            className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
+            className="absolute inset-0 w-full h-full object-cover object-center"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
@@ -85,17 +85,17 @@ export default function QuienesSomosPage() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.7, ease: 'backOut' }}
-            className="mb-6 bg-white/10 p-4 rounded-3xl backdrop-blur-md border border-white/20 shadow-2xl"
+            className="mb-6 bg-white/10 rounded-3xl backdrop-blur-md border border-white/20 shadow-2xl inline-flex items-center justify-center overflow-hidden"
           >
             {info.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={info.logo_url}
                 alt="Logo"
-                className="w-auto h-24 object-contain drop-shadow-md"
+                className="max-w-[280px] max-h-24 w-auto h-auto object-contain drop-shadow-md"
               />
             ) : (
-              <FaBuilding className="w-20 h-20 text-white drop-shadow-lg" />
+              <FaBuilding className="w-16 h-16 text-white drop-shadow-lg" />
             )}
           </motion.div>
           <motion.h1

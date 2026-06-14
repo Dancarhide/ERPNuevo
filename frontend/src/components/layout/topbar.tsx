@@ -125,14 +125,7 @@ export function Topbar() {
         <button className="md:hidden text-[#44474A] p-1">
           <Menu size={24} />
         </button>
-        <Image
-          src="/logo.png"
-          alt="Logo"
-          width={120}
-          height={40}
-          style={{ width: 'auto', height: '40px' }}
-          priority
-        />
+        <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" />
       </div>
 
       <div className="flex items-center gap-5" ref={dropdownRef}>

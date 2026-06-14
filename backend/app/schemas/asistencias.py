@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -26,8 +26,11 @@ class RegistroChecadorResponse(RegistroChecadorBase):
 class AsistenciaBase(BaseModel):
     fecha: date
     tipo: str
-    hora_entrada: Optional[time] = None
-    hora_salida: Optional[time] = None
+    hora_entrada: Optional[str] = None
+    hora_salida_descanso: Optional[str] = None
+    hora_entrada_descanso: Optional[str] = None
+    hora_salida: Optional[str] = None
+    tiempo_efectivo_minutos: int = 0
     justificacion: Optional[str] = None
 
 
@@ -37,8 +40,11 @@ class AsistenciaCreate(AsistenciaBase):
 
 class AsistenciaUpdate(BaseModel):
     tipo: Optional[str] = None
-    hora_entrada: Optional[time] = None
-    hora_salida: Optional[time] = None
+    hora_entrada: Optional[str] = None
+    hora_salida_descanso: Optional[str] = None
+    hora_entrada_descanso: Optional[str] = None
+    hora_salida: Optional[str] = None
+    tiempo_efectivo_minutos: Optional[int] = None
     justificacion: Optional[str] = None
 
 

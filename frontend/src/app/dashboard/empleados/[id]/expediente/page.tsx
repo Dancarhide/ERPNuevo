@@ -86,7 +86,7 @@ export default function ExpedienteEmpleadoPage({ params }: { params: Promise<{ i
       <div className="flex justify-between items-center mb-8 print:hidden">
         <button
           onClick={() => router.back()}
-          className="p-2 bg-white border border-[#E1DFE0] rounded-xl text-[#858789] hover:text-[#44474A] hover:bg-[#F8F9FA] transition-colors shadow-sm"
+          className="p-2 bg-white border border-[#E1DFE0] rounded-xl text-[#858789] hover:text-[#44474A] hover:bg-transparent transition-colors shadow-sm"
         >
           <ArrowLeft size={20} />
         </button>
@@ -291,7 +291,7 @@ export default function ExpedienteEmpleadoPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Footer del PDF */}
-        <div className="bg-[#F8F9FA] p-6 text-center text-xs text-[#858789] border-t border-[#E1DFE0] mt-4 print:mt-auto">
+        <div className="bg-transparent p-6 text-center text-xs text-[#858789] border-t border-[#E1DFE0] mt-4 print:mt-auto">
           <p className="mb-1">Este documento es de uso interno y confidencial.</p>
           <p>Generado por el Sistema ERP Corporativo - Módulo de Recursos Humanos.</p>
         </div>

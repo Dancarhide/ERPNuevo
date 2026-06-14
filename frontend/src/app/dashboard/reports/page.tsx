@@ -117,7 +117,7 @@ export default function ReportsDashboard() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-[1600px] mx-auto bg-slate-50 min-h-screen">
+    <div className="p-6 md:p-8 space-y-8 max-w-[1600px] mx-auto bg-transparent min-h-screen">
       <header className="mb-10">
         <h1 className="text-3xl font-extrabold text-slate-800 mb-2">Dashboard Ejecutivo</h1>
         <p className="text-slate-500">Métricas en tiempo real y análisis organizacional.</p>

@@ -34,6 +34,8 @@ export default function NuevoEmpleadoPage() {
     salud_nss: '',
     salud_tipo_sangre: '',
     salud_discapacidad: false,
+    turno_entrada: '09:00',
+    turno_salida: '18:00',
   });
 
   useEffect(() => {
@@ -80,6 +82,8 @@ export default function NuevoEmpleadoPage() {
           tipo_sangre: formData.salud_tipo_sangre || null,
           discapacidad: formData.salud_discapacidad,
         },
+        turno_entrada: formData.turno_entrada,
+        turno_salida: formData.turno_salida,
       };
 
       if (formData.familiar_nombre || formData.familiar_telefono || formData.familiar_parentesco) {
@@ -129,7 +133,7 @@ export default function NuevoEmpleadoPage() {
             continuación y compártela con el empleado, ya que no podrá visualizarse de nuevo.
           </p>
 
-          <div className="bg-[#F8F9FA] rounded-xl p-6 mb-8 border border-[#E1DFE0] max-w-md mx-auto">
+          <div className="bg-transparent rounded-xl p-6 mb-8 border border-[#E1DFE0] max-w-md mx-auto">
             <p className="text-sm text-[#858789] mb-2 font-semibold uppercase tracking-wider">
               Contraseña Temporal
             </p>
@@ -170,7 +174,7 @@ export default function NuevoEmpleadoPage() {
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => router.back()}
-          className="p-2 bg-white border border-[#E1DFE0] rounded-xl text-[#858789] hover:text-[#44474A] hover:bg-[#F8F9FA] transition-colors"
+          className="p-2 bg-white border border-[#E1DFE0] rounded-xl text-[#858789] hover:text-[#44474A] hover:bg-transparent transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
@@ -344,6 +348,32 @@ export default function NuevoEmpleadoPage() {
               />
             </div>
           </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Turno Entrada *
+            </label>
+            <input
+              type="time"
+              required
+              name="turno_entrada"
+              value={formData.turno_entrada}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Turno Salida *
+            </label>
+            <input
+              type="time"
+              required
+              name="turno_salida"
+              value={formData.turno_salida}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            />
+          </div>
         </div>
 
         <h2 className="text-[1.25rem] font-bold text-[#44474A] mb-6 mt-4 pb-4 border-b border-[#F3F4F6]">
@@ -443,7 +473,7 @@ export default function NuevoEmpleadoPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-6 py-2.5 text-[#44474A] font-semibold hover:bg-[#F8F9FA] rounded-xl transition-colors"
+            className="px-6 py-2.5 text-[#44474A] font-semibold hover:bg-transparent rounded-xl transition-colors"
           >
             Cancelar
           </button>

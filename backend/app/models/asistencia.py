@@ -34,7 +34,10 @@ class Asistencia(Base, AuditoriaMixin):
     )
     fecha = Column(Date, nullable=False, index=True)
     hora_entrada = Column(String(5), nullable=True)
+    hora_salida_descanso = Column(String(5), nullable=True)
+    hora_entrada_descanso = Column(String(5), nullable=True)
     hora_salida = Column(String(5), nullable=True)
+    tiempo_efectivo_minutos = Column(Integer, default=0, nullable=False)
     tipo = Column(String(20), default="Normal", nullable=False)
     justificacion = Column(String, nullable=True)
     registrado_por_id = Column(

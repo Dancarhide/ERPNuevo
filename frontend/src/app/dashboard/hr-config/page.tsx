@@ -228,7 +228,7 @@ export default function HrConfigPage() {
           ) : activeTab === 'areas' ? (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#F8F9FA] text-[#858789] text-[0.85rem] uppercase tracking-wider">
+                <tr className="bg-transparent text-[#858789] text-[0.85rem] uppercase tracking-wider">
                   <th className="px-6 py-4 font-semibold">ID</th>
                   <th className="px-6 py-4 font-semibold">Nombre del Área</th>
                   <th className="px-6 py-4 font-semibold text-right">Acciones</th>
@@ -243,7 +243,7 @@ export default function HrConfigPage() {
                   </tr>
                 ) : (
                   areas.map((a) => (
-                    <tr key={a.id} className="hover:bg-[#F8F9FA] transition-colors">
+                    <tr key={a.id} className="hover:bg-transparent transition-colors">
                       <td className="px-6 py-4 text-[#858789]">#{a.id}</td>
                       <td className="px-6 py-4 font-medium text-[#44474A]">{a.nombre_area}</td>
                       <td className="px-6 py-4 text-right">
@@ -268,7 +268,7 @@ export default function HrConfigPage() {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#F8F9FA] text-[#858789] text-[0.85rem] uppercase tracking-wider">
+                <tr className="bg-transparent text-[#858789] text-[0.85rem] uppercase tracking-wider">
                   <th className="px-6 py-4 font-semibold">Nombre del Puesto</th>
                   <th className="px-6 py-4 font-semibold">Área Asignada</th>
                   <th className="px-6 py-4 font-semibold">Nivel Jerárquico</th>
@@ -287,7 +287,7 @@ export default function HrConfigPage() {
                     const areaName =
                       areas.find((a) => a.id === p.area_id)?.nombre_area || 'Sin área';
                     return (
-                      <tr key={p.id} className="hover:bg-[#F8F9FA] transition-colors">
+                      <tr key={p.id} className="hover:bg-transparent transition-colors">
                         <td className="px-6 py-4 font-medium text-[#44474A]">{p.nombre_puesto}</td>
                         <td className="px-6 py-4 text-[#858789]">{areaName}</td>
                         <td className="px-6 py-4 text-[#858789]">Nivel {p.hierarchy_level}</td>
@@ -348,7 +348,7 @@ export default function HrConfigPage() {
                 <button
                   type="button"
                   onClick={() => setIsAreaModalOpen(false)}
-                  className="px-5 py-2.5 text-[#44474A] font-medium hover:bg-[#F8F9FA] rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-[#44474A] font-medium hover:bg-transparent rounded-xl transition-colors"
                 >
                   Cancelar
                 </button>
@@ -515,7 +515,7 @@ export default function HrConfigPage() {
                 <button
                   type="button"
                   onClick={() => setIsPuestoModalOpen(false)}
-                  className="px-5 py-2.5 text-[#44474A] font-medium hover:bg-[#F8F9FA] rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-[#44474A] font-medium hover:bg-transparent rounded-xl transition-colors"
                 >
                   Cancelar
                 </button>

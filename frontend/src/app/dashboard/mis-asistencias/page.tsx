@@ -9,7 +9,10 @@ interface Asistencia {
   id: number;
   fecha: string;
   hora_entrada: string | null;
+  hora_salida_descanso: string | null;
+  hora_entrada_descanso: string | null;
   hora_salida: string | null;
+  tiempo_efectivo_minutos: number;
   tipo: string;
 }
 
@@ -84,8 +87,12 @@ export default function MisAsistenciasPage() {
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-sm">
                   <th className="p-4 font-medium border-b border-gray-100">Fecha</th>
-                  <th className="p-4 font-medium border-b border-gray-100">Hora Entrada</th>
-                  <th className="p-4 font-medium border-b border-gray-100">Hora Salida</th>
+                  <th className="p-4 font-medium border-b border-gray-100">Entrada</th>
+                  <th className="p-4 font-medium border-b border-gray-100">
+                    Comida (Salida / Regreso)
+                  </th>
+                  <th className="p-4 font-medium border-b border-gray-100">Salida</th>
+                  <th className="p-4 font-medium border-b border-gray-100">Hrs. Efectivas</th>
                   <th className="p-4 font-medium border-b border-gray-100">Estatus</th>
                 </tr>
               </thead>
@@ -108,11 +115,25 @@ export default function MisAsistenciasPage() {
                       )}
                     </td>
                     <td className="p-4">
+                      {a.hora_salida_descanso || a.hora_entrada_descanso ? (
+                        <span className="text-gray-500 text-sm">
+                          {a.hora_salida_descanso || '--:--'} a {a.hora_entrada_descanso || '--:--'}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm italic">No aplica</span>
+                      )}
+                    </td>
+                    <td className="p-4">
                       {a.hora_salida ? (
                         <span className="text-gray-800 font-medium">{a.hora_salida}</span>
                       ) : (
                         <span className="text-gray-400 text-sm italic">Sin registro</span>
                       )}
+                    </td>
+                    <td className="p-4 font-semibold text-gray-700">
+                      {a.tiempo_efectivo_minutos > 0
+                        ? `${(a.tiempo_efectivo_minutos / 60).toFixed(1)} hrs`
+                        : '0 hrs'}
                     </td>
                     <td className="p-4">
                       {a.tipo === 'Normal' ? (

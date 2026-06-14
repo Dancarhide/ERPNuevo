@@ -307,7 +307,7 @@ export default function EvaluacionesPage() {
         </div>
 
         {/* Tab Selector */}
-        <div className="flex bg-[#F8F9FA] p-1 rounded-xl border border-[#E5E7EB]">
+        <div className="flex bg-transparent p-1 rounded-xl border border-[#E5E7EB]">
           <button
             onClick={() => setTab('evaluar')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
@@ -433,7 +433,7 @@ export default function EvaluacionesPage() {
                   ) : (
                     <>
                       {tipoActivo !== 'auto_evaluacion' && tipoActivo !== 'satisfaccion' && (
-                        <div className="mb-8 p-6 bg-[#F8F9FA] rounded-2xl border border-[#E5E7EB]">
+                        <div className="mb-8 p-6 bg-transparent rounded-2xl border border-[#E5E7EB]">
                           <label className="text-xs font-bold text-[#858789] uppercase tracking-wider mb-2 block">
                             Selecciona a quién vas a evaluar:
                           </label>
@@ -481,7 +481,7 @@ export default function EvaluacionesPage() {
                                       ${
                                         respuestas[p.id] === String(val)
                                           ? 'border-[#A7313A] bg-[#A7313A] text-white shadow-md scale-110'
-                                          : 'border-[#E5E7EB] bg-[#F8F9FA] text-[#858789] hover:border-[#A7313A] hover:bg-white hover:text-[#A7313A]'
+                                          : 'border-[#E5E7EB] bg-transparent text-[#858789] hover:border-[#A7313A] hover:bg-white hover:text-[#A7313A]'
                                       }
                                     `}
                                   >
@@ -544,7 +544,7 @@ export default function EvaluacionesPage() {
                 {campanias.map((c) => (
                   <div
                     key={c.id}
-                    className="flex justify-between items-center p-4 border border-[#E5E7EB] rounded-xl bg-[#F8F9FA]"
+                    className="flex justify-between items-center p-4 border border-[#E5E7EB] rounded-xl bg-transparent"
                   >
                     <div>
                       <p className="font-bold text-[#44474A]">{c.nombre}</p>
@@ -610,7 +610,7 @@ export default function EvaluacionesPage() {
                   preguntas.map((p, i) => (
                     <div
                       key={p.id}
-                      className="p-6 flex items-center justify-between gap-4 hover:bg-[#F8F9FA] transition-colors group"
+                      className="p-6 flex items-center justify-between gap-4 hover:bg-transparent transition-colors group"
                     >
                       <div className="flex gap-4 items-center">
                         <div className="w-8 h-8 rounded-full bg-[#A7313A]/10 text-[#A7313A] flex items-center justify-center font-bold text-sm">
@@ -643,7 +643,7 @@ export default function EvaluacionesPage() {
               <select
                 value={campaniaSelec}
                 onChange={(e) => setCampaniaSelec(e.target.value ? Number(e.target.value) : '')}
-                className="w-full md:w-1/2 px-4 py-3 bg-[#F8F9FA] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 font-medium text-[#44474A]"
+                className="w-full md:w-1/2 px-4 py-3 bg-transparent border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 font-medium text-[#44474A]"
               >
                 <option value="">-- Todos los ciclos --</option>
                 {campanias.map((c) => (

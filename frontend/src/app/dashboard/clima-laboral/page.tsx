@@ -281,7 +281,7 @@ export default function ClimaLaboralPage() {
             </div>
           ) : !estado.activa ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <div className="bg-slate-50 p-6 rounded-full mb-6">
+              <div className="bg-transparent p-6 rounded-full mb-6">
                 <ClipboardList size={48} className="text-slate-300" />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">No hay encuestas activas</h2>
@@ -305,7 +305,7 @@ export default function ClimaLaboralPage() {
           ) : (
             <div className="flex-1 flex flex-col">
               {/* Wizard Header */}
-              <div className="bg-slate-50 border-b border-slate-100 px-8 py-4 flex justify-between items-center">
+              <div className="bg-transparent border-b border-slate-100 px-8 py-4 flex justify-between items-center">
                 <div className="text-sm font-medium text-slate-500 uppercase tracking-wider">
                   Campaña: {estado.nombre_campania}
                 </div>
@@ -450,7 +450,7 @@ export default function ClimaLaboralPage() {
                                     ? opt.v <= 2
                                       ? 'border-amber-500 bg-amber-50'
                                       : 'border-emerald-500 bg-emerald-50'
-                                    : 'border-slate-100 hover:border-slate-300 bg-slate-50 hover:bg-slate-100'
+                                    : 'border-slate-100 hover:border-slate-300 bg-transparent hover:bg-slate-100'
                                 }`}
                               >
                                 <span className="text-3xl mb-2 grayscale-[0.2]">{opt.e}</span>
@@ -599,7 +599,7 @@ export default function ClimaLaboralPage() {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="bg-slate-50 text-slate-500 uppercase font-semibold text-xs border-b border-slate-200">
+                    <thead className="bg-transparent text-slate-500 uppercase font-semibold text-xs border-b border-slate-200">
                       <tr>
                         <th className="px-6 py-4">Fecha</th>
                         <th className="px-6 py-4">Empleado</th>
@@ -620,7 +620,7 @@ export default function ClimaLaboralPage() {
                           },
                           i: number
                         ) => (
-                          <tr key={i} className="hover:bg-slate-50">
+                          <tr key={i} className="hover:bg-transparent">
                             <td className="px-6 py-4">{r.fecha_respuesta}</td>
                             <td className="px-6 py-4 font-medium text-slate-900">
                               {r.empleado_nombre}
@@ -724,7 +724,7 @@ export default function ClimaLaboralPage() {
                 {campanias.map((c) => (
                   <div
                     key={c.id}
-                    className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100"
+                    className="flex justify-between items-center p-3 bg-transparent rounded-lg border border-slate-100"
                   >
                     <div>
                       <p className="font-bold text-sm text-slate-900">{c.nombre}</p>
@@ -752,7 +752,7 @@ export default function ClimaLaboralPage() {
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
               <h2 className="text-xl font-bold text-slate-800 mb-4">Banco de Preguntas</h2>
 
-              <div className="space-y-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="space-y-4 mb-6 bg-transparent p-4 rounded-xl border border-slate-200">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     Categoría

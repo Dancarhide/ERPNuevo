@@ -1,6 +1,8 @@
+import os
+import uuid
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -58,3 +60,26 @@ async def update_info_empresa(
     await session.commit()
     await session.refresh(info)
     return info
+
+
+@router.post("/upload-image")
+async def upload_image(
+    file: UploadFile = File(...),
+    current_user: Empleado = Depends(RequirePermission("configurar_empresa")),
+) -> Any:
+    """
+    Subir una imagen (logo o banner) para la empresa.
+    """
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="El archivo no es una imagen válida.")
+
+    ext = file.filename.split(".")[-1] if file.filename else "img"
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    os.makedirs("uploads", exist_ok=True)
+    filepath = os.path.join("uploads", filename)
+
+    with open(filepath, "wb") as f:
+        f.write(await file.read())
+
+    # Devolvemos una URL relativa
+    return {"url": f"/uploads/{filename}"}

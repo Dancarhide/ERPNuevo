@@ -22,6 +22,25 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
   return data;
 };
 
+export const uploadApi = async (endpoint: string, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`/api${endpoint}`, {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || 'Ocurrió un error en el servidor al subir el archivo');
+  }
+
+  return data;
+};
+
 export const authApi = {
   getMe: () => fetchApi('/auth/me'),
   logout: () => fetchApi('/auth/logout', { method: 'POST' }),
@@ -152,6 +171,7 @@ export const empresaApi = {
   getInfo: () => fetchApi('/empresa/info'),
   updateInfo: (data: Record<string, unknown>) =>
     fetchApi('/empresa/info', { method: 'PUT', body: JSON.stringify(data) }),
+  uploadImage: (file: File) => uploadApi('/empresa/upload-image', file),
 };
 export const kpiApi = {
   getHeadcount: () => fetchApi('/kpis/headcount'),

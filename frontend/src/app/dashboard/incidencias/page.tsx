@@ -144,7 +144,7 @@ export default function IncidenciasPage() {
             return (
               <div
                 key={col}
-                className="w-[320px] shrink-0 flex flex-col bg-[#F8F9FA] border border-[#E1DFE0] rounded-2xl p-4"
+                className="w-[320px] shrink-0 flex flex-col bg-transparent border border-[#E1DFE0] rounded-2xl p-4"
                 onDragOver={onDragOver}
                 onDrop={(e) => onDrop(e, col)}
               >
@@ -172,7 +172,7 @@ export default function IncidenciasPage() {
                         >
                           {item.gravedad}
                         </span>
-                        <span className="text-[0.75rem] text-[#858789] font-medium bg-[#F8F9FA] px-2 py-0.5 rounded-md">
+                        <span className="text-[0.75rem] text-[#858789] font-medium bg-transparent px-2 py-0.5 rounded-md">
                           {item.tipo}
                         </span>
                       </div>

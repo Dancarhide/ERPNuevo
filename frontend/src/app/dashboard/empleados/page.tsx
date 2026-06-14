@@ -306,7 +306,7 @@ export default function EmpleadosPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#F8F9FA] text-[#858789] text-[0.85rem] uppercase tracking-wider border-b border-[#E1DFE0]">
+              <tr className="bg-transparent text-[#858789] text-[0.85rem] uppercase tracking-wider border-b border-[#E1DFE0]">
                 <th className="px-6 py-4 font-semibold">Empleado</th>
                 <th className="px-6 py-4 font-semibold">Posición & Área</th>
                 <th className="px-6 py-4 font-semibold">Contacto</th>
@@ -338,7 +338,7 @@ export default function EmpleadosPage() {
                 </tr>
               ) : (
                 empleados.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-[#F8F9FA] transition-colors group">
+                  <tr key={emp.id} className="hover:bg-transparent transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A7313A] to-[#8F2930] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
@@ -441,14 +441,14 @@ export default function EmpleadosPage() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-[#F8F9FA] hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
+                className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-transparent hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
               >
                 Anterior
               </button>
               <button
                 disabled={empleados.length < 10}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-[#F8F9FA] hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
+                className="px-4 py-2 border border-[#E1DFE0] bg-white rounded-xl hover:bg-transparent hover:text-[#44474A] hover:border-[#44474A] disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-[#E1DFE0] font-medium transition-all shadow-sm"
               >
                 Siguiente
               </button>

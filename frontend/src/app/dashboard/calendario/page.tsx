@@ -170,7 +170,7 @@ export default function CalendarioPage() {
       cells.push(
         <div
           key={`empty-${i}`}
-          className="min-h-[120px] bg-slate-50 border border-slate-100 rounded-lg opacity-50"
+          className="min-h-[120px] bg-transparent border border-slate-100 rounded-lg opacity-50"
         ></div>
       );
     }
@@ -289,7 +289,7 @@ export default function CalendarioPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-transparent">
               <h2 className="text-lg font-bold text-slate-800">
                 {selectedEvent
                   ? canManage
@@ -315,7 +315,7 @@ export default function CalendarioPage() {
                     disabled={!canManage}
                     value={formData.titulo}
                     onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-slate-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-transparent"
                   />
                 </div>
                 <div>
@@ -326,7 +326,7 @@ export default function CalendarioPage() {
                     disabled={!canManage}
                     value={formData.descripcion}
                     onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-slate-50 resize-none h-24"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-transparent resize-none h-24"
                   ></textarea>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -340,7 +340,7 @@ export default function CalendarioPage() {
                       disabled={!canManage}
                       value={formData.fecha_inicio}
                       onChange={(e) => setFormData({ ...formData, fecha_inicio: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-slate-50"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-transparent"
                     />
                   </div>
                   <div>
@@ -353,7 +353,7 @@ export default function CalendarioPage() {
                       disabled={!canManage}
                       value={formData.fecha_fin}
                       onChange={(e) => setFormData({ ...formData, fecha_fin: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-slate-50"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-transparent"
                     />
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export default function CalendarioPage() {
                       disabled={!canManage}
                       value={formData.tipo}
                       onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-slate-50"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 disabled:bg-transparent"
                     >
                       <option value="Evento">Evento</option>
                       <option value="Día Festivo">Día Festivo</option>

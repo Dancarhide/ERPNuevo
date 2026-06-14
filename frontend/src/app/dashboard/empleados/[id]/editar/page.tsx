@@ -35,6 +35,8 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
     salud_nss: '',
     salud_tipo_sangre: '',
     salud_discapacidad: false,
+    turno_entrada: '09:00',
+    turno_salida: '18:00',
   });
 
   useEffect(() => {
@@ -70,6 +72,8 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
             salud_nss: salud?.nss || '',
             salud_tipo_sangre: salud?.tipo_sangre || '',
             salud_discapacidad: salud?.discapacidad || false,
+            turno_entrada: resEmp.turno_entrada || '09:00',
+            turno_salida: resEmp.turno_salida || '18:00',
           });
         }
       } catch (err) {
@@ -153,6 +157,8 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
           tipo_sangre: formData.salud_tipo_sangre,
           discapacidad: formData.salud_discapacidad,
         },
+        turno_entrada: formData.turno_entrada,
+        turno_salida: formData.turno_salida,
       };
 
       await empleadosApi.update(parseInt(unwrappedParams.id), payload);
@@ -181,7 +187,7 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => router.back()}
-          className="p-2 bg-white border border-[#E1DFE0] rounded-xl text-[#858789] hover:text-[#44474A] hover:bg-[#F8F9FA] transition-colors"
+          className="p-2 bg-white border border-[#E1DFE0] rounded-xl text-[#858789] hover:text-[#44474A] hover:bg-transparent transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
@@ -355,6 +361,32 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
               />
             </div>
           </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Turno Entrada *
+            </label>
+            <input
+              type="time"
+              required
+              name="turno_entrada"
+              value={formData.turno_entrada}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Turno Salida *
+            </label>
+            <input
+              type="time"
+              required
+              name="turno_salida"
+              value={formData.turno_salida}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            />
+          </div>
         </div>
 
         {/* Sección de Salud y Familiar */}
@@ -467,7 +499,7 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-2.5 text-[#44474A] font-semibold hover:bg-[#F8F9FA] rounded-xl transition-colors"
+              className="px-6 py-2.5 text-[#44474A] font-semibold hover:bg-transparent rounded-xl transition-colors"
             >
               Cancelar
             </button>
@@ -508,7 +540,7 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
                 </strong>
               </p>
 
-              <div className="bg-[#F8F9FA] rounded-xl p-5 border border-[#E1DFE0] mb-6">
+              <div className="bg-transparent rounded-xl p-5 border border-[#E1DFE0] mb-6">
                 <div className="flex items-center justify-between bg-white border border-[#E1DFE0] rounded-lg px-4 py-3">
                   <span className="font-mono text-xl tracking-wider text-[#A7313A] font-bold">
                     {newPassword}

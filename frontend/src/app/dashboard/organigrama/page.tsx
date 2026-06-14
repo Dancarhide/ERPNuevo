@@ -94,7 +94,7 @@ const PuestoCard = ({ data }: { data: PuestoCardData }) => {
         {data.area ?? 'Sin área'} {data.isStaff && '(Staff)'}
       </div>
 
-      <div className="p-4 bg-[#F8F9FA] border-b border-[#E1DFE0] relative">
+      <div className="p-4 bg-transparent border-b border-[#E1DFE0] relative">
         {data.isStaff && (
           <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[0.6rem] font-bold rounded-full uppercase">
             Staff
@@ -361,7 +361,7 @@ export default function OrganigramaPage() {
     : 0;
 
   return (
-    <div className="h-[calc(100vh-6rem)] w-full flex flex-col bg-[#F8F9FA]">
+    <div className="h-[calc(100vh-6rem)] w-full flex flex-col bg-transparent">
       <div className="p-6 pb-4 bg-white border-b border-[#E1DFE0] flex justify-between items-center z-10 shadow-sm">
         <div>
           <h1 className="text-[1.5rem] font-bold text-[#44474A] tracking-[-0.02em]">Organigrama</h1>
@@ -387,7 +387,7 @@ export default function OrganigramaPage() {
 
       <div className="flex-1 relative">
         {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#F8F9FA]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent">
             <Loader2 size={40} className="animate-spin text-[#A7313A] mb-4" />
             <p className="text-[#858789] font-medium">Dibujando estructura...</p>
           </div>
