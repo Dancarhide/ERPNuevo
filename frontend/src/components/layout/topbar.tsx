@@ -125,9 +125,11 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         <button onClick={onMenuClick} className="md:hidden text-[#44474A] p-1 flex-shrink-0">
           <Menu size={24} />
         </button>
-        <img
+        <Image
           src="/logo.png"
           alt="Logo"
+          width={160}
+          height={40}
           className="h-7 sm:h-8 md:h-10 w-auto object-contain flex-shrink-0 max-w-[120px] sm:max-w-[160px] md:max-w-none"
         />
       </div>

@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
     SQLALCHEMY_DATABASE_URI: str = ""
 
+    PAC_URL: str | None = os.getenv("PAC_URL")
+    PAC_USER: str | None = os.getenv("PAC_USER")
+    PAC_PASSWORD: str | None = os.getenv("PAC_PASSWORD")
+
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: str, values: dict[str, Any]) -> str:
         if isinstance(v, str) and v != "":

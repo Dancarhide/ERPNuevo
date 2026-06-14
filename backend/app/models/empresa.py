@@ -19,3 +19,4 @@ class InfoEmpresa(Base):
     banner_url = Column(String, nullable=True)
     # Nómina
     periodicidad_nomina = Column(String(20), default="Quincenal", nullable=False)
+    registro_patronal = Column(String(20), nullable=True)

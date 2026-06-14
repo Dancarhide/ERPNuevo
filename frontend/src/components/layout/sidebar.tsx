@@ -16,8 +16,6 @@ import {
   Star,
   UserCog,
   Settings,
-  ChevronRight,
-  ChevronLeft,
   ChevronDown,
 } from 'lucide-react';
 
@@ -80,7 +78,7 @@ const MENU_ITEMS: MenuItem[] = [
     requiredPermission: 'ver_configuracion',
     subItems: [
       { path: '/dashboard/payroll', label: 'Lotes de Nómina' },
-      { path: '/dashboard/payroll/conceptos', label: 'Catálogo de Conceptos' },
+      { path: '/dashboard/payroll/configuracion', label: 'Configuración Fiscal' },
     ],
   },
   {
@@ -197,7 +195,7 @@ export function Sidebar({
     if (mobileMenuOpen && setMobileMenuOpen) {
       setMobileMenuOpen(false);
     }
-  }, [pathname]);
+  }, [pathname, mobileMenuOpen, setMobileMenuOpen]);
 
   const filteredMenuItems = MENU_ITEMS.filter((item) => {
     if (!item.requiredPermission) return true;

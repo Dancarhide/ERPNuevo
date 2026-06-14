@@ -23,6 +23,7 @@ export default function NuevoEmpleadoPage() {
     rfc: '',
     telefono: '',
     curp: '',
+    cp: '',
     sexo: '',
     area_id: '',
     puesto_id: '',
@@ -71,6 +72,7 @@ export default function NuevoEmpleadoPage() {
         rfc: formData.rfc,
         telefono: formData.telefono,
         curp: formData.curp,
+        cp: formData.cp,
         sexo: formData.sexo || null,
         area_id: formData.area_id ? parseInt(formData.area_id) : null,
         puesto_id: formData.puesto_id ? parseInt(formData.puesto_id) : null,
@@ -251,6 +253,19 @@ export default function NuevoEmpleadoPage() {
               type="text"
               name="telefono"
               value={formData.telefono}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Código Postal (CP)
+            </label>
+            <input
+              type="text"
+              name="cp"
+              maxLength={5}
+              value={formData.cp}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all"
             />

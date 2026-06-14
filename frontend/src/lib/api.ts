@@ -1,8 +1,13 @@
-export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
+interface FetchApiOptions extends RequestInit {
+  parseJson?: boolean;
+}
+
+export const fetchApi = async (endpoint: string, options: FetchApiOptions = {}) => {
+  const { parseJson = true, ...restOptions } = options;
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...restOptions.headers,
     },
     // Esto asegura que se envíen las cookies HttpOnly al proxy de Next.js
     credentials: 'same-origin',
@@ -10,8 +15,15 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
 
   const res = await fetch(`/api${endpoint}`, {
     ...defaultOptions,
-    ...options,
+    ...restOptions,
   });
+
+  if (!parseJson) {
+    if (!res.ok) {
+      throw new Error('Ocurrió un error en el servidor al obtener el archivo');
+    }
+    return res.text();
+  }
 
   const data = await res.json().catch(() => null);
 
@@ -214,6 +226,12 @@ export const nominaApi = {
     }),
   cerrarLote: (loteId: string) => fetchApi(`/nomina/lotes/${loteId}/cerrar`, { method: 'PUT' }),
 
+  // CFDI Stamping
+  timbrarRecibo: (nominaId: number) =>
+    fetchApi(`/nomina/recibos/${nominaId}/timbrar`, { method: 'POST' }),
+  getXmlRecibo: (nominaId: number) =>
+    fetchApi(`/nomina/recibos/${nominaId}/xml`, { parseJson: false }),
+
   // Recibos
   getRecibo: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}`),
   updateRecibo: (nominaId: number, data: ApiData) =>
@@ -270,4 +288,12 @@ export const chatApi = {
   sendMensaje: (data: Record<string, unknown>) =>
     fetchApi('/chat', { method: 'POST', body: JSON.stringify(data) }),
   getUnread: () => fetchApi('/chat/unread'),
+};
+
+export const parametrosFiscalesApi = {
+  getAll: () => fetchApi('/parametros_fiscales'),
+  create: (data: Record<string, unknown>) =>
+    fetchApi('/parametros_fiscales', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Record<string, unknown>) =>
+    fetchApi(`/parametros_fiscales/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 };

@@ -7,10 +7,12 @@ y generación de XML CFDI y recibos PDF.
 
 import csv
 import io
+import json
 from decimal import Decimal
 from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -19,6 +21,7 @@ from app.api.deps import RequirePermission, get_current_user
 from app.core.database import get_db
 from app.models.empleados import Empleado
 from app.models.nomina import ConceptoNomina, DetalleNomina, LoteNomina, Nomina
+from app.models.parametros_fiscales import ParametroFiscal
 from app.schemas.nomina import (
     ConceptoNominaCreate,
     ConceptoNominaResponse,
@@ -33,6 +36,13 @@ from app.schemas.nomina import (
     ReciboPDFResponse,
     ReciboXMLResponse,
 )
+from app.services.calculadora_nomina import (
+    calcular_cuota_obrera_imss,
+    calcular_dias_pagados,
+    calcular_isr_mensual,
+    calcular_sbc,
+)
+from app.services.cfdi_service import CFDIService, PACException
 
 router = APIRouter()
 
@@ -422,23 +432,72 @@ async def procesar_lote(
         if (e.periodicidad_nomina is None or e.periodicidad_nomina == lote.periodicidad)
     ]
 
-    # Obtener conceptos obligatorios
-    res_conceptos = await session.execute(
-        select(ConceptoNomina).where(ConceptoNomina.es_obligatorio, ConceptoNomina.activo)
+    # Obtener parámetros fiscales del año del lote
+    año_lote = lote.periodo_inicio.year
+    res_param = await session.execute(
+        select(ParametroFiscal)
+        .where(ParametroFiscal.ejercicio <= año_lote)
+        .order_by(ParametroFiscal.ejercicio.desc())
     )
-    conceptos_oblig = res_conceptos.scalars().all()
+    param_fiscal = res_param.scalars().first()
 
-    # Eliminar nóminas existentes del lote (si se reprocesa)
-    existing = await session.execute(select(Nomina).where(Nomina.lote_id == lote_id))
-    for n in existing.scalars().all():
-        await session.delete(n)
-    await session.flush()
+    if not param_fiscal:
+        raise HTTPException(
+            status_code=500,
+            detail=f"No hay parámetros fiscales (UMA, ISR) configurados para el año {año_lote}",
+        )
+
+    uma_actual = param_fiscal.uma
+    try:
+        tabla_isr_actual = json.loads(param_fiscal.tabla_isr_mensual)
+        tabla_isr_parsed = [
+            (
+                Decimal(str(r["limite_inferior"])),
+                Decimal(str(r["limite_superior"])),
+                Decimal(str(r["cuota_fija"])),
+                Decimal(str(r["porcentaje"])),
+            )
+            for r in tabla_isr_actual
+        ]
+    except Exception:
+        raise HTTPException(
+            status_code=500, detail="Formato JSON inválido en la tabla ISR configurada."
+        )
+
+    # Obtener TODO el catálogo activo
+    res_conceptos = await session.execute(select(ConceptoNomina).where(ConceptoNomina.activo))
+    conceptos: dict[str, ConceptoNomina] = {c.clave: c for c in res_conceptos.scalars().all()}  # type: ignore
+
+    # Asegurarnos que existan los conceptos obligatorios (P001, D001, D002)
+    c_sueldo = conceptos.get("P001")
+    c_imss = conceptos.get("D001")
+    c_isr = conceptos.get("D002")
+    c_infonavit = conceptos.get("D003")
+
+    if not c_sueldo or not c_imss or not c_isr or not c_infonavit:
+        raise HTTPException(
+            status_code=500,
+            detail="Faltan conceptos base SAT P001, D001, D002 o D003 en el catálogo.",
+        )
 
     total_percepciones = Decimal("0.00")
     total_deducciones = Decimal("0.00")
 
     for emp in empleados_aplicables:
-        # Crear recibo base
+        dias_periodo = (
+            15
+            if lote.periodicidad == "Quincenal"
+            else (7 if lote.periodicidad == "Semanal" else 30)
+        )
+        # Fase 2: Integración de faltas reales
+        dias_pagados = await calcular_dias_pagados(
+            emp.id, lote.periodo_inicio, lote.periodo_fin, session
+        )
+        if dias_pagados > Decimal(dias_periodo):
+            dias_pagados = Decimal(dias_periodo)
+
+        # 1. Base del Recibo
+        sdi_calculado = calcular_sbc(emp.sueldo) if emp.sueldo else Decimal("0.00")
         nomina = Nomina(
             empleado_id=emp.id,
             lote_id=lote_id,
@@ -446,12 +505,8 @@ async def procesar_lote(
             fecha_fin=lote.periodo_fin,
             periodicidad=lote.periodicidad,
             sueldo_base=emp.sueldo or Decimal("0.00"),
-            dias_trabajados=15
-            if lote.periodicidad == "Quincenal"
-            else (7 if lote.periodicidad == "Semanal" else 30),
-            sdi=emp.sueldo * emp.factor_integracion / 30
-            if emp.sueldo and hasattr(emp, "factor_integracion")
-            else Decimal("0.00"),
+            dias_trabajados=dias_pagados,
+            sdi=sdi_calculado,
             estado="Borrador",
         )
         session.add(nomina)
@@ -460,28 +515,47 @@ async def procesar_lote(
         perc = Decimal("0.00")
         ded = Decimal("0.00")
 
-        for c in conceptos_oblig:
-            monto = c.monto_defecto
-            # Si es sueldo base, usar el del empleado
-            if c.clave_sat in ("001",) and c.tipo_sat == "P":
-                monto = emp.sueldo or Decimal("0.00")
+        # 2. P001 - Sueldo Base del Periodo
+        monto_sueldo = (emp.sueldo or Decimal("0.00")) * Decimal(dias_pagados)
+        session.add(
+            DetalleNomina(nomina_id=nomina.id, concepto_id=c_sueldo.id, monto_aplicado=monto_sueldo)
+        )
+        perc += monto_sueldo
 
-            detalle = DetalleNomina(
-                nomina_id=nomina.id,
-                concepto_id=c.id,
-                monto_aplicado=monto,
+        # 3. Impuestos D001 (IMSS) y D002 (ISR)
+        if monto_sueldo > 0:
+            monto_imss = calcular_cuota_obrera_imss(sdi_calculado, dias_pagados, uma_actual)
+            session.add(
+                DetalleNomina(nomina_id=nomina.id, concepto_id=c_imss.id, monto_aplicado=monto_imss)
             )
-            session.add(detalle)
+            ded += monto_imss
 
-            if c.tipo == "Percepcion":
-                perc += monto
-            elif c.tipo == "Deduccion":
-                ded += monto
+            # Para ISR, mensualizamos la base
+            factor_mensual = Decimal("30.4") / Decimal(dias_periodo)
+            base_mensualizada = monto_sueldo * factor_mensual
+            isr_mensual = calcular_isr_mensual(base_mensualizada, tabla_isr_parsed)
+            isr_periodo = isr_mensual / factor_mensual
+            isr_periodo = isr_periodo.quantize(Decimal("0.01"))
 
-        # Si no hay concepto de sueldo obligatorio, el sueldo base es la percepción principal
-        if perc == Decimal("0.00"):
-            perc = emp.sueldo or Decimal("0.00")
+            session.add(
+                DetalleNomina(nomina_id=nomina.id, concepto_id=c_isr.id, monto_aplicado=isr_periodo)
+            )
+            ded += isr_periodo
 
+        # 4. Otras Deducciones de Empleado
+        if getattr(emp, "infonavit_mensual", None) and c_infonavit:
+            # Prorratear la mensualidad al periodo
+            factor = Decimal(dias_periodo) / Decimal("30.4")
+            monto_infonavit = emp.infonavit_mensual * factor
+            monto_infonavit = monto_infonavit.quantize(Decimal("0.01"))
+            session.add(
+                DetalleNomina(
+                    nomina_id=nomina.id, concepto_id=c_infonavit.id, monto_aplicado=monto_infonavit
+                )
+            )
+            ded += monto_infonavit
+
+        # 5. Totales
         nomina.subtotal_percepciones = perc
         nomina.subtotal_deducciones = ded
         nomina.neto_pagar = perc - ded
@@ -1177,3 +1251,50 @@ async def get_recibo_pdf(
 </html>"""
 
     return ReciboPDFResponse(nomina_id=nomina_id, html_content=html)
+
+
+@router.post("/recibos/{nomina_id}/timbrar")
+async def timbrar_recibo(
+    nomina_id: int,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("timbrar_nomina"))],
+):
+    """
+    Timbra una nómina con el PAC simulado y genera el XML CFDI 4.0
+    """
+    try:
+        nomina = await CFDIService.timbrar_nomina(nomina_id, session)
+        return {
+            "mensaje": "Nómina timbrada exitosamente",
+            "uuid": nomina.uuid_sat,
+            "xml_url": nomina.xml_url,
+        }
+    except PACException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error en el servidor: {str(e)}")
+
+
+@router.get("/recibos/{nomina_id}/xml")
+async def descargar_xml_nomina(
+    nomina_id: int,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("ver_nomina"))],
+):
+    """
+    Descarga el XML CFDI 4.0 timbrado
+    """
+    res = await session.execute(select(Nomina).where(Nomina.id == nomina_id))
+    nomina = res.scalar_one_or_none()
+    if not nomina:
+        raise HTTPException(status_code=404, detail="Nómina no encontrada")
+    if not nomina.xml_cfdi_content:
+        raise HTTPException(
+            status_code=400, detail="Esta nómina aún no ha sido timbrada o no contiene XML."
+        )
+
+    return Response(
+        content=nomina.xml_cfdi_content,
+        media_type="application/xml",
+        headers={"Content-Disposition": f'attachment; filename="CFDI_{nomina.uuid_sat}.xml"'},
+    )

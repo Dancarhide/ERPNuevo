@@ -6,6 +6,11 @@ import { TipTapEditor } from '@/components/TipTapEditor';
 import { empresaApi } from '@/lib/api';
 
 interface InfoEmpresa {
+  nombre: string;
+  rfc: string;
+  regimen_fiscal: string;
+  cp_fiscal: string;
+  registro_patronal: string;
   mision: string;
   vision: string;
   historia: string;
@@ -16,6 +21,11 @@ interface InfoEmpresa {
 
 export default function AdminEmpresaPage() {
   const [info, setInfo] = useState<InfoEmpresa>({
+    nombre: '',
+    rfc: '',
+    regimen_fiscal: '',
+    cp_fiscal: '',
+    registro_patronal: '',
     mision: '',
     vision: '',
     historia: '',
@@ -41,6 +51,11 @@ export default function AdminEmpresaPage() {
       const data = await empresaApi.getInfo();
       if (data) {
         setInfo({
+          nombre: data.nombre || '',
+          rfc: data.rfc || '',
+          regimen_fiscal: data.regimen_fiscal || '',
+          cp_fiscal: data.cp_fiscal || '',
+          registro_patronal: data.registro_patronal || '',
           mision: data.mision || '',
           vision: data.vision || '',
           historia: data.historia || '',
@@ -145,6 +160,74 @@ export default function AdminEmpresaPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
+          {/* Fiscal y Nómina */}
+          <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+            <h3 className="mb-4 text-lg font-bold text-gray-800">Datos Fiscales y Patronales</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-600">
+                  Razón Social
+                </label>
+                <input
+                  type="text"
+                  value={info.nombre}
+                  onChange={(e) => setInfo({ ...info, nombre: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="Ej. Empresa S.A. de C.V."
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-600">RFC</label>
+                <input
+                  type="text"
+                  value={info.rfc}
+                  onChange={(e) => setInfo({ ...info, rfc: e.target.value.toUpperCase() })}
+                  maxLength={13}
+                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase"
+                  placeholder="Ej. EMP120304XYZ"
+                />
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block mb-2 text-sm font-semibold text-gray-600">
+                  Régimen Fiscal (Clave SAT)
+                </label>
+                <input
+                  type="text"
+                  value={info.regimen_fiscal}
+                  onChange={(e) => setInfo({ ...info, regimen_fiscal: e.target.value })}
+                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="Ej. 601 (General de Ley Personas Morales)"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-600">
+                  Código Postal Fiscal
+                </label>
+                <input
+                  type="text"
+                  value={info.cp_fiscal}
+                  onChange={(e) => setInfo({ ...info, cp_fiscal: e.target.value })}
+                  maxLength={5}
+                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="Ej. 06000"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold text-gray-600">
+                  Registro Patronal (IMSS)
+                </label>
+                <input
+                  type="text"
+                  value={info.registro_patronal}
+                  onChange={(e) => setInfo({ ...info, registro_patronal: e.target.value })}
+                  maxLength={11}
+                  className="w-full p-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="Ej. Y1234567890"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Misión y Visión */}
           <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
             <h3 className="mb-4 text-lg font-bold text-gray-800">Misión y Visión</h3>

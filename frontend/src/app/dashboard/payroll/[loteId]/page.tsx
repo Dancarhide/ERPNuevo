@@ -15,6 +15,7 @@ import {
   FileText,
   Download,
   X,
+  Zap,
 } from 'lucide-react';
 
 interface NominaItem {
@@ -132,13 +133,24 @@ export default function DetalleLotePage() {
     }
   };
 
-  const handleVerXML = async (nominaId: number) => {
+  const handleTimbrar = async (nominaId: number) => {
+    if (!confirm('¿Timbrar este recibo ante el SAT?')) return;
     try {
-      const data = await nominaApi.getReciboXML(nominaId);
-      setXmlModal({ content: data.xml_content });
-    } catch (e) {
-      alert(`Error al generar XML: ${e instanceof Error ? e.message : String(e)}`);
+      await nominaApi.timbrarRecibo(nominaId);
+      alert('¡Recibo timbrado correctamente!');
+      await fetchLote();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`Error al timbrar: ${msg}`);
     }
+  };
+
+  const handleVerXML = async (nominaId: number, estatusSat: string) => {
+    if (estatusSat !== 'Timbrado') {
+      alert('Debes timbrar la nómina primero para obtener el XML del SAT.');
+      return;
+    }
+    window.open(`http://localhost:8000/api/nomina/recibos/${nominaId}/xml`, '_blank');
   };
 
   const handleVerPDF = async (nominaId: number) => {
@@ -370,18 +382,27 @@ export default function DetalleLotePage() {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => handleVerPDF(n.id)}
-                          title="Ver Recibo"
+                          title="Ver Recibo PDF"
                           className="p-1.5 text-[#858789] hover:text-[#A7313A] hover:bg-[#A7313A]/10 rounded-md transition-colors"
                         >
                           <FileText size={15} />
                         </button>
                         <button
-                          onClick={() => handleVerXML(n.id)}
-                          title="Generar XML CFDI"
-                          className="p-1.5 text-[#858789] hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                          onClick={() => handleVerXML(n.id, n.estatus_sat)}
+                          title="Descargar XML CFDI"
+                          className={`p-1.5 rounded-md transition-colors ${n.estatus_sat === 'Timbrado' ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-300 cursor-not-allowed'}`}
                         >
                           <Download size={15} />
                         </button>
+                        {n.estatus_sat !== 'Timbrado' && n.estado === 'Pagado' && (
+                          <button
+                            onClick={() => handleTimbrar(n.id)}
+                            title="Timbrar CFDI"
+                            className="p-1.5 text-amber-600 hover:text-white hover:bg-amber-500 rounded-md transition-colors"
+                          >
+                            <Zap size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

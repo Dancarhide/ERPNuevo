@@ -258,6 +258,52 @@ async def procesar_checada(session: AsyncSession, empleado_id: int, timestamp: d
                 )
                 session.add(nueva_incidencia)
 
+    # 6. Lógica de Incidencias (Horas Extra Automáticas - Aprobación Pendiente)
+    if asistencia.tiempo_efectivo_minutos > 540:
+        res_he = await session.execute(
+            select(Incidencia).where(
+                Incidencia.empleado_reportado_id == empleado_id,
+                Incidencia.fecha_incidencia == fecha,
+                Incidencia.tipo == "Horas Extra",
+            )
+        )
+        he_existente = res_he.scalar_one_or_none()
+        if not he_existente:
+            minutos_extra = asistencia.tiempo_efectivo_minutos - 480
+            horas_extra = round(minutos_extra / 60.0, 1)
+            nueva_he = Incidencia(
+                empleado_reportado_id=empleado_id,
+                titulo=f"Aprobación Pendiente: {horas_extra} Horas Extra",
+                tipo="Horas Extra",
+                fecha_incidencia=fecha,
+                estatus="Pendiente",
+                descripcion=(
+                    f"El empleado acumuló {asistencia.tiempo_efectivo_minutos} minutos de tiempo "
+                    "efectivo. Favor de revisar y aprobar."
+                ),
+            )
+            session.add(nueva_he)
+            await session.flush()
+
+            # Notificar al jefe directo
+            from app.services.notificaciones_service import crear_notificacion
+
+            if emp and emp.jefe_directo_id:
+                try:
+                    await crear_notificacion(
+                        session=session,
+                        empleado_id=emp.jefe_directo_id,
+                        titulo="Horas Extra Pendientes",
+                        mensaje=(
+                            f"El empleado {emp.nombre_completo} tiene {horas_extra} "
+                            f"horas extra pendientes de aprobación del día {fecha}."
+                        ),
+                        tipo="warning",
+                        link="/incidencias",
+                    )
+                except Exception:
+                    pass
+
     await session.commit()
 
 

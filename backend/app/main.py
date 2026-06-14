@@ -22,6 +22,7 @@ from app.api.routes import (
     nomina,
     notificaciones,
     organigrama,
+    parametros_fiscales,
     puestos,
     roles,
     tareas,
@@ -50,6 +51,9 @@ app.include_router(empresa.router, prefix="/api/empresa", tags=["empresa"])
 app.include_router(kpis.router, prefix="/api/kpis", tags=["kpis"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(nomina.router, prefix="/api/nomina", tags=["nomina"])
+app.include_router(
+    parametros_fiscales.router, prefix="/api/parametros_fiscales", tags=["parametros_fiscales"]
+)
 app.include_router(incidencias.router, prefix="/api/incidencias", tags=["incidencias"])
 app.include_router(notificaciones.router, prefix="/api/notificaciones", tags=["notificaciones"])
 app.include_router(tareas.router, prefix="/api/tareas", tags=["tareas"])

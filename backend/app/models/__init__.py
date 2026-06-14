@@ -14,6 +14,7 @@ from .dashboard import ConfiguracionDashboard
 from .empleados import Area, Empleado, EmpleadoFamiliar, EmpleadoSalud, Puesto
 from .empresa import InfoEmpresa
 from .nomina import ConceptoNomina, DetalleNomina, LoteNomina, Nomina, Prestamo
+from .parametros_fiscales import ParametroFiscal
 from .seguridad import (
     Credencial,
     DelegacionRol,
@@ -79,6 +80,7 @@ __all__ = [
     "Mensaje",
     "Tarea",
     "Notificacion",
+    "ParametroFiscal",
     "EventoEmpresa",
     "EventoParticipante",
     "RegistroChecador",
