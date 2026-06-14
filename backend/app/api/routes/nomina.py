@@ -5,10 +5,12 @@ Gestión de Lotes de Nómina, Recibos Individuales, Catálogo de Conceptos
 y generación de XML CFDI y recibos PDF.
 """
 
+import csv
+import io
 from decimal import Decimal
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -523,7 +525,127 @@ async def cerrar_lote(
     return lote
 
 
-# ═══════════════════════════════════════════════════════════════
+@router.post("/lotes/{lote_id}/importar", response_model=LoteNominaResponse)
+async def importar_csv_lote(
+    lote_id: str,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[Empleado, Depends(RequirePermission("ver_configuracion"))],
+    file: UploadFile = File(...),
+):
+    """
+    Importa percepciones y deducciones desde un archivo CSV.
+    Formato esperado: Empleado ID, Clave Concepto (interna o SAT), Monto
+    """
+    lote = await session.get(LoteNomina, lote_id)
+    if not lote:
+        raise HTTPException(status_code=404, detail="Lote no encontrado")
+    if lote.estatus != "Procesado":
+        raise HTTPException(
+            status_code=400, detail="Solo se puede importar a un lote en estado Procesado"
+        )
+
+    # Leer archivo
+    content = await file.read()
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = content.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text))
+    # Validar headers
+    if (
+        not reader.fieldnames
+        or "Empleado ID" not in reader.fieldnames
+        or "Clave Concepto" not in reader.fieldnames
+        or "Monto" not in reader.fieldnames
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="El CSV debe tener las columnas: Empleado ID, Clave Concepto, Monto",
+        )
+
+    # Obtener todas las nóminas del lote y crear un índice
+    res_noms = await session.execute(
+        select(Nomina).where(Nomina.lote_id == lote_id).options(selectinload(Nomina.detalles))
+    )
+    nominas_db = {n.empleado_id: n for n in res_noms.scalars().all()}
+
+    # Obtener catálogo de conceptos
+    res_conceptos = await session.execute(select(ConceptoNomina))
+    conceptos_db = {}
+    for c in res_conceptos.scalars().all():
+        conceptos_db[c.clave] = c
+        conceptos_db[c.clave_sat] = c
+
+    # Procesar filas
+    updates_made = False
+    for row in reader:
+        try:
+            emp_id = int(row["Empleado ID"])
+            clave = row["Clave Concepto"].strip()
+            monto = Decimal(row["Monto"].replace(",", "").strip() or "0")
+        except (ValueError, KeyError, Exception):
+            continue
+
+        nomina = nominas_db.get(emp_id)
+        concepto = conceptos_db.get(clave)
+
+        if not nomina or not concepto:
+            continue
+
+        # Buscar si ya existe el detalle, si no crearlo
+        detalle_existente = next((d for d in nomina.detalles if d.concepto_id == concepto.id), None)
+        if detalle_existente:
+            detalle_existente.monto_aplicado = monto
+        else:
+            nuevo_detalle = DetalleNomina(
+                nomina_id=nomina.id, concepto_id=concepto.id, monto_aplicado=monto
+            )
+            session.add(nuevo_detalle)
+            nomina.detalles.append(nuevo_detalle)
+
+        updates_made = True
+
+    if updates_made:
+        await session.flush()
+        # Recalcular totales para cada nómina actualizada
+        total_perc = Decimal("0.00")
+        total_ded = Decimal("0.00")
+
+        for n in nominas_db.values():
+            perc = Decimal("0.00")
+            ded = Decimal("0.00")
+            otros = Decimal("0.00")
+            for d in n.detalles:
+                c = await session.get(ConceptoNomina, d.concepto_id)
+                if c:
+                    if c.tipo == "Percepcion":
+                        perc += d.monto_aplicado
+                    elif c.tipo == "Deduccion":
+                        ded += d.monto_aplicado
+                    else:
+                        otros += d.monto_aplicado
+
+            n.subtotal_percepciones = perc
+            n.subtotal_deducciones = ded
+            n.subtotal_otros = otros
+            n.neto_pagar = perc - ded + otros
+            n.total_pagado = n.neto_pagar
+
+            total_perc += perc
+            total_ded += ded
+
+        lote.total_percepciones = total_perc
+        lote.total_deducciones = total_ded
+        lote.total_neto = total_perc - total_ded
+        lote.total_lote = lote.total_neto
+
+        await session.commit()
+
+    await session.refresh(lote)
+    return lote
+
+
 # RECIBOS INDIVIDUALES
 # ═══════════════════════════════════════════════════════════════
 
@@ -575,7 +697,7 @@ async def update_recibo(
     if data.detalles is not None:
         # Eliminar detalles existentes y reemplazar
         for d in nomina.detalles:
-            await session.delete(d)
+            session.delete(d)
         await session.flush()
 
         perc = Decimal("0.00")

@@ -203,6 +203,18 @@ export const nominaApi = {
   getMisRecibos: () => fetchApi('/nomina/mis-recibos'),
   getReciboXML: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}/xml`),
   getReciboPDF: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}/pdf`),
+  importarCsv: async (loteId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`/api/nomina/lotes/${loteId}/importar`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin',
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.detail || 'Error al importar');
+    return data;
+  },
 };
 
 export const incidenciasApi = {
