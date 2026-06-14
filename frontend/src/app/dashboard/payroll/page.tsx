@@ -37,7 +37,7 @@ const ESTATUS_BADGE: Record<string, { label: string; style: string }> = {
 };
 
 const fmt = (v: number) =>
-  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v);
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v || 0);
 const fmtDate = (d: string) =>
   new Date(d + 'T00:00:00').toLocaleDateString('es-MX', {
     day: '2-digit',
@@ -121,8 +121,8 @@ export default function PayrollPage() {
     }
   };
 
-  const totalGlobal = lotes.reduce((a, l) => a + l.total_neto, 0);
-  const totalEmpleados = lotes.reduce((a, l) => a + l.numero_empleados, 0);
+  const totalGlobal = lotes.reduce((a, l) => a + (Number(l.total_neto) || 0), 0);
+  const totalEmpleados = lotes.reduce((a, l) => a + (Number(l.numero_empleados) || 0), 0);
 
   return (
     <div className="p-6 md:p-8 max-w-[1400px] mx-auto">

@@ -58,7 +58,7 @@ const ESTATUS_SAT_BADGE: Record<string, string> = {
 };
 
 const fmt = (v: number) =>
-  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v);
+  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v || 0);
 const fmtDate = (d: string) =>
   new Date(d + 'T00:00:00').toLocaleDateString('es-MX', {
     day: '2-digit',

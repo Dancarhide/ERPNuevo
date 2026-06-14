@@ -308,75 +308,82 @@ export default function RolesConfigPage() {
         {loading ? (
           <div className="p-12 text-center text-gray-500">Cargando...</div>
         ) : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 text-gray-500 text-sm">
-                <th className="p-4 font-medium border-b border-gray-100 w-12"></th>
-                <th className="p-4 font-medium border-b border-gray-100">Nombre del Rol</th>
-                <th className="p-4 font-medium border-b border-gray-100">Área</th>
-                <th className="p-4 font-medium border-b border-gray-100">Permisos</th>
-                <th className="p-4 font-medium border-b border-gray-100">Usuarios</th>
-                <th className="p-4 font-medium border-b border-gray-100 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map((rol) => (
-                <tr
-                  key={rol.id}
-                  className="hover:bg-gray-50 border-b border-gray-50 last:border-0 group"
-                >
-                  <td className="p-4 text-center">
-                    {rol.es_sistema ? (
-                      <FaLock className="text-red-400 mx-auto" title="Rol de Sistema (Protegido)" />
-                    ) : (
-                      <FaShieldAlt className="text-gray-300 mx-auto" />
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <div className="font-medium text-gray-800">{rol.nombre_rol}</div>
-                    <div className="text-sm text-gray-500 truncate max-w-xs">{rol.descripcion}</div>
-                  </td>
-                  <td className="p-4">
-                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                      {rol.area_nombre || 'Global'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-                      {rol.permisos?.length || 0} asignados
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-xs font-bold">
-                        {rol.empleados_count}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openEditRolModal(rol)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Editar"
-                      >
-                        <FaEdit />
-                      </button>
-                      {!rol.es_sistema && (
-                        <button
-                          onClick={() => handleDelete(rol.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Eliminar"
-                        >
-                          <FaTrash />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="bg-gray-50 text-gray-500 text-sm">
+                  <th className="p-4 font-medium border-b border-gray-100 w-12"></th>
+                  <th className="p-4 font-medium border-b border-gray-100">Nombre del Rol</th>
+                  <th className="p-4 font-medium border-b border-gray-100">Área</th>
+                  <th className="p-4 font-medium border-b border-gray-100">Permisos</th>
+                  <th className="p-4 font-medium border-b border-gray-100">Usuarios</th>
+                  <th className="p-4 font-medium border-b border-gray-100 text-right">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {roles.map((rol) => (
+                  <tr
+                    key={rol.id}
+                    className="hover:bg-gray-50 border-b border-gray-50 last:border-0 group"
+                  >
+                    <td className="p-4 text-center">
+                      {rol.es_sistema ? (
+                        <FaLock
+                          className="text-red-400 mx-auto"
+                          title="Rol de Sistema (Protegido)"
+                        />
+                      ) : (
+                        <FaShieldAlt className="text-gray-300 mx-auto" />
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="font-medium text-gray-800">{rol.nombre_rol}</div>
+                      <div className="text-sm text-gray-500 truncate max-w-xs">
+                        {rol.descripcion}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                        {rol.area_nombre || 'Global'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                        {rol.permisos?.length || 0} asignados
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-xs font-bold">
+                          {rol.empleados_count}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => openEditRolModal(rol)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <FaEdit />
+                        </button>
+                        {!rol.es_sistema && (
+                          <button
+                            onClick={() => handleDelete(rol.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

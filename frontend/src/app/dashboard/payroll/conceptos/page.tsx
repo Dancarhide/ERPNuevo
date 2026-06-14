@@ -355,8 +355,8 @@ export default function ConceptosNominaPage() {
                     {items.length}
                   </span>
                 </div>
-                <div className="bg-white border border-black/5 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
-                  <table className="w-full text-sm">
+                <div className="bg-white border border-black/5 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-x-auto overflow-y-hidden">
+                  <table className="w-full text-sm min-w-[700px]">
                     <thead>
                       <tr className="border-b border-[#F3F4F6] bg-[#FAFAFA]">
                         <th className="text-left text-xs font-semibold text-[#858789] uppercase tracking-wide px-5 py-3">

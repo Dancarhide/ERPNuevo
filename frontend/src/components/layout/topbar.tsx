@@ -41,7 +41,15 @@ export function Topbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const { subscribe } = useWebSocket();
 
-  const userName = user?.nombre_completo || user?.email?.split('@')[0] || 'Administrador';
+  let userName = 'Administrador';
+  if (user?.nombre_completo) {
+    const parts = user.nombre_completo.split(' ').filter(Boolean);
+    if (parts.length > 0) {
+      userName = parts[0];
+    }
+  } else if (user?.email) {
+    userName = user.email.split('@')[0];
+  }
   const userRole = (user as { is_superuser?: boolean })?.is_superuser
     ? 'Súper Administrador'
     : 'Empleado';
@@ -211,11 +219,11 @@ export function Topbar() {
             className="flex items-center gap-2 p-1.5 rounded-lg cursor-pointer hover:bg-[#E1DFE0] transition-colors"
             onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            <div className="flex flex-col text-right mr-1 hidden sm:flex">
-              <span className="text-[0.9rem] font-bold text-[#44474A] leading-tight">
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-[0.95rem] font-bold text-[#44474A] truncate max-w-[150px]">
                 {userName}
               </span>
-              <span className="text-[0.75rem] font-medium text-[#858789]">{userRole}</span>
+              <span className="text-[0.75rem] text-[#858789]">{userRole}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-[#A7313A] text-white flex items-center justify-center font-bold text-[1.1rem]">
               {initials}

@@ -195,7 +195,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`relative flex flex-col bg-[#44474A] text-white shadow-[2px_0_10px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out z-50 overflow-hidden ${
+      className={`relative flex flex-col shrink-0 bg-[#44474A] text-white shadow-[2px_0_10px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out z-50 overflow-hidden ${
         isCollapsed ? 'w-[80px]' : 'w-[260px]'
       }`}
     >

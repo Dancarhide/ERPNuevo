@@ -23,7 +23,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       <Topbar />
       <div className="flex flex-1 pt-[70px]">
         <Sidebar />
-        <main className="flex-1 transition-all duration-300 relative">{children}</main>
+        <main className="flex-1 transition-all duration-300 relative min-w-0">{children}</main>
       </div>
     </div>
   );
