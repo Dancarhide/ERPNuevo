@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import RequirePermission
 from app.core.database import get_db
 from app.core.security import generate_random_password, get_password_hash
 from app.models.empleados import Empleado, EmpleadoFamiliar, EmpleadoSalud
@@ -25,7 +25,7 @@ router = APIRouter()
 @router.get("", response_model=EmpleadosListResponse)
 async def read_empleados(
     session: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Empleado, Depends(get_current_user)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("ver_empleados"))],
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=1000),
     search: str = Query(None, description="Búsqueda por nombre o correo"),
@@ -85,7 +85,7 @@ async def read_empleados(
 async def create_empleado(
     empleado_in: EmpleadoCreate,
     session: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Empleado, Depends(get_current_user)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("crear_empleados"))],
 ) -> Any:
     # Check if email exists
     if empleado_in.email:
@@ -151,7 +151,7 @@ async def create_empleado(
 async def read_empleado(
     empleado_id: int,
     session: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Empleado, Depends(get_current_user)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("ver_empleados"))],
 ) -> Any:
     result = await session.execute(
         select(Empleado)
@@ -175,7 +175,7 @@ async def update_empleado(
     empleado_id: int,
     empleado_in: EmpleadoUpdate,
     session: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Empleado, Depends(get_current_user)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("editar_empleados"))],
 ) -> Any:
     result = await session.execute(
         select(Empleado)
@@ -203,7 +203,7 @@ async def update_empleado(
             select(EmpleadoFamiliar).where(EmpleadoFamiliar.empleado_id == empleado_id)
         )
         for fam in empleado.familiares:
-            await session.delete(fam)
+            fam.activo = False
 
         for fam_data in empleado_in.familiares:
             nuevo_fam = EmpleadoFamiliar(**fam_data.model_dump(), empleado_id=empleado.id)
@@ -227,7 +227,7 @@ async def update_empleado(
 async def reset_password(
     empleado_id: int,
     session: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[Empleado, Depends(get_current_user)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("editar_empleados"))],
 ) -> dict[str, str]:
     result = await session.execute(select(Credencial).where(Credencial.empleado_id == empleado_id))
     credencial = result.scalar_one_or_none()

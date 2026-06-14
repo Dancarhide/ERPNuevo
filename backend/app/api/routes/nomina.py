@@ -396,7 +396,10 @@ async def procesar_lote(
     cuya periodicidad coincide con el lote. Solo aplica conceptos obligatorios del catálogo.
     El contador deberá revisar y ajustar cada recibo individualmente.
     """
-    lote = await session.get(LoteNomina, lote_id)
+    res_lote = await session.execute(
+        select(LoteNomina).where(LoteNomina.id == lote_id).with_for_update()
+    )
+    lote = res_lote.scalar_one_or_none()
     if not lote:
         raise HTTPException(status_code=404, detail="Lote no encontrado")
     if lote.estatus != "Borrador":
@@ -506,7 +509,10 @@ async def cerrar_lote(
     session: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[Empleado, Depends(RequirePermission("ver_configuracion"))],
 ):
-    lote = await session.get(LoteNomina, lote_id)
+    res_lote = await session.execute(
+        select(LoteNomina).where(LoteNomina.id == lote_id).with_for_update()
+    )
+    lote = res_lote.scalar_one_or_none()
     if not lote:
         raise HTTPException(status_code=404, detail="Lote no encontrado")
     if lote.estatus != "Procesado":
@@ -669,9 +675,14 @@ async def get_recibo(
     if not nomina:
         raise HTTPException(status_code=404, detail="Recibo no encontrado")
 
-    # Empleados solo pueden ver sus propios recibos
-    # (admins con ver_configuracion pueden ver todos)
-    # Verificación simplificada: se valida en el frontend con permisos
+    if nomina.empleado_id != current_user.id:
+        from app.api.deps import RequirePermission
+
+        try:
+            await RequirePermission("ver_configuracion")(session=session, current_user=current_user)
+        except HTTPException:
+            raise HTTPException(status_code=403, detail="No puedes ver el recibo de otro empleado.")
+
     return nomina
 
 
@@ -848,7 +859,7 @@ async def create_recibo_manual(
 async def get_xml_cfdi(
     nomina_id: int,
     session: Annotated[AsyncSession, Depends(get_db)],
-    _: Annotated[Empleado, Depends(RequirePermission("ver_configuracion"))],
+    current_user: Annotated[Empleado, Depends(get_current_user)],
 ):
     """Genera la estructura XML del CFDI de Nómina v4.0 con Complemento Nómina v1.2."""
     res = await session.execute(
@@ -863,6 +874,16 @@ async def get_xml_cfdi(
     nomina = res.scalars().first()
     if not nomina:
         raise HTTPException(status_code=404, detail="Recibo no encontrado")
+
+    if nomina.empleado_id != current_user.id:
+        from app.api.deps import RequirePermission
+
+        try:
+            await RequirePermission("ver_configuracion")(session=session, current_user=current_user)
+        except HTTPException:
+            raise HTTPException(
+                status_code=403, detail="No puedes descargar el XML de otro empleado."
+            )
 
     emp = nomina.empleado
     percepciones = [d for d in nomina.detalles if d.concepto.tipo == "Percepcion"]
@@ -975,7 +996,7 @@ async def get_xml_cfdi(
 
     </nomina12:Nomina>
   </cfdi:Complemento>
-</cfdi:Comprobante>"""  # noqa: E501
+</cfdi:Comprobante>"""
 
     # Guardar el XML en la BD
     nomina.xml_cfdi_content = xml_content
@@ -1004,6 +1025,16 @@ async def get_recibo_pdf(
     if not nomina:
         raise HTTPException(status_code=404, detail="Recibo no encontrado")
 
+    if nomina.empleado_id != current_user.id:
+        from app.api.deps import RequirePermission
+
+        try:
+            await RequirePermission("ver_configuracion")(session=session, current_user=current_user)
+        except HTTPException:
+            raise HTTPException(
+                status_code=403, detail="No puedes descargar el PDF de otro empleado."
+            )
+
     emp = nomina.empleado
     percepciones = [d for d in nomina.detalles if d.concepto.tipo == "Percepcion"]
     deducciones = [d for d in nomina.detalles if d.concepto.tipo == "Deduccion"]
@@ -1014,20 +1045,20 @@ async def get_recibo_pdf(
 
     perc_rows = "\n".join(
         [
-            f"<tr><td>{d.concepto.nombre_concepto}</td><td class='amount'>{fmt(d.monto_aplicado)}</td></tr>"  # noqa: E501
+            f"<tr><td>{d.concepto.nombre_concepto}</td><td class='amount'>{fmt(d.monto_aplicado)}</td></tr>"
             for d in percepciones
         ]
     )
     ded_rows = "\n".join(
         [
-            f"<tr><td>{d.concepto.nombre_concepto}</td><td class='amount'>{fmt(d.monto_aplicado)}</td></tr>"  # noqa: E501
+            f"<tr><td>{d.concepto.nombre_concepto}</td><td class='amount'>{fmt(d.monto_aplicado)}</td></tr>"
             for d in deducciones
         ]
     )
     otros_rows = (
         "\n".join(
             [
-                f"<tr><td>{d.concepto.nombre_concepto}</td><td class='amount'>{fmt(d.monto_aplicado)}</td></tr>"  # noqa: E501
+                f"<tr><td>{d.concepto.nombre_concepto}</td><td class='amount'>{fmt(d.monto_aplicado)}</td></tr>"
                 for d in otros
             ]
         )
@@ -1066,7 +1097,7 @@ async def get_recibo_pdf(
   .total-item .label {{ font-size: 9px; color: #666; text-transform: uppercase; }}
   .total-item .value {{ font-size: 14px; font-weight: bold; }}
   .total-item.neto .value {{ color: #A7313A; font-size: 18px; }}
-  .footer {{ padding: 10px 20px; text-align: center; color: #999; font-size: 9px; border-top: 1px solid #eee; }}  # noqa: E501
+  .footer {{ padding: 10px 20px; text-align: center; color: #999; font-size: 9px; border-top: 1px solid #eee; }}
   @media print {{ body {{ padding: 0; }} }}
 </style>
 </head>
@@ -1079,21 +1110,21 @@ async def get_recibo_pdf(
     </div>
     <div class="periodo">
       <div>Período de Pago</div>
-      <div style="font-size:13px;font-weight:bold">{nomina.fecha_inicio.strftime("%d/%m/%Y")} — {nomina.fecha_fin.strftime("%d/%m/%Y")}</div>  # noqa: E501
+      <div style="font-size:13px;font-weight:bold">{nomina.fecha_inicio.strftime("%d/%m/%Y")} — {nomina.fecha_fin.strftime("%d/%m/%Y")}</div>
       <div>Días trabajados: {nomina.dias_trabajados}</div>
     </div>
   </div>
 
   <div class="empleado-info">
     <div>
-      <div class="field"><div class="label">Nombre del Trabajador</div><div class="value">{emp.nombre_completo if emp else "—"}</div></div>  # noqa: E501
-      <div class="field"><div class="label">RFC</div><div class="value">{emp.rfc or "—"}</div></div>  # noqa: E501
-      <div class="field"><div class="label">CURP</div><div class="value">{emp.curp or "—"}</div></div>  # noqa: E501
+      <div class="field"><div class="label">Nombre del Trabajador</div><div class="value">{emp.nombre_completo if emp else "—"}</div></div>
+      <div class="field"><div class="label">RFC</div><div class="value">{emp.rfc or "—"}</div></div>
+      <div class="field"><div class="label">CURP</div><div class="value">{emp.curp or "—"}</div></div>
     </div>
     <div>
-      <div class="field"><div class="label">Departamento</div><div class="value">{emp.area.nombre_area if emp and emp.area else "—"}</div></div>  # noqa: E501
-      <div class="field"><div class="label">Puesto</div><div class="value">{emp.puesto.nombre_puesto if emp and emp.puesto else "—"}</div></div>  # noqa: E501
-      <div class="field"><div class="label">NSS</div><div class="value">{getattr(emp, "numero_seguro_social", "—") or "—"}</div></div>  # noqa: E501
+      <div class="field"><div class="label">Departamento</div><div class="value">{emp.area.nombre_area if emp and emp.area else "—"}</div></div>
+      <div class="field"><div class="label">Puesto</div><div class="value">{emp.puesto.nombre_puesto if emp and emp.puesto else "—"}</div></div>
+      <div class="field"><div class="label">NSS</div><div class="value">{getattr(emp, "numero_seguro_social", "—") or "—"}</div></div>
     </div>
   </div>
 
@@ -1101,7 +1132,7 @@ async def get_recibo_pdf(
     <div class="col percepciones">
       <h3>Percepciones</h3>
       <table>
-        {perc_rows if perc_rows else '<tr><td colspan="2" style="color:#999;text-align:center">Sin percepciones registradas</td></tr>'}  # noqa: E501
+        {perc_rows if perc_rows else '<tr><td colspan="2" style="color:#999;text-align:center">Sin percepciones registradas</td></tr>'}
         <tr style="font-weight:bold;border-top:2px solid #10B981">
           <td>Total Percepciones</td>
           <td class="amount" style="color:#10B981">{fmt(nomina.subtotal_percepciones)}</td>
@@ -1111,7 +1142,7 @@ async def get_recibo_pdf(
     <div class="col deducciones">
       <h3>Deducciones</h3>
       <table>
-        {ded_rows if ded_rows else '<tr><td colspan="2" style="color:#999;text-align:center">Sin deducciones registradas</td></tr>'}  # noqa: E501
+        {ded_rows if ded_rows else '<tr><td colspan="2" style="color:#999;text-align:center">Sin deducciones registradas</td></tr>'}
         <tr style="font-weight:bold;border-top:2px solid #EF4444">
           <td>Total Deducciones</td>
           <td class="amount" style="color:#EF4444">{fmt(nomina.subtotal_deducciones)}</td>
@@ -1120,7 +1151,7 @@ async def get_recibo_pdf(
     </div>
   </div>
 
-  {"<div class='col otros' style='padding:14px 20px;border-top:1px solid #eee'><h3>Otros Pagos</h3><table>" + otros_rows + "</table></div>" if otros_rows else ""}  # noqa: E501
+  {"<div class='col otros' style='padding:14px 20px;border-top:1px solid #eee'><h3>Otros Pagos</h3><table>" + otros_rows + "</table></div>" if otros_rows else ""}
 
   <div class="totales">
     <div class="total-item">
@@ -1138,8 +1169,8 @@ async def get_recibo_pdf(
   </div>
 
   <div class="footer">
-    Recibo generado electrónicamente • SDI: {fmt(nomina.sdi)} • Factor Integración: {float(nomina.factor_integracion):.4f}  # noqa: E501
-    {"• UUID SAT: " + nomina.uuid_sat if nomina.uuid_sat else "• Pendiente de timbrado por PAC"}  # noqa: E501
+    Recibo generado electrónicamente • SDI: {fmt(nomina.sdi)} • Factor Integración: {float(nomina.factor_integracion):.4f}
+    {"• UUID SAT: " + nomina.uuid_sat if nomina.uuid_sat else "• Pendiente de timbrado por PAC"}
   </div>
 </div>
 </body>

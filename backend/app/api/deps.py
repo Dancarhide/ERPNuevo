@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.config import settings
+from app.core.context import current_user_id_var
 from app.core.database import get_db
 from app.models.empleados import Empleado
 
@@ -43,6 +44,7 @@ async def get_current_user(
     if empleado.estatus != "Activo":
         raise HTTPException(status_code=400, detail="Usuario inactivo")
 
+    current_user_id_var.set(empleado.id)
     return empleado
 
 
