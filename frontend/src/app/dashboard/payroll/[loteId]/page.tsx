@@ -17,6 +17,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import ModalEditarRecibo from './ModalEditarRecibo';
 
 interface NominaItem {
   id: number;
@@ -76,8 +77,10 @@ export default function DetalleLotePage() {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [cerrando, setCerrando] = useState(false);
+  const [timbrandoTodos, setTimbrandoTodos] = useState(false);
   const [xmlModal, setXmlModal] = useState<{ content: string } | null>(null);
   const [pdfModal, setPdfModal] = useState<{ html: string } | null>(null);
+  const [editingNominaId, setEditingNominaId] = useState<number | null>(null);
 
   const fetchLote = async () => {
     setLoading(true);
@@ -145,6 +148,21 @@ export default function DetalleLotePage() {
     }
   };
 
+  const handleTimbrarTodos = async () => {
+    if (!confirm('¿Timbrar TODOS los recibos pendientes de este lote ante el SAT?')) return;
+    setTimbrandoTodos(true);
+    try {
+      const res = await nominaApi.timbrarLote(loteId);
+      alert(res.mensaje || '¡Recibos timbrados correctamente!');
+      await fetchLote();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`Error al timbrar lote: ${msg}`);
+    } finally {
+      setTimbrandoTodos(false);
+    }
+  };
+
   const handleVerXML = async (nominaId: number, estatusSat: string) => {
     if (estatusSat !== 'Timbrado') {
       alert('Debes timbrar la nómina primero para obtener el XML del SAT.');
@@ -191,6 +209,9 @@ export default function DetalleLotePage() {
   if (!lote) return <div className="p-8 text-center text-gray-500">Lote no encontrado.</div>;
 
   const puedeCerrar = lote.estatus === 'Procesado';
+  const puedeTimbrarTodos =
+    lote.estatus === 'Cerrado' &&
+    lote.nominas.some((n) => n.estatus_sat !== 'Timbrado' && n.estado === 'Pagado');
 
   return (
     <div className="p-6 md:p-8 max-w-[1400px] mx-auto">
@@ -236,6 +257,20 @@ export default function DetalleLotePage() {
               >
                 {cerrando ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
                 Cerrar y Autorizar
+              </button>
+            )}
+            {puedeTimbrarTodos && (
+              <button
+                onClick={handleTimbrarTodos}
+                disabled={timbrandoTodos}
+                className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-60 text-sm font-medium"
+              >
+                {timbrandoTodos ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Zap size={16} />
+                )}
+                Timbrar Todos
               </button>
             )}
           </div>
@@ -346,7 +381,7 @@ export default function DetalleLotePage() {
                   <tr
                     key={n.id}
                     className="hover:bg-[#FAFAFA] transition-colors cursor-pointer"
-                    onClick={() => router.push(`/dashboard/payroll/${loteId}/recibo/${n.id}`)}
+                    onClick={() => setEditingNominaId(n.id)}
                   >
                     <td className="px-6 py-4">
                       <div className="font-semibold text-[#44474A]">{n.empleado_nombre}</div>
@@ -416,7 +451,7 @@ export default function DetalleLotePage() {
       {/* Modal XML */}
       {xmlModal && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4"
           onClick={() => setXmlModal(null)}
         >
           <div
@@ -452,7 +487,7 @@ export default function DetalleLotePage() {
       {/* Modal PDF */}
       {pdfModal && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4"
           onClick={() => setPdfModal(null)}
         >
           <div
@@ -487,6 +522,18 @@ export default function DetalleLotePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Editar Recibo */}
+      {editingNominaId && (
+        <ModalEditarRecibo
+          nominaId={editingNominaId}
+          onClose={() => setEditingNominaId(null)}
+          onSuccess={() => {
+            setEditingNominaId(null);
+            fetchLote();
+          }}
+        />
       )}
     </div>
   );

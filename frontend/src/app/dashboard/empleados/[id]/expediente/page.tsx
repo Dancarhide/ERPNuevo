@@ -167,14 +167,6 @@ export default function ExpedienteEmpleadoPage({ params }: { params: Promise<{ i
                 </div>
                 <div className="flex justify-between items-center border-b border-gray-100 pb-2">
                   <span className="text-[#858789] font-medium flex items-center gap-2">
-                    <MapPin size={16} /> Dirección:
-                  </span>
-                  <span className="font-semibold text-[#44474A]">
-                    {empleado.direccion_empleado || 'No registrado'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                  <span className="text-[#858789] font-medium flex items-center gap-2">
                     <User size={16} /> Sexo:
                   </span>
                   <span className="font-semibold text-[#44474A]">

@@ -115,7 +115,7 @@ export default function ModalEditarRecibo({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-8 flex flex-col items-center justify-center">
           <Loader2 className="animate-spin text-[#A7313A] mb-4" size={32} />
           <p className="text-gray-500">Cargando recibo...</p>
@@ -134,7 +134,7 @@ export default function ModalEditarRecibo({
     .filter((d) => d.concepto?.tipo === 'Deduccion');
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex justify-between items-center p-5 border-b bg-gray-50">
           <div>

@@ -343,7 +343,7 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
           </div>
           <div>
             <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
-              Sueldo Base Mensual
+              Sueldo Base Total
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#858789]">$</span>

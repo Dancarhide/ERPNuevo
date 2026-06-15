@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     PAC_URL: str | None = os.getenv("PAC_URL")
     PAC_USER: str | None = os.getenv("PAC_USER")
     PAC_PASSWORD: str | None = os.getenv("PAC_PASSWORD")
+    PAC_TEST_MODE: bool = os.getenv("PAC_TEST_MODE", "True").lower() in ("true", "1", "yes")
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: str, values: dict[str, Any]) -> str:

@@ -25,7 +25,7 @@ async def read_puestos(
     # Get active employees count per puesto
     count_stmt = (
         select(Empleado.puesto_id, func.count(Empleado.id))
-        .where(Empleado.estatus == "Activo")
+        .where(Empleado.estatus == "Activo", Empleado.es_sistema.is_(False))
         .group_by(Empleado.puesto_id)
     )
     count_result = await session.execute(count_stmt)

@@ -421,6 +421,7 @@ async def procesar_lote(
     res_empleados = await session.execute(
         select(Empleado).where(
             Empleado.estatus == "Activo",
+            Empleado.es_sistema.is_(False),
         )
     )
     empleados = res_empleados.scalars().all()
@@ -742,6 +743,7 @@ async def get_recibo(
         .options(
             selectinload(Nomina.empleado).selectinload(Empleado.area),
             selectinload(Nomina.empleado).selectinload(Empleado.puesto),
+            selectinload(Nomina.empleado).selectinload(Empleado.datos_salud),
             selectinload(Nomina.detalles).selectinload(DetalleNomina.concepto),
         )
     )
@@ -833,6 +835,7 @@ async def update_recibo(
         .options(
             selectinload(Nomina.empleado).selectinload(Empleado.area),
             selectinload(Nomina.empleado).selectinload(Empleado.puesto),
+            selectinload(Nomina.empleado).selectinload(Empleado.datos_salud),
             selectinload(Nomina.detalles).selectinload(DetalleNomina.concepto),
         )
     )
@@ -851,6 +854,7 @@ async def get_mis_recibos(
         .options(
             selectinload(Nomina.empleado).selectinload(Empleado.area),
             selectinload(Nomina.empleado).selectinload(Empleado.puesto),
+            selectinload(Nomina.empleado).selectinload(Empleado.datos_salud),
             selectinload(Nomina.detalles).selectinload(DetalleNomina.concepto),
         )
         .order_by(Nomina.fecha_fin.desc())
@@ -942,6 +946,7 @@ async def get_xml_cfdi(
         .options(
             selectinload(Nomina.empleado).selectinload(Empleado.area),
             selectinload(Nomina.empleado).selectinload(Empleado.puesto),
+            selectinload(Nomina.empleado).selectinload(Empleado.datos_salud),
             selectinload(Nomina.detalles).selectinload(DetalleNomina.concepto),
         )
     )
@@ -966,6 +971,9 @@ async def get_xml_cfdi(
 
     total_gravado = sum(d.monto_aplicado for d in percepciones if not d.concepto.es_exento)
     total_exento = sum(d.monto_aplicado for d in percepciones if d.concepto.es_exento)
+
+    total_impuestos = sum(d.monto_aplicado for d in deducciones if d.concepto.clave_sat == "002")
+    total_otras_ded = float(nomina.subtotal_deducciones) - float(total_impuestos)
 
     percepciones_xml = "\n        ".join(
         [
@@ -1014,9 +1022,15 @@ async def get_xml_cfdi(
   Total="{float(nomina.neto_pagar):.2f}"
   Moneda="MXN"
   TipoDeComprobante="N"
-  MetodoPago="PPD"
+  MetodoPago="PUE"
+  Exportacion="01"
   FormaPago="99"
   LugarExpedicion="{emp.cp or "00000"}">
+
+  <cfdi:Emisor
+    Rfc="EKU9003173C9"
+    Nombre="EMPRESA DEMO SA DE CV"
+    RegimenFiscal="601"/>
 
   <cfdi:Receptor
     Rfc="{emp.rfc or "XAXX010101000"}"
@@ -1035,11 +1049,11 @@ async def get_xml_cfdi(
       NumDiasPagados="{nomina.dias_trabajados}"
       TotalPercepciones="{float(nomina.subtotal_percepciones):.2f}"
       TotalDeducciones="{float(nomina.subtotal_deducciones):.2f}"
-      TotalOtrosPagos="{float(nomina.subtotal_otros):.2f}">
+      {f'TotalOtrosPagos="{float(nomina.subtotal_otros):.2f}"' if float(nomina.subtotal_otros) > 0 else ""}>
 
       <nomina12:Receptor
         Curp="{emp.curp or ""}"
-        NumSeguridadSocial="{getattr(emp, "numero_seguro_social", "") or ""}"
+        NumSeguridadSocial="{emp.datos_salud.nss if emp and emp.datos_salud and emp.datos_salud.nss else ""}"
         FechaInicioRelLaboral="{emp.fecha_ingreso.isoformat() if emp.fecha_ingreso else ""}"
         TipoContrato="01"
         Sindicalizado="No"
@@ -1049,7 +1063,7 @@ async def get_xml_cfdi(
         Departamento="{emp.area.nombre_area if emp.area else ""}"
         Puesto="{emp.puesto.nombre_puesto if emp.puesto else ""}"
         RiesgoPuesto="1"
-        PeriodicidadPago="{{'Semanal': '02', 'Quincenal': '04', 'Mensual': '05'}}.get(nomina.periodicidad, '04')"
+        PeriodicidadPago="{ {"Semanal": "02", "Quincenal": "04", "Mensual": "05"}.get(nomina.periodicidad, "04") }"
         SalarioBaseCotApor="{float(nomina.sueldo_base):.2f}"
         SalarioDiarioIntegrado="{float(nomina.sdi):.6f}"
         ClaveEntFed="MEX"/>
@@ -1060,7 +1074,7 @@ async def get_xml_cfdi(
         {percepciones_xml}
       </nomina12:Percepciones>
 
-      {"<nomina12:Deducciones TotalOtrosDeducciones='" + f"{float(nomina.subtotal_deducciones):.2f}'" + " TotalImpuestosRetenidos='0.00'>" if deducciones else ""}
+      {"<nomina12:Deducciones TotalOtrosDeducciones='" + f"{total_otras_ded:.2f}'" + " TotalImpuestosRetenidos='" + f"{total_impuestos:.2f}'>" if deducciones else ""}
         {deducciones_xml}
       {"</nomina12:Deducciones>" if deducciones else ""}
 
@@ -1092,6 +1106,7 @@ async def get_recibo_pdf(
         .options(
             selectinload(Nomina.empleado).selectinload(Empleado.area),
             selectinload(Nomina.empleado).selectinload(Empleado.puesto),
+            selectinload(Nomina.empleado).selectinload(Empleado.datos_salud),
             selectinload(Nomina.detalles).selectinload(DetalleNomina.concepto),
         )
     )
@@ -1198,7 +1213,7 @@ async def get_recibo_pdf(
     <div>
       <div class="field"><div class="label">Departamento</div><div class="value">{emp.area.nombre_area if emp and emp.area else "—"}</div></div>
       <div class="field"><div class="label">Puesto</div><div class="value">{emp.puesto.nombre_puesto if emp and emp.puesto else "—"}</div></div>
-      <div class="field"><div class="label">NSS</div><div class="value">{getattr(emp, "numero_seguro_social", "—") or "—"}</div></div>
+      <div class="field"><div class="label">NSS</div><div class="value">{emp.datos_salud.nss if emp and emp.datos_salud and emp.datos_salud.nss else "—"}</div></div>
     </div>
   </div>
 
@@ -1251,6 +1266,57 @@ async def get_recibo_pdf(
 </html>"""
 
     return ReciboPDFResponse(nomina_id=nomina_id, html_content=html)
+
+
+@router.post("/lotes/{lote_id}/timbrar")
+async def timbrar_lote_completo(
+    lote_id: str,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Empleado, Depends(RequirePermission("timbrar_nomina"))],
+):
+    """
+    Timbra masivamente todos los recibos de un lote que estén Pagados y no timbrados.
+    """
+    res_lote = await session.execute(select(LoteNomina).where(LoteNomina.id == lote_id))
+    lote = res_lote.scalar_one_or_none()
+    if not lote:
+        raise HTTPException(status_code=404, detail="Lote no encontrado")
+
+    if lote.estatus != "Cerrado":
+        raise HTTPException(status_code=400, detail="El lote debe estar Cerrado para timbrarlo.")
+
+    res_nominas = await session.execute(
+        select(Nomina).where(
+            Nomina.lote_id == lote_id, Nomina.estado == "Pagado", Nomina.estatus_sat != "Timbrado"
+        )
+    )
+    nominas = res_nominas.scalars().all()
+
+    if not nominas:
+        raise HTTPException(
+            status_code=400, detail="No hay recibos pendientes de timbrar en este lote."
+        )
+
+    exitosos = 0
+    errores = []
+
+    for nomina in nominas:
+        try:
+            await CFDIService.timbrar_nomina(nomina.id, session)
+            exitosos += 1
+        except Exception as e:
+            errores.append(f"Nomina {nomina.id}: {str(e)}")
+
+    if errores and exitosos == 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se pudo timbrar ningún recibo. Errores: {', '.join(errores)}",
+        )
+
+    return {
+        "mensaje": f"{exitosos} recibos timbrados exitosamente.",
+        "errores": errores if errores else None,
+    }
 
 
 @router.post("/recibos/{nomina_id}/timbrar")

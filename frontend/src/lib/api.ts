@@ -229,6 +229,8 @@ export const nominaApi = {
   // CFDI Stamping
   timbrarRecibo: (nominaId: number) =>
     fetchApi(`/nomina/recibos/${nominaId}/timbrar`, { method: 'POST' }),
+  timbrarLote: (loteId: string | number) =>
+    fetchApi(`/nomina/lotes/${loteId}/timbrar`, { method: 'POST' }),
   getXmlRecibo: (nominaId: number) =>
     fetchApi(`/nomina/recibos/${nominaId}/xml`, { parseJson: false }),
 

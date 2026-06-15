@@ -20,9 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 MODULOS_PERMISOS = {
     "Empleados": {
         "ver_empleados": "Ver lista de empleados",
-        "crear_empleado": "Dar de alta un nuevo empleado",
-        "editar_empleado": "Modificar datos de un empleado",
-        "eliminar_empleado": "Dar de baja o eliminar un empleado",
+        "crear_empleados": "Dar de alta un nuevo empleado",
+        "editar_empleados": "Modificar datos de un empleado",
+        "eliminar_empleados": "Dar de baja o eliminar un empleado",
     },
     "Vacaciones": {
         "ver_vacaciones": "Ver solicitudes de vacaciones",
