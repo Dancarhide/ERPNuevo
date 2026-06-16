@@ -80,7 +80,9 @@ export default function GestionAsistenciaPage() {
     const loadCatalogs = async () => {
       try {
         const areasData = await areasApi.getAll();
-        setAreasList(Array.isArray(areasData) ? areasData : areasData.items || []);
+        setAreasList(
+          Array.isArray(areasData) ? areasData : (areasData as { items: Area[] }).items || []
+        );
       } catch (error) {
         console.error('Error al cargar catálogos', error);
       }

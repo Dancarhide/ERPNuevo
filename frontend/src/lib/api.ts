@@ -2,7 +2,11 @@ interface FetchApiOptions extends RequestInit {
   parseJson?: boolean;
 }
 
-export const fetchApi = async (endpoint: string, options: FetchApiOptions = {}) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const fetchApi = async <T = any>(
+  endpoint: string,
+  options: FetchApiOptions = {}
+): Promise<T> => {
   const { parseJson = true, ...restOptions } = options;
   const defaultOptions: RequestInit = {
     headers: {
@@ -22,13 +26,13 @@ export const fetchApi = async (endpoint: string, options: FetchApiOptions = {}) 
     if (!res.ok) {
       throw new Error('Ocurrió un error en el servidor al obtener el archivo');
     }
-    return res.text();
+    return (await res.text()) as unknown as T;
   }
 
   let data = null;
   try {
     data = await res.json();
-  } catch (err) {
+  } catch {
     if (!res.ok) {
       throw new Error(`Error HTTP ${res.status}: Respuesta no pudo ser procesada`);
     }
@@ -38,10 +42,12 @@ export const fetchApi = async (endpoint: string, options: FetchApiOptions = {}) 
     throw new Error(data?.detail || `Error HTTP ${res.status}`);
   }
 
-  return data;
+  return data as T;
 };
 
-export const uploadApi = async (endpoint: string, file: File) => {
+export type ApiData = unknown;
+
+export const uploadApi = async <T = unknown>(endpoint: string, file: File): Promise<T> => {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -57,7 +63,7 @@ export const uploadApi = async (endpoint: string, file: File) => {
     throw new Error(data?.detail || 'Ocurrió un error en el servidor al subir el archivo');
   }
 
-  return data;
+  return data as T;
 };
 
 export const authApi = {
@@ -68,22 +74,24 @@ export const authApi = {
     fetchApi('/auth/change-password', { method: 'POST', body: JSON.stringify({ new_password }) }),
 };
 
-type ApiData = Record<string, unknown>;
+import { Area, Puesto, Empleado } from '@/types';
 
 export const areasApi = {
-  getAll: () => fetchApi('/areas/'),
-  create: (data: ApiData) => fetchApi('/areas/', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: ApiData) =>
-    fetchApi(`/areas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => fetchApi(`/areas/${id}`, { method: 'DELETE' }),
+  getAll: () => fetchApi<Area[]>('/areas/'),
+  create: (data: Partial<Area>) =>
+    fetchApi<Area>('/areas/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<Area>) =>
+    fetchApi<Area>(`/areas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => fetchApi<void>(`/areas/${id}`, { method: 'DELETE' }),
 };
 
 export const puestosApi = {
-  getAll: () => fetchApi('/puestos/'),
-  create: (data: ApiData) => fetchApi('/puestos/', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: ApiData) =>
-    fetchApi(`/puestos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id: number) => fetchApi(`/puestos/${id}`, { method: 'DELETE' }),
+  getAll: () => fetchApi<Puesto[]>('/puestos/'),
+  create: (data: Partial<Puesto>) =>
+    fetchApi<Puesto>('/puestos/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<Puesto>) =>
+    fetchApi<Puesto>(`/puestos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) => fetchApi<void>(`/puestos/${id}`, { method: 'DELETE' }),
 };
 
 export const empleadosApi = {
@@ -107,14 +115,17 @@ export const empleadosApi = {
     if (fecha_ingreso_inicio) params.append('fecha_ingreso_inicio', fecha_ingreso_inicio);
     if (fecha_ingreso_fin) params.append('fecha_ingreso_fin', fecha_ingreso_fin);
 
-    return fetchApi(`/empleados/?${params.toString()}`);
+    return fetchApi<{ items: Empleado[]; total: number }>(`/empleados/?${params.toString()}`);
   },
-  getById: (id: number) => fetchApi(`/empleados/${id}`),
-  create: (data: ApiData) =>
-    fetchApi('/empleados/', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: ApiData) =>
-    fetchApi(`/empleados/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  resetPassword: (id: number) => fetchApi(`/empleados/${id}/reset-password`, { method: 'POST' }),
+  getById: (id: number) => fetchApi<Empleado>(`/empleados/${id}`),
+  create: (data: Partial<Empleado> & Record<string, unknown>) =>
+    fetchApi<Empleado>('/empleados/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<Empleado> & Record<string, unknown>) =>
+    fetchApi<Empleado>(`/empleados/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  resetPassword: (id: number) =>
+    fetchApi<{ message: string; password_temporal: string }>(`/empleados/${id}/reset-password`, {
+      method: 'POST',
+    }),
 };
 
 export const organigramaApi = {
@@ -127,7 +138,7 @@ export const vacacionesApi = {
     if (empleadoId) params.append('empleado_id', String(empleadoId));
     return fetchApi(`/vacaciones?${params.toString()}`);
   },
-  create: (data: ApiData) =>
+  create: (data: Record<string, unknown>) =>
     fetchApi('/vacaciones', { method: 'POST', body: JSON.stringify(data) }),
   updateStatus: (id: number, estatus: string, motivo_rechazo?: string) =>
     fetchApi(`/vacaciones/${id}/status`, {
@@ -163,8 +174,9 @@ export const asistenciasApi = {
 
 export const rolesApi = {
   getAll: () => fetchApi('/roles'),
-  create: (data: ApiData) => fetchApi('/roles', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: ApiData) =>
+  create: (data: Record<string, unknown>) =>
+    fetchApi('/roles', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Record<string, unknown>) =>
     fetchApi(`/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => fetchApi(`/roles/${id}`, { method: 'DELETE' }),
   asignar: (empleado_id: number, rol_id: number) =>
@@ -209,7 +221,7 @@ export const nominaApi = {
   getConceptos: (tipo?: string) => fetchApi(`/nomina/conceptos${tipo ? `?tipo=${tipo}` : ''}`),
   createConcepto: (data: Record<string, unknown>) =>
     fetchApi('/nomina/conceptos', { method: 'POST', body: JSON.stringify(data) }),
-  updateConcepto: (id: number, data: ApiData) =>
+  updateConcepto: (id: number, data: Record<string, unknown>) =>
     fetchApi(`/nomina/conceptos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteConcepto: (id: number) => fetchApi(`/nomina/conceptos/${id}`, { method: 'DELETE' }),
   seedConceptos: () =>
@@ -243,8 +255,8 @@ export const nominaApi = {
 
   // Recibos
   getRecibo: (nominaId: number) => fetchApi(`/nomina/recibos/${nominaId}`),
-  updateRecibo: (nominaId: number, data: ApiData) =>
-    fetchApi(`/nomina/recibos/${nominaId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  updateRecibo: (nominaId: number, data: Record<string, unknown>) =>
+    fetchApi(`/nomina/lotes/recibos/${nominaId}`, { method: 'PUT', body: JSON.stringify(data) }),
   createRecibo: (data: Record<string, unknown>) =>
     fetchApi('/nomina/recibos', { method: 'POST', body: JSON.stringify(data) }),
   getMisRecibos: () => fetchApi('/nomina/mis-recibos'),
@@ -272,7 +284,7 @@ export const incidenciasApi = {
   },
   create: (data: Record<string, unknown>) =>
     fetchApi('/incidencias/', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: ApiData) =>
+  update: (id: number, data: Record<string, unknown>) =>
     fetchApi(`/incidencias/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => fetchApi(`/incidencias/${id}`, { method: 'DELETE' }),
 };
@@ -287,7 +299,7 @@ export const tareasApi = {
   getAll: () => fetchApi('/tareas'),
   create: (data: Record<string, unknown>) =>
     fetchApi('/tareas', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: number, data: ApiData) =>
+  update: (id: number, data: Record<string, unknown>) =>
     fetchApi(`/tareas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => fetchApi(`/tareas/${id}`, { method: 'DELETE' }),
 };

@@ -43,6 +43,8 @@ class EmpleadoBase(BaseModel):
     sueldo: Decimal = Decimal("0.00")
     sueldo_fiscal: Decimal = Decimal("0.00")
     infonavit_mensual: Decimal = Decimal("0.00")
+    infonavit_tipo_descuento: str | None = None
+    infonavit_valor_descuento: Decimal | None = None
     fondo_ahorro_pct: Decimal = Decimal("0.00")
     vales_despensa_pct: Decimal = Decimal("0.00")
     ciudad: Optional[str] = None

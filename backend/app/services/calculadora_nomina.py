@@ -179,6 +179,21 @@ async def calcular_dias_pagados(
 
         current_date += timedelta(days=1)
 
+    from app.models.asistencia import Incidencia
+
+    res_retardos = await session.execute(
+        select(Incidencia).where(
+            Incidencia.empleado_reportado_id == empleado_id,
+            Incidencia.tipo == "Retardo",
+            Incidencia.estatus == "Aprobada",
+            Incidencia.fecha_incidencia >= fecha_inicio_calc,
+            Incidencia.fecha_incidencia <= fecha_fin_calc,
+        )
+    )
+    retardos = len(res_retardos.scalars().all())
+    faltas_por_retardo = retardos // 3
+    faltas_injustificadas += faltas_por_retardo
+
     # Si hay faltas, pierde parte proporcional del séptimo día (factor 1.1666 por falta aprox)
     dias_a_descontar = Decimal(faltas_injustificadas) * Decimal("1.1666")
 

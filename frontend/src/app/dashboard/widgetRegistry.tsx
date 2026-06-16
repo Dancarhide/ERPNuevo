@@ -13,8 +13,7 @@ export type WidgetType = 'stat' | 'panel';
 
 export interface WidgetConfig {
   id: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  component: React.ComponentType<any>;
+  component: React.ComponentType<Record<string, unknown>>;
   requiredPermission: string | null;
   type: WidgetType;
 }

@@ -8,6 +8,7 @@ class ParametrosFiscalesBase(BaseModel):
     uma: Decimal = Field(..., description="Unidad de Medida y Actualización diaria")
     salario_minimo_general: Decimal = Field(..., description="Salario mínimo general diario")
     salario_minimo_frontera: Decimal = Field(..., description="Salario mínimo zona frontera")
+    umi: Decimal = Field(..., description="Unidad Mixta Infonavit diaria")
     tabla_isr_mensual: str = Field(..., description="JSON string con las tarifas mensuales de ISR")
 
 
@@ -17,6 +18,7 @@ class ParametrosFiscalesCreate(ParametrosFiscalesBase):
 
 class ParametrosFiscalesUpdate(BaseModel):
     uma: Decimal | None = None
+    umi: Decimal | None = None
     salario_minimo_general: Decimal | None = None
     salario_minimo_frontera: Decimal | None = None
     tabla_isr_mensual: str | None = None

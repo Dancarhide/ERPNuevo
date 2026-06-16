@@ -30,7 +30,7 @@ export default function MiPerfilPage() {
       empleadosApi
         .getById(user.id)
         .then((data) => {
-          setEmpleado(data);
+          setEmpleado(data as unknown as EmpleadoPerfil);
         })
         .catch(console.error)
         .finally(() => setLoading(false));

@@ -551,18 +551,47 @@ async def procesar_lote(
             )
             ded += isr_periodo
 
-        # 4. Otras Deducciones de Empleado
-        if getattr(emp, "infonavit_mensual", None) and c_infonavit:
-            # Prorratear la mensualidad al periodo
-            factor = Decimal(dias_periodo) / Decimal("30.4")
-            monto_infonavit = emp.infonavit_mensual * factor
-            monto_infonavit = monto_infonavit.quantize(Decimal("0.01"))
-            session.add(
-                DetalleNomina(
-                    nomina_id=nomina.id, concepto_id=c_infonavit.id, monto_aplicado=monto_infonavit
-                )
+        # 4. Otras Deducciones de Empleado (Infonavit)
+        if c_infonavit and emp.infonavit_tipo_descuento and emp.infonavit_valor_descuento:
+            tipo_desc = emp.infonavit_tipo_descuento
+            valor_desc = emp.infonavit_valor_descuento
+
+            import calendar
+
+            fecha = lote.periodo_fin
+            # Determinar el bimestre actual y sus días (Ene-Feb, Mar-Abr, etc.)
+            mes_inicio_bimestre = fecha.month if fecha.month % 2 != 0 else fecha.month - 1
+            mes_fin_bimestre = mes_inicio_bimestre + 1
+            dias_bimestre = (
+                calendar.monthrange(fecha.year, mes_inicio_bimestre)[1]
+                + calendar.monthrange(fecha.year, mes_fin_bimestre)[1]
             )
-            ded += monto_infonavit
+
+            monto_infonavit = Decimal("0.00")
+
+            if tipo_desc == "Porcentaje":
+                # Salario Base * porcentaje * días cotizados
+                monto_infonavit = sdi_calculado * (valor_desc / Decimal("100")) * dias_pagados
+            elif tipo_desc == "Cuota Fija":
+                # Cuota mensual * 2 meses / dias_bimestre * dias cotizados (segun SUA)
+                # O la forma simplificada: (Cuota / 30.4) * dias pagados (pero usaremos la precisa del SUA)
+                monto_infonavit = (valor_desc * 2 / Decimal(dias_bimestre)) * dias_pagados
+            elif tipo_desc in ("VSM", "UMI"):
+                umi_actual = param_fiscal.umi or Decimal("0.00")
+                monto_infonavit = (
+                    valor_desc * umi_actual * 2 / Decimal(dias_bimestre)
+                ) * dias_pagados
+
+            if monto_infonavit > 0:
+                monto_infonavit = monto_infonavit.quantize(Decimal("0.01"))
+                session.add(
+                    DetalleNomina(
+                        nomina_id=nomina.id,
+                        concepto_id=c_infonavit.id,
+                        monto_aplicado=monto_infonavit,
+                    )
+                )
+                ded += monto_infonavit
 
         # 5. Totales
         nomina.subtotal_percepciones = perc

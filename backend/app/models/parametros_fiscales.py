@@ -11,6 +11,7 @@ class ParametroFiscal(Base, AuditoriaMixin):
     uma = Column(Numeric(10, 2), nullable=False)
     salario_minimo_general = Column(Numeric(10, 2), nullable=False)
     salario_minimo_frontera = Column(Numeric(10, 2), nullable=False)
+    umi = Column(Numeric(10, 4), default=0.00, nullable=False)
 
     # JSON-encoded array for ISR tables
     tabla_isr_mensual = Column(String, nullable=False)

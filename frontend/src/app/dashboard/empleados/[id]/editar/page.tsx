@@ -2,10 +2,16 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { empleadosApi, areasApi, puestosApi } from '@/lib/api';
 import { Save, ArrowLeft, Loader2, KeyRound, Copy, CheckCircle2, X } from 'lucide-react';
 
-type CatalogItem = { id: number; nombre_area?: string; nombre_puesto?: string; area_id?: number };
+type CatalogItem = {
+  id: number;
+  nombre_area?: string;
+  nombre_puesto?: string;
+  area_id?: number | null;
+};
 
 export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -38,6 +44,8 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
     salud_discapacidad: false,
     turno_entrada: '09:00',
     turno_salida: '18:00',
+    infonavit_tipo_descuento: '',
+    infonavit_valor_descuento: '',
   });
 
   useEffect(() => {
@@ -52,9 +60,14 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
         setPuestos(resPuestos || []);
 
         if (resEmp) {
-          const fam =
-            resEmp.familiares && resEmp.familiares.length > 0 ? resEmp.familiares[0] : null;
-          const salud = resEmp.datos_salud || null;
+          const fam = (
+            resEmp.familiares && resEmp.familiares.length > 0 ? resEmp.familiares[0] : null
+          ) as { nombre_completo?: string; parentesco?: string; telefono?: string } | null;
+          const salud = (resEmp.datos_salud || null) as {
+            nss?: string;
+            tipo_sangre?: string;
+            discapacidad?: boolean;
+          } | null;
 
           setFormData({
             nombre_completo: resEmp.nombre_completo || '',
@@ -66,8 +79,8 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
             sexo: resEmp.sexo || '',
             area_id: resEmp.area_id ? String(resEmp.area_id) : '',
             puesto_id: resEmp.puesto_id ? String(resEmp.puesto_id) : '',
-            sueldo: resEmp.sueldo || '',
-            sueldo_fiscal: resEmp.sueldo_fiscal || '',
+            sueldo: resEmp.sueldo ? String(resEmp.sueldo) : '',
+            sueldo_fiscal: resEmp.sueldo_fiscal ? String(resEmp.sueldo_fiscal) : '',
             familiar_nombre: fam?.nombre_completo || '',
             familiar_parentesco: fam?.parentesco || '',
             familiar_telefono: fam?.telefono || '',
@@ -76,6 +89,10 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
             salud_discapacidad: salud?.discapacidad || false,
             turno_entrada: resEmp.turno_entrada || '09:00',
             turno_salida: resEmp.turno_salida || '18:00',
+            infonavit_tipo_descuento: resEmp.infonavit_tipo_descuento || '',
+            infonavit_valor_descuento: resEmp.infonavit_valor_descuento
+              ? String(resEmp.infonavit_valor_descuento)
+              : '',
           });
         }
       } catch (err) {
@@ -162,13 +179,18 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
         },
         turno_entrada: formData.turno_entrada,
         turno_salida: formData.turno_salida,
+        infonavit_tipo_descuento: formData.infonavit_tipo_descuento || null,
+        infonavit_valor_descuento: formData.infonavit_valor_descuento
+          ? parseFloat(formData.infonavit_valor_descuento)
+          : null,
       };
 
       await empleadosApi.update(parseInt(unwrappedParams.id), payload);
       router.push('/dashboard/empleados');
     } catch (err: unknown) {
+      console.error('Error al actualizar empleado:', err);
       const msg = err instanceof Error ? err.message : 'Ocurrió un error al actualizar';
-      alert(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
@@ -385,6 +407,38 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
               className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
             />
           </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Tipo Descuento Infonavit
+            </label>
+            <select
+              name="infonavit_tipo_descuento"
+              value={formData.infonavit_tipo_descuento}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            >
+              <option value="">No aplica</option>
+              <option value="Porcentaje">Porcentaje</option>
+              <option value="Cuota Fija">Cuota Fija</option>
+              <option value="VSM">VSM / UMI</option>
+            </select>
+          </div>
+          {formData.infonavit_tipo_descuento && (
+            <div>
+              <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+                Valor Descuento Infonavit
+              </label>
+              <input
+                type="number"
+                step="0.0001"
+                name="infonavit_valor_descuento"
+                value={formData.infonavit_valor_descuento}
+                onChange={handleChange}
+                placeholder="Ej. 15.5 o 1500.00"
+                className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all"
+              />
+            </div>
+          )}
         </div>
 
         {/* Sección de Salud y Familiar */}

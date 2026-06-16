@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Send, Settings, BarChart2, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/components/auth-provider';
 import {
   BarChart,
@@ -156,7 +157,7 @@ export default function EvaluacionesPage() {
   const handleEnviar = async () => {
     const id_empleado = empleadoSelec || user?.id;
     if (!id_empleado) {
-      alert('Selecciona un empleado para evaluar');
+      toast.error('Selecciona un empleado para evaluar');
       return;
     }
     const lista = Object.entries(respuestas).map(([id_pregunta, respuesta]) => ({
@@ -164,7 +165,7 @@ export default function EvaluacionesPage() {
       respuesta,
     }));
     if (lista.length === 0) {
-      alert('Completa al menos una respuesta');
+      toast.error('Completa al menos una respuesta');
       return;
     }
 
@@ -184,9 +185,10 @@ export default function EvaluacionesPage() {
       await loadEmpleados();
       setEnviado(true);
       setRespuestas({});
-    } catch (e) {
+      toast.success('Evaluación enviada con éxito');
+    } catch (e: unknown) {
       console.error(e);
-      alert('Error al enviar evaluación');
+      toast.error((e as Error).message || 'Error al enviar evaluación');
     } finally {
       setEnviando(false);
     }
@@ -210,9 +212,10 @@ export default function EvaluacionesPage() {
       });
       setNewCampaniaNombre('');
       loadCampanias();
-    } catch (e) {
+      toast.success('Campaña creada');
+    } catch (e: unknown) {
       console.error(e);
-      alert('Error al crear campaña');
+      toast.error((e as Error).message || 'Error al crear campaña');
     }
   };
 
@@ -221,9 +224,10 @@ export default function EvaluacionesPage() {
     try {
       await fetchApi(`/evaluaciones-desempeno/campanias/${id}/cerrar`, { method: 'PUT' });
       loadCampanias();
-    } catch (e) {
+      toast.success('Campaña cerrada');
+    } catch (e: unknown) {
       console.error(e);
-      alert('Error al cerrar campaña');
+      toast.error((e as Error).message || 'Error al cerrar campaña');
     }
   };
 
@@ -240,9 +244,10 @@ export default function EvaluacionesPage() {
       });
       setNewPregunta('');
       loadPreguntas();
-    } catch (e) {
+      toast.success('Pregunta creada');
+    } catch (e: unknown) {
       console.error(e);
-      alert('Error al crear pregunta');
+      toast.error((e as Error).message || 'Error al crear pregunta');
     } finally {
       setLoadingConfig(false);
     }

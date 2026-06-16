@@ -24,11 +24,11 @@ type Empleado = {
   id: number;
   nombre_completo: string;
   email: string | null;
-  telefono: string | null;
-  rfc: string | null;
+  telefono?: string | null;
+  rfc?: string | null;
   estatus: string;
-  area: Area | null;
-  puesto: Puesto | null;
+  area?: Area | null;
+  puesto?: Puesto | null;
   fecha_ingreso: string | null;
   sueldo: number;
   sueldo_fiscal: number;
@@ -70,8 +70,14 @@ export default function EmpleadosPage() {
         ]);
 
         // Se asume que areasData.items o areasData devuelve la lista. Ajusta según tu backend.
-        setAreasList(Array.isArray(areasData) ? areasData : areasData.items || []);
-        setPuestosList(Array.isArray(puestosData) ? puestosData : puestosData.items || []);
+        setAreasList(
+          Array.isArray(areasData) ? areasData : (areasData as { items: Area[] }).items || []
+        );
+        setPuestosList(
+          Array.isArray(puestosData)
+            ? puestosData
+            : (puestosData as { items: Puesto[] }).items || []
+        );
         setJefesList(jefesData.items || []);
       } catch (error) {
         console.error('Error al cargar catálogos', error);
@@ -94,7 +100,7 @@ export default function EmpleadosPage() {
         fechaInicio,
         fechaFin
       );
-      setEmpleados(res.items || []);
+      setEmpleados((res.items || []) as unknown as Empleado[]);
       setTotal(res.total || 0);
     } catch (error) {
       console.error('Error al obtener empleados:', error);

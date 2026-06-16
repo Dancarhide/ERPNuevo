@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { empleadosApi, areasApi, puestosApi } from '@/lib/api';
 import { Save, ArrowLeft, Loader2, Copy, CheckCircle2 } from 'lucide-react';
 
-type CatalogItem = { id: number; nombre_area?: string; nombre_puesto?: string; area_id?: number };
+type CatalogItem = {
+  id: number;
+  nombre_area?: string;
+  nombre_puesto?: string;
+  area_id?: number | null;
+};
 
 export default function NuevoEmpleadoPage() {
   const router = useRouter();
@@ -37,6 +43,8 @@ export default function NuevoEmpleadoPage() {
     salud_discapacidad: false,
     turno_entrada: '09:00',
     turno_salida: '18:00',
+    infonavit_tipo_descuento: '',
+    infonavit_valor_descuento: '',
   });
 
   useEffect(() => {
@@ -86,6 +94,10 @@ export default function NuevoEmpleadoPage() {
         },
         turno_entrada: formData.turno_entrada,
         turno_salida: formData.turno_salida,
+        infonavit_tipo_descuento: formData.infonavit_tipo_descuento || null,
+        infonavit_valor_descuento: formData.infonavit_valor_descuento
+          ? parseFloat(formData.infonavit_valor_descuento)
+          : null,
       };
 
       if (formData.familiar_nombre || formData.familiar_telefono || formData.familiar_parentesco) {
@@ -106,8 +118,10 @@ export default function NuevoEmpleadoPage() {
         router.push('/dashboard/empleados');
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Ocurrió un error al guardar';
-      alert(msg);
+      console.error('Error al crear empleado:', err);
+      const msg = (err as Error).message || 'Ocurrió un error al crear el empleado';
+      toast.error(msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -372,6 +386,38 @@ export default function NuevoEmpleadoPage() {
               className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
             />
           </div>
+          <div>
+            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+              Tipo Descuento Infonavit
+            </label>
+            <select
+              name="infonavit_tipo_descuento"
+              value={formData.infonavit_tipo_descuento}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all bg-white"
+            >
+              <option value="">No aplica</option>
+              <option value="Porcentaje">Porcentaje</option>
+              <option value="Cuota Fija">Cuota Fija</option>
+              <option value="VSM">VSM / UMI</option>
+            </select>
+          </div>
+          {formData.infonavit_tipo_descuento && (
+            <div>
+              <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
+                Valor Descuento Infonavit
+              </label>
+              <input
+                type="number"
+                step="0.0001"
+                name="infonavit_valor_descuento"
+                value={formData.infonavit_valor_descuento}
+                onChange={handleChange}
+                placeholder="Ej. 15.5 o 1500.00"
+                className="w-full px-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all"
+              />
+            </div>
+          )}
         </div>
 
         <h2 className="text-[1.25rem] font-bold text-[#44474A] mb-6 mt-4 pb-4 border-b border-[#F3F4F6]">

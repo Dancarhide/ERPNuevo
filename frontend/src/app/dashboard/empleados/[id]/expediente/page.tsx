@@ -10,7 +10,6 @@ import {
   User,
   Briefcase,
   Building2,
-  MapPin,
   HeartPulse,
   Phone,
   Mail,
@@ -18,7 +17,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-type CatalogItem = { id: number; nombre_area?: string; nombre_puesto?: string; area_id?: number };
+type CatalogItem = {
+  id: number;
+  nombre_area?: string;
+  nombre_puesto?: string;
+  area_id?: number | null;
+};
 
 export default function ExpedienteEmpleadoPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);

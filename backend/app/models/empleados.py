@@ -81,6 +81,8 @@ class Empleado(Base, AuditoriaMixin):
     sueldo = Column(Numeric(10, 2), default=0.00, nullable=False)
     sueldo_fiscal = Column(Numeric(10, 2), default=0.00, nullable=False)
     infonavit_mensual = Column(Numeric(10, 2), default=0.00, nullable=False)
+    infonavit_tipo_descuento = Column(String(50), nullable=True)  # VSM, Cuota Fija, Porcentaje
+    infonavit_valor_descuento = Column(Numeric(10, 4), default=0.00, nullable=True)
     fondo_ahorro_pct = Column(Numeric(5, 2), default=0.00, nullable=False)
     vales_despensa_pct = Column(Numeric(5, 2), default=0.00, nullable=False)
     foto = Column(String, nullable=True)

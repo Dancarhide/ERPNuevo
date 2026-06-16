@@ -110,7 +110,10 @@ export default function AdminEmpresaPage() {
     if (!file) return;
     try {
       const res = await empresaApi.uploadImage(file);
-      setInfo((prev) => ({ ...prev, [field]: `http://localhost:8000${res.url}` }));
+      setInfo((prev) => ({
+        ...prev,
+        [field]: `http://localhost:8000${(res as { url: string }).url}`,
+      }));
       showToast('Imagen subida. No olvides guardar cambios.', 'success');
     } catch (err) {
       console.error(err);
