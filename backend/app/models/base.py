@@ -81,7 +81,7 @@ def _record_audit(connection, target, mapper, action):
         stmt,
         {
             "tabla": mapper.local_table.name,
-            "reg_id": getattr(target, "id", 0),
+            "reg_id": str(getattr(target, "id", 0)),
             "accion": action,
             "cambios": cambios_json,
             "uid": user_id,
