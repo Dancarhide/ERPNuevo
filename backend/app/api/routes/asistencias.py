@@ -317,7 +317,7 @@ async def registrar_checada_web(
 
     from app.core.config import settings
 
-    if getattr(settings, "ENVIRONMENT", "dev") == "dev":
+    if getattr(settings, "ENVIRONMENT", "dev") == "dev" or settings.TEST_MODE_CHECADOR:
         from datetime import timedelta
 
         # Simulador de checadas para pruebas

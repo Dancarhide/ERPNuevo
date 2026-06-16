@@ -10,7 +10,7 @@ class AuditoriaLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     tabla_afectada = Column(String(100), nullable=False)
-    registro_id = Column(Integer, nullable=False)
+    registro_id = Column(String(100), nullable=False)
     accion = Column(String(20), nullable=False)  # INSERT, UPDATE, DELETE
     cambios = Column(JSON, nullable=True)  # { "campo": {"old": X, "new": Y} }
 

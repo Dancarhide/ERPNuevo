@@ -318,8 +318,8 @@ export default function HrConfigPage() {
       {/* Modal Area */}
       {isAreaModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-[#F3F4F6]">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-[#F3F4F6] shrink-0">
               <h3 className="text-[1.25rem] font-bold text-[#44474A]">
                 {editingId ? 'Editar Área' : 'Nueva Área'}
               </h3>
@@ -330,7 +330,7 @@ export default function HrConfigPage() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleCreateArea} className="p-6">
+            <form onSubmit={handleCreateArea} className="p-6 overflow-y-auto">
               <div className="mb-6">
                 <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
                   Nombre del Área *
@@ -368,8 +368,8 @@ export default function HrConfigPage() {
       {/* Modal Puesto */}
       {isPuestoModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-[#F3F4F6]">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-[#F3F4F6] shrink-0">
               <h3 className="text-[1.25rem] font-bold text-[#44474A]">
                 {editingId ? 'Editar Puesto' : 'Nuevo Puesto'}
               </h3>
@@ -380,7 +380,7 @@ export default function HrConfigPage() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleCreatePuesto} className="p-6">
+            <form onSubmit={handleCreatePuesto} className="p-6 overflow-y-auto">
               <div className="mb-4">
                 <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
                   Nombre del Puesto *

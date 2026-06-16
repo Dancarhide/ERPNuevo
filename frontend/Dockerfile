@@ -15,9 +15,9 @@ RUN pnpm config set ignore-scripts true && pnpm install
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Usar variable estática para build, pero Cloudflare o el proxy hará que funcione
-ENV NEXT_PUBLIC_API_URL=/api
+# Dejar vacio para que use ruta relativa por defecto en el cliente
+ENV NEXT_PUBLIC_API_URL=""
+ENV BACKEND_URL=http://backend:8000
 RUN pnpm run build
 
 # Stage de producción

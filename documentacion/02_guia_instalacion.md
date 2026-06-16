@@ -52,6 +52,6 @@ Probar el acceso en el navegador dirigiendose al dominio configurado (`https://e
 ### Paso 3.6: Creacion del Super Administrador
 Para poder ingresar por primera vez, es necesario crear una cuenta maestra ejecutando el siguiente comando interactivo en la terminal del servidor:
 ```bash
-docker compose exec backend uv run python scripts/create_superadmin.py --email admin@empresa.com --password "ContrasenaSegura123"
+docker compose exec backend uv run python scripts/create_superadmin.py admin@erp.com
 ```
 En este punto el servidor puede ser entregado al area de administracion de la empresa cliente con esas credenciales.

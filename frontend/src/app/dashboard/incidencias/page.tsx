@@ -3,6 +3,19 @@
 import { useEffect, useState, useCallback, ReactNode } from 'react';
 import { incidenciasApi, empleadosApi } from '@/lib/api';
 import { Loader2, Plus, AlertTriangle, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core';
 
 type Incidencia = {
   id: number;
@@ -33,12 +46,113 @@ const COLUMN_ICONS: Record<string, ReactNode> = {
   Descartada: <XCircle size={18} className="text-red-500" />,
 };
 
+function IncidenciaCard({
+  item,
+  isDragging,
+  isOverlay,
+}: {
+  item: Incidencia;
+  isDragging?: boolean;
+  isOverlay?: boolean;
+}) {
+  return (
+    <div
+      className={`bg-white border border-black/5 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-shadow ${isDragging ? 'opacity-50' : 'opacity-100'} ${isOverlay ? 'cursor-grabbing shadow-[0_10px_30px_rgba(0,0,0,0.15)] scale-105' : 'hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <span
+          className={`text-[0.7rem] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${GRAVEDAD_COLORS[item.gravedad] || 'bg-gray-100 text-gray-800'}`}
+        >
+          {item.gravedad}
+        </span>
+        <span className="text-[0.75rem] text-[#858789] font-medium bg-transparent px-2 py-0.5 rounded-md">
+          {item.tipo}
+        </span>
+      </div>
+      <h4 className="font-bold text-[#44474A] text-[0.95rem] mb-1 line-clamp-2 leading-tight">
+        {item.titulo}
+      </h4>
+      <p className="text-[0.8rem] text-[#858789] line-clamp-2 mb-3">{item.descripcion}</p>
+
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-[#F3F4F6]">
+        <div className="flex flex-col">
+          <span className="text-[0.65rem] uppercase font-bold text-[#A4A4A4] tracking-wider">
+            Reportado
+          </span>
+          <span className="text-[0.8rem] font-medium text-[#44474A] truncate max-w-[120px]">
+            {item.empleado_reportado?.nombre_completo || 'N/A'}
+          </span>
+        </div>
+        <div className="text-right flex flex-col">
+          <span className="text-[0.65rem] uppercase font-bold text-[#A4A4A4] tracking-wider">
+            Fecha
+          </span>
+          <span className="text-[0.8rem] font-medium text-[#44474A]">{item.fecha_incidencia}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DraggableCard({ item }: { item: Incidencia }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: item.id.toString(),
+    data: { item },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`cursor-grab touch-manipulation`}
+    >
+      <IncidenciaCard item={item} isDragging={isDragging} />
+    </div>
+  );
+}
+
+function DroppableColumn({
+  id,
+  title,
+  count,
+  icon,
+  children,
+}: {
+  id: string;
+  title: string;
+  count: number;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`w-[280px] md:w-[320px] shrink-0 flex flex-col border border-[#E1DFE0] rounded-2xl p-4 transition-colors ${
+        isOver ? 'bg-[#F3F4F6]' : 'bg-transparent'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-4 px-2">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h3 className="font-bold text-[#44474A]">{title}</h3>
+        </div>
+        <span className="bg-[#E1DFE0] text-[#858789] text-xs font-bold px-2 py-1 rounded-full">
+          {count}
+        </span>
+      </div>
+      <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1 pb-10">{children}</div>
+    </div>
+  );
+}
+
 export default function IncidenciasPage() {
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [loading, setLoading] = useState(true);
   const [empleados, setEmpleados] = useState<{ id: number; nombre_completo: string }[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Modal de creacion
   const [showModal, setShowModal] = useState(false);
   const [newIncidencia, setNewIncidencia] = useState({
     titulo: '',
@@ -73,14 +187,13 @@ export default function IncidenciasPage() {
 
   const handleStatusChange = async (id: number, newEstatus: string) => {
     try {
-      // Optimistic update
       setIncidencias((prev) =>
         prev.map((inc) => (inc.id === id ? { ...inc, estatus: newEstatus } : inc))
       );
       await incidenciasApi.update(id, { estatus: newEstatus });
     } catch (e) {
       console.error(e);
-      fetchData(); // revert on fail
+      fetchData();
     }
   };
 
@@ -99,24 +212,38 @@ export default function IncidenciasPage() {
     }
   };
 
-  // Simplest Kanban implementation using HTML5 Drag and Drop
-  const onDragStart = (e: React.DragEvent, id: number) => {
-    e.dataTransfer.setData('incidencia_id', id.toString());
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
   };
 
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const onDrop = (e: React.DragEvent, status: string) => {
-    const idStr = e.dataTransfer.getData('incidencia_id');
-    if (!idStr) return;
-    const id = parseInt(idStr);
-    const item = incidencias.find((i) => i.id === id);
-    if (item && item.estatus !== status) {
-      handleStatusChange(id, status);
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+    if (over) {
+      const id = parseInt(active.id as string);
+      const newStatus = over.id as string;
+      const item = incidencias.find((i) => i.id === id);
+      if (item && item.estatus !== newStatus) {
+        handleStatusChange(id, newStatus);
+      }
     }
   };
+
+  const activeItem = incidencias.find((i) => i.id.toString() === activeId);
 
   return (
     <div className="p-4 md:p-8 h-[calc(100vh-70px)] flex flex-col overflow-hidden">
@@ -138,84 +265,41 @@ export default function IncidenciasPage() {
           <Loader2 className="animate-spin text-[#A7313A]" size={40} />
         </div>
       ) : (
-        <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
-          {COLUMNAS.map((col) => {
-            const colItems = incidencias.filter((i) => i.estatus === col);
-            return (
-              <div
-                key={col}
-                className="w-[280px] md:w-[320px] shrink-0 flex flex-col bg-transparent border border-[#E1DFE0] rounded-2xl p-4"
-                onDragOver={onDragOver}
-                onDrop={(e) => onDrop(e, col)}
-              >
-                <div className="flex items-center justify-between mb-4 px-2">
-                  <div className="flex items-center gap-2">
-                    {COLUMN_ICONS[col]}
-                    <h3 className="font-bold text-[#44474A]">{col}</h3>
-                  </div>
-                  <span className="bg-[#E1DFE0] text-[#858789] text-xs font-bold px-2 py-1 rounded-full">
-                    {colItems.length}
-                  </span>
-                </div>
-
-                <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
+            {COLUMNAS.map((col) => {
+              const colItems = incidencias.filter((i) => i.estatus === col);
+              return (
+                <DroppableColumn
+                  key={col}
+                  id={col}
+                  title={col}
+                  count={colItems.length}
+                  icon={COLUMN_ICONS[col]}
+                >
                   {colItems.map((item) => (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={(e) => onDragStart(e, item.id)}
-                      className="bg-white border border-black/5 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] cursor-grab hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <span
-                          className={`text-[0.7rem] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${GRAVEDAD_COLORS[item.gravedad] || 'bg-gray-100 text-gray-800'}`}
-                        >
-                          {item.gravedad}
-                        </span>
-                        <span className="text-[0.75rem] text-[#858789] font-medium bg-transparent px-2 py-0.5 rounded-md">
-                          {item.tipo}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-[#44474A] text-[0.95rem] mb-1 line-clamp-2 leading-tight">
-                        {item.titulo}
-                      </h4>
-                      <p className="text-[0.8rem] text-[#858789] line-clamp-2 mb-3">
-                        {item.descripcion}
-                      </p>
-
-                      <div className="flex items-center justify-between mt-auto pt-3 border-t border-[#F3F4F6]">
-                        <div className="flex flex-col">
-                          <span className="text-[0.65rem] uppercase font-bold text-[#A4A4A4] tracking-wider">
-                            Reportado
-                          </span>
-                          <span className="text-[0.8rem] font-medium text-[#44474A] truncate max-w-[120px]">
-                            {item.empleado_reportado?.nombre_completo || 'N/A'}
-                          </span>
-                        </div>
-                        <div className="text-right flex flex-col">
-                          <span className="text-[0.65rem] uppercase font-bold text-[#A4A4A4] tracking-wider">
-                            Fecha
-                          </span>
-                          <span className="text-[0.8rem] font-medium text-[#44474A]">
-                            {item.fecha_incidencia}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <DraggableCard key={item.id} item={item} />
                   ))}
                   {colItems.length === 0 && (
                     <div className="text-center py-8 text-[#A4A4A4] text-sm border-2 border-dashed border-[#E1DFE0] rounded-xl bg-transparent">
                       Arrastra tarjetas aquí
                     </div>
                   )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </DroppableColumn>
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeItem ? <IncidenciaCard item={activeItem} isOverlay /> : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
-      {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col max-h-[90vh]">
@@ -325,7 +409,7 @@ export default function IncidenciasPage() {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-[#F3F4F6] flex justify-end gap-3">
+              <div className="mt-4 pt-4 border-t border-[#F3F4F6] flex justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
