@@ -16,7 +16,7 @@ class IncidenciaBase(BaseModel):
     titulo: str
     descripcion: str
     tipo: str
-    gravedad: str
+    gravedad: Optional[str] = None
     estatus: Optional[str] = "Pendiente"
     fecha_incidencia: date
     evidencia_url: Optional[str] = None

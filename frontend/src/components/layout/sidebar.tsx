@@ -192,10 +192,11 @@ export function Sidebar({
   const { user } = useAuth();
 
   useEffect(() => {
-    if (mobileMenuOpen && setMobileMenuOpen) {
+    if (setMobileMenuOpen) {
       setMobileMenuOpen(false);
     }
-  }, [pathname, mobileMenuOpen, setMobileMenuOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const filteredMenuItems = MENU_ITEMS.filter((item) => {
     if (!item.requiredPermission) return true;

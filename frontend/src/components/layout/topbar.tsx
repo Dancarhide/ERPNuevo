@@ -156,7 +156,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           </button>
 
           {notifOpen && (
-            <div className="absolute top-full right-0 mt-2.5 bg-white border border-[#A4A4A4] rounded-lg shadow-[0_10px_25px_rgba(0,0,0,0.1)] w-[320px] max-h-[400px] overflow-y-auto py-2 z-[1000] flex flex-col">
+            <div className="absolute top-full -right-[70px] sm:right-0 mt-2.5 bg-white border border-[#A4A4A4] rounded-lg shadow-[0_10px_25px_rgba(0,0,0,0.1)] w-[300px] sm:w-[320px] max-h-[400px] overflow-y-auto py-2 z-[1000] flex flex-col">
               <div className="px-4 py-2 border-b border-[#F3F4F6] flex justify-between items-center sticky top-0 bg-white">
                 <span className="font-bold text-[#44474A]">Notificaciones</span>
                 {unreadCount > 0 && (
