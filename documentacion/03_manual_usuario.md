@@ -10,7 +10,7 @@ La primera vez que el sistema se instala, la base de datos se encuentra vacia. E
 El administrador de TI debe ejecutar el siguiente comando directamente en el servidor para generar las credenciales iniciales de acceso:
 
 ```bash
-docker compose exec backend uv run python scripts/create_super_admin.py --email admin@empresa.com --password "ContrasenaSegura123"
+docker compose exec backend uv run python scripts/create_superadmin.py --email admin@empresa.com --password "ContrasenaSegura123"
 ```
 Una vez ejecutado, puede utilizar dicho correo y contrasena en la pantalla de inicio de sesion (Login) del ERP.
 
