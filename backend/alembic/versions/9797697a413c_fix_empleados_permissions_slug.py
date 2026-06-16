@@ -19,13 +19,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.execute("UPDATE permisos SET slug = 'crear_empleados' WHERE slug = 'crear_empleado'")
-    op.execute("UPDATE permisos SET slug = 'editar_empleados' WHERE slug = 'editar_empleado'")
-    op.execute("UPDATE permisos SET slug = 'eliminar_empleados' WHERE slug = 'eliminar_empleado'")
+    op.execute("DELETE FROM permisos WHERE slug = 'crear_empleado'")
+    op.execute("DELETE FROM permisos WHERE slug = 'editar_empleado'")
+    op.execute("DELETE FROM permisos WHERE slug = 'eliminar_empleado'")
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.execute("UPDATE permisos SET slug = 'crear_empleado' WHERE slug = 'crear_empleados'")
-    op.execute("UPDATE permisos SET slug = 'editar_empleado' WHERE slug = 'editar_empleados'")
-    op.execute("UPDATE permisos SET slug = 'eliminar_empleado' WHERE slug = 'eliminar_empleados'")
+    pass

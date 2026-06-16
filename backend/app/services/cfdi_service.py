@@ -174,25 +174,38 @@ class CFDIService:
                     data = response.json()
                     simulated_uuid = data.get("uuid")
                     simulated_sello = data.get("sello")
+
+                    nomina.uuid_sat = simulated_uuid
+                    nomina.sello_sat = simulated_sello
+                    nomina.xml_cfdi_content = xml_content.replace(
+                        "[SELLO_DIGITAL]", simulated_sello
+                    ).replace("[CERTIFICADO]", "CERT_PRODUCCION")
+                    nomina.estatus_sat = "Timbrado"
+                    nomina.estado = "Pagado"
             except Exception as e:
                 raise PACException(f"Falla de conexión con PAC real: {str(e)}")
-        else:
+        elif str(settings.PAC_TEST_MODE).lower() in ("true", "1", "yes"):
             # Flujo Simulado Local
             simulated_uuid = str(uuid.uuid4()).upper()
             simulated_sello = base64.b64encode(simulated_uuid.encode()).decode()
+            nomina.uuid_sat = simulated_uuid
+            nomina.sello_sat = simulated_sello
+            nomina.xml_cfdi_content = xml_content.replace(
+                "[SELLO_DIGITAL]", simulated_sello
+            ).replace("[CERTIFICADO]", "CERT_SIMULADO_1234567890")
+            nomina.estatus_sat = "Timbrado"
+            nomina.estado = "Pagado"
+        else:
+            # ERP sin proveedor contratado (Modo Pre-nómina)
+            # Solo genera el XML para que el usuario lo timbre por fuera.
+            nomina.xml_cfdi_content = xml_content.replace("[SELLO_DIGITAL]", "").replace(
+                "[CERTIFICADO]", ""
+            )
+            nomina.estatus_sat = "Generado"
 
-        # 4. Actualizar Nómina con datos del Timbre
-        nomina.uuid_sat = simulated_uuid
-        nomina.sello_sat = simulated_sello
-        nomina.xml_cfdi_content = xml_content.replace("[SELLO_DIGITAL]", simulated_sello).replace(
-            "[CERTIFICADO]", "CERT_SIMULADO_1234567890"
-        )
-        nomina.estatus_sat = "Timbrado"
-        nomina.estado = "Pagado"
-
-        # Opcional: Generar URL local para descargar el XML simulado (o devolverlo)
-        nomina.xml_url = f"/api/nomina/recibos/{nomina_id}/descargar-xml"
-        nomina.pdf_url = f"/api/nomina/recibos/{nomina_id}/descargar-pdf"
+        # Opcional: Generar URL local para descargar el XML (o devolverlo)
+        nomina.xml_url = f"/api/nomina/recibos/{nomina_id}/xml"
+        nomina.pdf_url = f"/api/nomina/recibos/{nomina_id}/pdf"
 
         await session.commit()
         return nomina

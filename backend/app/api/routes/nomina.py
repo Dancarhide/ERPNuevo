@@ -1063,7 +1063,7 @@ async def get_xml_cfdi(
         Departamento="{emp.area.nombre_area if emp.area else ""}"
         Puesto="{emp.puesto.nombre_puesto if emp.puesto else ""}"
         RiesgoPuesto="1"
-        PeriodicidadPago="{ {"Semanal": "02", "Quincenal": "04", "Mensual": "05"}.get(nomina.periodicidad, "04") }"
+        PeriodicidadPago="{ {"Semanal": "02", "Quincenal": "04", "Mensual": "05"}.get(str(nomina.periodicidad), "04") }"
         SalarioBaseCotApor="{float(nomina.sueldo_base):.2f}"
         SalarioDiarioIntegrado="{float(nomina.sdi):.6f}"
         ClaveEntFed="MEX"/>
@@ -1359,8 +1359,11 @@ async def descargar_xml_nomina(
             status_code=400, detail="Esta nómina aún no ha sido timbrada o no contiene XML."
         )
 
+    filename = (
+        f"CFDI_{nomina.uuid_sat}.xml" if nomina.uuid_sat else f"CFDI_Pre_Nomina_{nomina.id}.xml"
+    )
     return Response(
         content=nomina.xml_cfdi_content,
         media_type="application/xml",
-        headers={"Content-Disposition": f'attachment; filename="CFDI_{nomina.uuid_sat}.xml"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

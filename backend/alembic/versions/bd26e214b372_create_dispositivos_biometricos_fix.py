@@ -71,3 +71,5 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_dispositivos_biometricos_id"), table_name="dispositivos_biometricos")
     op.drop_table("dispositivos_biometricos")
     # ### end Alembic commands ###
+    op.execute("DROP TYPE IF EXISTS marcadispositivo")
+    op.execute("DROP TYPE IF EXISTS metodoconexion")
