@@ -1,4 +1,5 @@
 from .asistencia import Asistencia, DiaFestivo, Incidencia, RegistroChecador, Vacacion
+from .auditoria import AuditoriaLog
 from .base import AuditoriaMixin, Base
 from .checador import DispositivoBiometrico
 from .comunicacion import (
@@ -39,6 +40,7 @@ from .talento import (
 __all__ = [
     "Base",
     "AuditoriaMixin",
+    "AuditoriaLog",
     # Seguridad
     "Recurso",
     "Permiso",
