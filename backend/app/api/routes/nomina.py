@@ -417,11 +417,14 @@ async def procesar_lote(
             status_code=400, detail="Solo se puede procesar un lote en estado Borrador"
         )
 
-    # Obtener empleados activos con la periodicidad del lote (o sin periodicidad específica)
+    # Obtener empleados aplicables considerando fechas de alta y baja
+    from sqlalchemy import or_
+
     res_empleados = await session.execute(
         select(Empleado).where(
-            Empleado.estatus == "Activo",
             Empleado.es_sistema.is_(False),
+            or_(Empleado.fecha_ingreso.is_(None), Empleado.fecha_ingreso <= lote.periodo_fin),
+            or_(Empleado.fecha_baja.is_(None), Empleado.fecha_baja >= lote.periodo_inicio),
         )
     )
     empleados = res_empleados.scalars().all()
@@ -490,9 +493,14 @@ async def procesar_lote(
             if lote.periodicidad == "Quincenal"
             else (7 if lote.periodicidad == "Semanal" else 30)
         )
-        # Fase 2: Integración de faltas reales
+        # Fase 2: Integración de faltas reales (restringido por vigencia del contrato)
         dias_pagados = await calcular_dias_pagados(
-            emp.id, lote.periodo_inicio, lote.periodo_fin, session
+            emp.id,
+            lote.periodo_inicio,
+            lote.periodo_fin,
+            session,
+            fecha_ingreso=emp.fecha_ingreso,
+            fecha_baja=emp.fecha_baja,
         )
         if dias_pagados > Decimal(dias_periodo):
             dias_pagados = Decimal(dias_periodo)

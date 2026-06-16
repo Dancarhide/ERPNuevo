@@ -345,24 +345,7 @@ export default function NuevoEmpleadoPage() {
               />
             </div>
           </div>
-          <div>
-            <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
-              Sueldo Fiscal
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#858789]">$</span>
-              <input
-                type="text"
-                name="sueldo_fiscal"
-                pattern="^\d+(\.\d{1,2})?$"
-                title="Debe ser un número válido, opcionalmente con 2 decimales"
-                value={formData.sueldo_fiscal}
-                onChange={handleChange}
-                placeholder="Ej. 10000.00"
-                className="w-full pl-8 pr-4 py-2.5 border border-[#E1DFE0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A7313A]/20 focus:border-[#A7313A] transition-all"
-              />
-            </div>
-          </div>
+
           <div>
             <label className="block text-[0.9rem] font-semibold text-[#44474A] mb-2">
               Turno Entrada *

@@ -83,21 +83,35 @@ def calcular_cuota_obrera_imss(sbc: Decimal, dias_trabajados: int, uma: Decimal)
 
 
 async def calcular_dias_pagados(
-    empleado_id: int, fecha_inicio: date, fecha_fin: date, session: AsyncSession
+    empleado_id: int,
+    fecha_inicio: date,
+    fecha_fin: date,
+    session: AsyncSession,
+    fecha_ingreso: date | None = None,
+    fecha_baja: date | None = None,
 ) -> Decimal:
     """
     Calcula los días efectivos a pagar descontando faltas injustificadas.
-    Itera día a día evaluando:
-    1. ¿Es día festivo oficial? -> Se paga.
-    2. ¿Está de vacaciones aprobadas? -> Se paga.
-    3. ¿Tiene incapacidad / incidencia justificada? -> Depende (por defecto, no descontamos).
-    4. ¿Es domingo (Día de descanso)? -> Se paga si no hay faltas en la semana. Si falta 1 día
-       a la semana, pierde proporción del domingo. (Por simplicidad, si el domingo no está
-       justificado, y tiene 1 falta, descontamos 1.16 días).
+    Itera día a día evaluando, pero restringe el periodo al tiempo que el empleado
+    estuvo realmente activo (entre fecha_ingreso y fecha_baja).
     """
+    # Restringir las fechas de iteración según la vigencia del contrato
+    fecha_inicio_calc = fecha_inicio
+    if fecha_ingreso and fecha_ingreso > fecha_inicio:
+        fecha_inicio_calc = fecha_ingreso
+
+    fecha_fin_calc = fecha_fin
+    if fecha_baja and fecha_baja < fecha_fin:
+        fecha_fin_calc = fecha_baja
+
+    if fecha_inicio_calc > fecha_fin_calc:
+        return Decimal("0.00")
+
     # Obtener festivos
     res_festivos = await session.execute(
-        select(DiaFestivo).where(DiaFestivo.fecha >= fecha_inicio, DiaFestivo.fecha <= fecha_fin)
+        select(DiaFestivo).where(
+            DiaFestivo.fecha >= fecha_inicio_calc, DiaFestivo.fecha <= fecha_fin_calc
+        )
     )
     festivos: Dict[date, DiaFestivo] = {df.fecha: df for df in res_festivos.scalars().all()}  # type: ignore
 
@@ -106,8 +120,8 @@ async def calcular_dias_pagados(
         select(Vacacion).where(
             Vacacion.empleado_id == empleado_id,
             Vacacion.estatus_vacacion == "Aprobada",
-            Vacacion.fecha_fin >= fecha_inicio,
-            Vacacion.fecha_inicio <= fecha_fin,
+            Vacacion.fecha_fin >= fecha_inicio_calc,
+            Vacacion.fecha_inicio <= fecha_fin_calc,
         )
     )
     vacaciones_list = res_vacaciones.scalars().all()
@@ -116,17 +130,17 @@ async def calcular_dias_pagados(
     res_asistencias = await session.execute(
         select(Asistencia).where(
             Asistencia.empleado_id == empleado_id,
-            Asistencia.fecha >= fecha_inicio,
-            Asistencia.fecha <= fecha_fin,
+            Asistencia.fecha >= fecha_inicio_calc,
+            Asistencia.fecha <= fecha_fin_calc,
         )
     )
     asistencias: Dict[date, Asistencia] = {a.fecha: a for a in res_asistencias.scalars().all()}  # type: ignore
 
-    dias_totales = (fecha_fin - fecha_inicio).days + 1
+    dias_totales = (fecha_fin_calc - fecha_inicio_calc).days + 1
     faltas_injustificadas = 0
 
-    current_date = fecha_inicio
-    while current_date <= fecha_fin:
+    current_date = fecha_inicio_calc
+    while current_date <= fecha_fin_calc:
         # Es festivo?
         if current_date in festivos:
             current_date += timedelta(days=1)

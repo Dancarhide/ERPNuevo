@@ -25,10 +25,17 @@ export const fetchApi = async (endpoint: string, options: FetchApiOptions = {}) 
     return res.text();
   }
 
-  const data = await res.json().catch(() => null);
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (err) {
+    if (!res.ok) {
+      throw new Error(`Error HTTP ${res.status}: Respuesta no pudo ser procesada`);
+    }
+  }
 
   if (!res.ok) {
-    throw new Error(data?.detail || 'Ocurrió un error en el servidor');
+    throw new Error(data?.detail || `Error HTTP ${res.status}`);
   }
 
   return data;
