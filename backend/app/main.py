@@ -30,6 +30,7 @@ from app.api.routes import (
     vacantes,
 )
 from app.core.config import settings
+from app.core.redis import redis_client
 from app.core.scheduler import start_scheduler
 
 app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json")
@@ -77,7 +78,13 @@ if settings.BACKEND_CORS_ORIGINS:
 
 @app.on_event("startup")
 async def startup_event() -> None:
+    await redis_client.connect()
     start_scheduler()
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    await redis_client.disconnect()
 
 
 @app.get("/")

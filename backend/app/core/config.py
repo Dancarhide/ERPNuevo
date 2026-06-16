@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     PAC_PASSWORD: str | None = os.getenv("PAC_PASSWORD")
     PAC_TEST_MODE: bool = os.getenv("PAC_TEST_MODE", "True").lower() in ("true", "1", "yes")
 
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: str, values: dict[str, Any]) -> str:
         if isinstance(v, str) and v != "":
