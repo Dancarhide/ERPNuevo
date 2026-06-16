@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     PAC_PASSWORD: str | None = os.getenv("PAC_PASSWORD")
     PAC_TEST_MODE: bool = os.getenv("PAC_TEST_MODE", "True").lower() in ("true", "1", "yes")
 
+    TEST_MODE_CHECADOR: bool = os.getenv("TEST_MODE_CHECADOR", "False").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
