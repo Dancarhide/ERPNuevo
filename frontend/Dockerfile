@@ -9,7 +9,7 @@ WORKDIR /app
 # Stage de instalación de dependencias
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+RUN pnpm config set ignore-scripts true && pnpm install
 
 # Stage de build
 FROM base AS builder
