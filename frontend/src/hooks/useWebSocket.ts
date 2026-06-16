@@ -16,9 +16,21 @@ const connectWs = async () => {
   if (wsInstance || isConnecting) return;
   isConnecting = true;
   try {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const backendHost =
+    let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let backendHost =
       window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (apiUrl) {
+      try {
+        const parsedUrl = new URL(apiUrl);
+        backendHost = parsedUrl.host;
+        protocol = parsedUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      } catch {
+        // Ignorar si no es una URL válida
+      }
+    }
+
     const wsUrl = `${protocol}//${backendHost}/api/notificaciones/ws`;
 
     const tokenData = await authApi.getWsToken();

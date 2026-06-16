@@ -13,11 +13,14 @@ export const fetchApi = async <T = any>(
       'Content-Type': 'application/json',
       ...restOptions.headers,
     },
-    // Esto asegura que se envíen las cookies HttpOnly al proxy de Next.js
-    credentials: 'same-origin',
+    // Cambiamos same-origin a include para soportar cookies cross-origin (si se desacopla el frontend del backend)
+    credentials: 'include',
   };
 
-  const res = await fetch(`/api${endpoint}`, {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const url = `${baseUrl}/api${endpoint}`;
+
+  const res = await fetch(url, {
     ...defaultOptions,
     ...restOptions,
   });
@@ -51,10 +54,13 @@ export const uploadApi = async <T = unknown>(endpoint: string, file: File): Prom
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch(`/api${endpoint}`, {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const url = `${baseUrl}/api${endpoint}`;
+
+  const res = await fetch(url, {
     method: 'POST',
     body: formData,
-    credentials: 'same-origin',
+    credentials: 'include',
   });
 
   const data = await res.json().catch(() => null);
@@ -265,10 +271,11 @@ export const nominaApi = {
   importarCsv: async (loteId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch(`/api/nomina/lotes/${loteId}/importar`, {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const res = await fetch(`${baseUrl}/api/nomina/lotes/${loteId}/importar`, {
       method: 'POST',
       body: formData,
-      credentials: 'same-origin',
+      credentials: 'include',
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.detail || 'Error al importar');
