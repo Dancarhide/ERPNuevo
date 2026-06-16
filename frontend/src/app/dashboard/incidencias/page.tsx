@@ -50,10 +50,12 @@ function IncidenciaCard({
   item,
   isDragging,
   isOverlay,
+  onStatusChange,
 }: {
   item: Incidencia;
   isDragging?: boolean;
   isOverlay?: boolean;
+  onStatusChange?: (id: number, newEstatus: string) => void;
 }) {
   return (
     <div
@@ -90,11 +92,39 @@ function IncidenciaCard({
           <span className="text-[0.8rem] font-medium text-[#44474A]">{item.fecha_incidencia}</span>
         </div>
       </div>
+
+      {onStatusChange && !isOverlay && !isDragging && (
+        <div
+          className="mt-3 pt-3 border-t border-[#F3F4F6] flex justify-between items-center"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span className="text-[0.7rem] font-bold text-[#A4A4A4] uppercase tracking-wider">
+            Mover a:
+          </span>
+          <select
+            className="text-[0.75rem] border border-[#E1DFE0] rounded-lg p-1 bg-[#F9F9F9] text-[#44474A] cursor-pointer outline-none focus:border-[#A7313A] focus:ring-1 focus:ring-[#A7313A]"
+            value={item.estatus}
+            onChange={(e) => onStatusChange(item.id, e.target.value)}
+          >
+            {['Pendiente', 'En Revisión', 'Resuelta', 'Descartada'].map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }
 
-function DraggableCard({ item }: { item: Incidencia }) {
+function DraggableCard({
+  item,
+  onStatusChange,
+}: {
+  item: Incidencia;
+  onStatusChange: (id: number, newEstatus: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id.toString(),
     data: { item },
@@ -107,7 +137,7 @@ function DraggableCard({ item }: { item: Incidencia }) {
       {...attributes}
       className={`cursor-grab touch-manipulation`}
     >
-      <IncidenciaCard item={item} isDragging={isDragging} />
+      <IncidenciaCard item={item} isDragging={isDragging} onStatusChange={onStatusChange} />
     </div>
   );
 }
@@ -283,7 +313,7 @@ export default function IncidenciasPage() {
                   icon={COLUMN_ICONS[col]}
                 >
                   {colItems.map((item) => (
-                    <DraggableCard key={item.id} item={item} />
+                    <DraggableCard key={item.id} item={item} onStatusChange={handleStatusChange} />
                   ))}
                   {colItems.length === 0 && (
                     <div className="text-center py-8 text-[#A4A4A4] text-sm border-2 border-dashed border-[#E1DFE0] rounded-xl bg-transparent">
