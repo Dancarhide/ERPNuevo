@@ -36,7 +36,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-erpnuevo}
+      - SQLALCHEMY_DATABASE_URI=postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-erpnuevo}
       - REDIS_URL=redis://cache:6379/0
     ports:
       - "8000:8000"
