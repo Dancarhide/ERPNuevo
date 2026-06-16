@@ -9,7 +9,7 @@ WORKDIR /app
 # Stage de instalación de dependencias
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Stage de build
 FROM base AS builder
