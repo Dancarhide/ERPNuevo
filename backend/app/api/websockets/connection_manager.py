@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Any, Dict, List
 
+import redis.asyncio as redis
 from fastapi import WebSocket
 
 from app.core.redis import redis_client
@@ -34,22 +35,40 @@ class ConnectionManager:
                 del self.active_connections[empleado_id]
 
     async def _listen_to_redis(self):
-        if not redis_client.client:
-            return
-        pubsub = redis_client.client.pubsub()
-        await pubsub.subscribe("ws_messages")
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    data = json.loads(message["data"])
-                    target_id = data.get("empleado_id")
-                    payload = data.get("payload")
-                    if target_id == "all":
-                        await self._local_broadcast(payload)
-                    elif target_id is not None:
-                        await self._local_send(payload, int(target_id))
-        except Exception as e:
-            logger.error("Error procesando mensaje Redis: %s", e, exc_info=True)
+        while True:
+            if not redis_client.client:
+                await asyncio.sleep(5)
+                continue
+
+            try:
+                pubsub = redis_client.client.pubsub()
+                await pubsub.subscribe("ws_messages")
+                while True:
+                    try:
+                        message = await pubsub.get_message(
+                            ignore_subscribe_messages=True, timeout=1.0
+                        )
+                        if message is not None and message["type"] == "message":
+                            data = json.loads(message["data"])
+                            target_id = data.get("empleado_id")
+                            payload = data.get("payload")
+                            if target_id == "all":
+                                await self._local_broadcast(payload)
+                            elif target_id is not None:
+                                await self._local_send(payload, int(target_id))
+                    except redis.exceptions.TimeoutError:
+                        continue  # Los timeouts de lectura son esperados, simplemente continuamos
+                    except Exception as e:
+                        logger.error("Error parseando mensaje de Redis: %s", e)
+
+                    await asyncio.sleep(
+                        0.01
+                    )  # Prevenir uso de CPU al 100% si falla algo silenciosamente
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error("Error en conexión pubsub Redis, reconectando... %s", e)
+                await asyncio.sleep(2)
 
     async def _local_send(self, message: dict[str, Any], empleado_id: int):
         """Envía el mensaje solo a las conexiones locales de este proceso"""

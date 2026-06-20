@@ -84,9 +84,6 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         setNotifications((prev) => {
           const exists = prev.some((n) => n.id === payload.id);
           if (!exists) {
-            toast.success(`Nueva notificación: ${payload.titulo || 'Nueva alerta'}`, {
-              duration: 5000,
-            });
             return [payload, ...prev];
           }
           return prev.map((n) => (n.id === payload.id ? { ...n, ...payload } : n));
