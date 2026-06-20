@@ -79,6 +79,10 @@ async def sync_device_attendance(session: AsyncSession, dispositivo: Dispositivo
                 await procesar_checada(session, emp_id, ts)
                 nuevos_registros += 1
 
+            if len(attendances) > 0:
+                conn.clear_attendance()
+                logger.info("Memoria de asistencias del dispositivo limpiada correctamente.")
+
             logger.info(
                 f"[REAL] Se conectó a {dispositivo.ip_address} y se leyeron {len(attendances)} asistencias ({nuevos_registros} procesables y nuevas)."  # noqa: E501
             )

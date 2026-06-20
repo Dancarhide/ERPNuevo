@@ -29,3 +29,10 @@ class VacacionResponse(VacacionBase):
 
     class Config:
         from_attributes = True
+
+
+class VacacionStatsResponse(BaseModel):
+    total: int
+    taken: int
+    pending: int
+    available: int

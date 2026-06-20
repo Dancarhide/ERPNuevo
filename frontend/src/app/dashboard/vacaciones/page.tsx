@@ -25,7 +25,7 @@ interface Vacacion {
 export default function VacacionesPage() {
   const [vacaciones, setVacaciones] = useState<Vacacion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ available: 12, pending: 0, taken: 0 }); // Todo: Available dynamic
+  const [stats, setStats] = useState({ available: 0, pending: 0, taken: 0, total: 0 });
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,24 +49,15 @@ export default function VacacionesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Asumimos empleado actual id = 1 para demo, pero ideal usar auth
-      // Para admin se cargan todas
-      const res = await vacacionesApi.getAll();
-      setVacaciones(res);
-
-      const pendingList = res.filter((v: Vacacion) => v.estatus_vacacion === 'Pendiente');
-      const approvedList = res.filter((v: Vacacion) => v.estatus_vacacion === 'Aprobado');
-
-      let totalTaken = 0;
-      approvedList.forEach((v: Vacacion) => {
-        totalTaken += calculateDays(v.fecha_inicio, v.fecha_fin);
+      const data = await vacacionesApi.getAll();
+      setVacaciones(data);
+      const statsData = await vacacionesApi.getStats();
+      setStats({
+        available: statsData.available,
+        pending: statsData.pending,
+        taken: statsData.taken,
+        total: statsData.total,
       });
-
-      setStats((prev) => ({
-        ...prev,
-        pending: pendingList.length,
-        taken: totalTaken,
-      }));
     } catch (error) {
       console.error('Error fetching vacations:', error);
     } finally {
@@ -77,7 +68,7 @@ export default function VacacionesPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleFormChange = (

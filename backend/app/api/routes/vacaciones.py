@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,10 +10,81 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.asistencia import Vacacion
 from app.models.empleados import Empleado
-from app.schemas.vacaciones import VacacionCreate, VacacionResponse, VacacionUpdate
+from app.schemas.vacaciones import (
+    VacacionCreate,
+    VacacionResponse,
+    VacacionStatsResponse,
+    VacacionUpdate,
+)
 from app.services.notificaciones_service import crear_notificacion
 
 router = APIRouter()
+
+
+@router.get("/stats/me", response_model=VacacionStatsResponse)
+async def get_my_vacation_stats(
+    session: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Empleado, Depends(get_current_user)],
+) -> Any:
+    total_ganados = 12
+    if current_user.fecha_ingreso:
+        today = date.today()
+        antiguedad_anios = (
+            today.year
+            - current_user.fecha_ingreso.year
+            - (
+                (today.month, today.day)
+                < (current_user.fecha_ingreso.month, current_user.fecha_ingreso.day)
+            )
+        )
+        if antiguedad_anios < 1:
+            antiguedad_anios = 1
+
+        from app.models.parametros_fiscales import PoliticaVacacional
+
+        query_pol = select(PoliticaVacacional).where(
+            PoliticaVacacional.anios_desde <= antiguedad_anios,
+            PoliticaVacacional.anios_hasta >= antiguedad_anios,
+            PoliticaVacacional.activo,
+        )
+        res_pol = await session.execute(query_pol)
+        politica = res_pol.scalar_one_or_none()
+
+        if politica:
+            total_ganados = politica.dias_otorgados
+        else:
+            # Fallback for max years
+            query_max = (
+                select(PoliticaVacacional)
+                .where(PoliticaVacacional.activo)
+                .order_by(PoliticaVacacional.anios_hasta.desc())
+                .limit(1)
+            )
+            res_max = await session.execute(query_max)
+            politica_max = res_max.scalar_one_or_none()
+            if politica_max and antiguedad_anios > politica_max.anios_hasta:
+                total_ganados = politica_max.dias_otorgados
+
+    query = select(Vacacion).where(Vacacion.empleado_id == current_user.id)
+    result = await session.execute(query)
+    vacaciones = result.scalars().all()
+
+    taken = 0
+    pending = 0
+
+    for v in vacaciones:
+        dias = (v.fecha_fin - v.fecha_inicio).days + 1
+        if dias < 0:
+            dias = 0
+
+        if v.estatus_vacacion == "Aprobado":
+            taken += dias
+        elif v.estatus_vacacion == "Pendiente":
+            pending += dias
+
+    return VacacionStatsResponse(
+        total=total_ganados, taken=taken, pending=pending, available=total_ganados - taken
+    )
 
 
 @router.get("", response_model=list[VacacionResponse])

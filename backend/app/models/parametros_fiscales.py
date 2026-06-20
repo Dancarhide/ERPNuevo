@@ -15,3 +15,12 @@ class ParametroFiscal(Base, AuditoriaMixin):
 
     # JSON-encoded array for ISR tables
     tabla_isr_mensual = Column(String, nullable=False)
+
+
+class PoliticaVacacional(Base, AuditoriaMixin):
+    __tablename__ = "politicas_vacacionales"
+
+    id = Column(Integer, primary_key=True, index=True)
+    anios_desde = Column(Integer, nullable=False)
+    anios_hasta = Column(Integer, nullable=False)
+    dias_otorgados = Column(Integer, nullable=False)

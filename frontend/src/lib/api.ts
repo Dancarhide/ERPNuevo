@@ -139,6 +139,7 @@ export const organigramaApi = {
 };
 
 export const vacacionesApi = {
+  getStats: () => fetchApi('/vacaciones/stats/me'),
   getAll: (empleadoId?: number) => {
     const params = new URLSearchParams();
     if (empleadoId) params.append('empleado_id', String(empleadoId));
@@ -322,6 +323,21 @@ export const tareasApi = {
   update: (id: number, data: Record<string, unknown>) =>
     fetchApi(`/tareas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: number) => fetchApi(`/tareas/${id}`, { method: 'DELETE' }),
+};
+
+export const politicasVacacionalesApi = {
+  getAll: () => fetchApi('/politicas_vacacionales'),
+  create: (data: unknown) =>
+    fetchApi('/politicas_vacacionales', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id: number, data: unknown) =>
+    fetchApi(`/politicas_vacacionales/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  delete: (id: number) => fetchApi(`/politicas_vacacionales/${id}`, { method: 'DELETE' }),
 };
 
 export const chatApi = {

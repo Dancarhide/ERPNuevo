@@ -1,10 +1,13 @@
 import asyncio
 import json
+import logging
 from typing import Any, Dict, List
 
 from fastapi import WebSocket
 
 from app.core.redis import redis_client
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
@@ -45,8 +48,8 @@ class ConnectionManager:
                         await self._local_broadcast(payload)
                     elif target_id is not None:
                         await self._local_send(payload, int(target_id))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("Error procesando mensaje Redis: %s", e, exc_info=True)
 
     async def _local_send(self, message: dict[str, Any], empleado_id: int):
         """Envía el mensaje solo a las conexiones locales de este proceso"""
@@ -54,8 +57,8 @@ class ConnectionManager:
             for connection in self.active_connections[empleado_id]:
                 try:
                     await connection.send_json(message)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error("Error enviando WS local a emp %s: %s", empleado_id, e)
 
     async def _local_broadcast(self, message: dict[str, Any]):
         """Envía el mensaje a todas las conexiones locales de este proceso"""
@@ -63,8 +66,8 @@ class ConnectionManager:
             for connection in connections:
                 try:
                     await connection.send_json(message)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error("Error en broadcast WS local: %s", e)
 
     async def send_personal_message(self, message: dict[str, Any], empleado_id: int):
         """Publica el mensaje en Redis para que llegue al usuario,

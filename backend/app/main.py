@@ -23,6 +23,7 @@ from app.api.routes import (
     notificaciones,
     organigrama,
     parametros_fiscales,
+    politicas_vacacionales,
     puestos,
     roles,
     tareas,
@@ -54,6 +55,11 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(nomina.router, prefix="/api/nomina", tags=["nomina"])
 app.include_router(
     parametros_fiscales.router, prefix="/api/parametros_fiscales", tags=["parametros_fiscales"]
+)
+app.include_router(
+    politicas_vacacionales.router,
+    prefix="/api/politicas_vacacionales",
+    tags=["politicas_vacacionales"],
 )
 app.include_router(incidencias.router, prefix="/api/incidencias", tags=["incidencias"])
 app.include_router(notificaciones.router, prefix="/api/notificaciones", tags=["notificaciones"])

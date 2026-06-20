@@ -100,6 +100,7 @@ const MENU_ITEMS: MenuItem[] = [
       { path: '/dashboard/admin-config', label: 'Sistema' },
       { path: '/dashboard/admin/empresa', label: 'Identidad Empresa' },
       { path: '/dashboard/hr-config', label: 'Estructura Organizacional' },
+      { path: '/dashboard/hr-config/vacaciones', label: 'Políticas de Vacaciones' },
     ],
   },
 ];

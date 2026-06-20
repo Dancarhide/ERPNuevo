@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -22,6 +23,7 @@ from app.schemas.evaluaciones import (
 from app.services.notificaciones_service import crear_notificacion_masiva
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/campanias", response_model=List[CampaniaEvaluacionResponse])
@@ -216,8 +218,8 @@ async def read_resultados(
             val_num = float(resp.respuesta)
             sum_numerico += val_num
             count_numerico += 1
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as e:
+            logger.error("Error al convertir respuesta a número en read_resultados: %s", e)
 
         detalles.append(
             RespuestaDetalle(
@@ -263,8 +265,8 @@ async def read_resultados_globales(
             val_num = float(resp.respuesta)
             sum_numerico += val_num
             count_numerico += 1
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as e:
+            logger.error("Error al convertir respuesta a número en read_resultados_globales: %s", e)
 
         detalles.append(
             RespuestaDetalle(

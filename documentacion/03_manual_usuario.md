@@ -60,6 +60,11 @@ El sistema concentra los "Checados" recibidos desde los relojes fisicos o desde 
 *   Si el sistema detecta una anomalia (ej. llegada despues de la tolerancia), el modulo de "Incidencias" registrara un Retardo.
 *   **Regla de Negocio:** La acumulacion de 3 retardos en un periodo configurado generara automaticamente una "Falta Injustificada", la cual se descontara en la nomina de dicho periodo.
 
+### 2.4. Políticas y Control de Vacaciones
+El sistema gestiona de forma automatizada las vacaciones según la Ley Federal del Trabajo o las políticas internas definidas por la empresa.
+*   **Cálculo Dinámico:** Los días otorgados no están "quemados" en el sistema. El motor de vacaciones cruza la fecha de ingreso del empleado con la "Política Vacacional" vigente registrada en la base de datos (Ej: de 1 a 1 año = 12 días; de 6 a 10 años = 22 días).
+*   **Gestión de Solicitudes:** Cuando un empleado realiza una solicitud, sus días cambian a estado "Pendiente" y, tras ser aprobados por Recursos Humanos, se restan definitivamente de su bolsa de "Días Disponibles".
+
 ## 3. Modulo de Nomina y Calculos Fiscales
 
 ### 3.1. Periodos y Generacion
