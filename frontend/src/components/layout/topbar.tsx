@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
+import toast from 'react-hot-toast';
 import { notificacionesApi, chatApi } from '@/lib/api';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { ChatDrawer } from './chat-drawer';
@@ -82,10 +83,13 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         const payload = message.payload as Notification;
         setNotifications((prev) => {
           const exists = prev.some((n) => n.id === payload.id);
-          if (exists) {
-            return prev.map((n) => (n.id === payload.id ? { ...n, ...payload } : n));
+          if (!exists) {
+            toast.success(`Nueva notificación: ${payload.titulo || 'Nueva alerta'}`, {
+              duration: 5000,
+            });
+            return [payload, ...prev];
           }
-          return [payload, ...prev];
+          return prev.map((n) => (n.id === payload.id ? { ...n, ...payload } : n));
         });
       } else if (message.type === 'chat') {
         const payload = message.payload as { emisor_id?: number };

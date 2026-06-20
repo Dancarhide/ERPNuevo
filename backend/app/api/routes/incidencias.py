@@ -21,6 +21,11 @@ async def get_incidencias(
     session: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[Empleado, Depends(RequirePermission("ver_incidencias"))],
     estatus: Optional[str] = None,
+    search: Optional[str] = None,
+    fecha_inicio: Optional[str] = None,
+    fecha_fin: Optional[str] = None,
+    area_id: Optional[int] = None,
+    empleado_reportado_id: Optional[int] = None,
 ) -> Any:
     query = select(Incidencia).options(
         selectinload(Incidencia.empleado_reportado), selectinload(Incidencia.reportante)
@@ -30,7 +35,6 @@ async def get_incidencias(
     from app.models.seguridad import Permiso, RolPermiso
 
     # Verificamos si tiene "gestionar_incidencias"
-    # Este es un chequeo rápido manual (podemos optimizarlo después)
     has_manage = False
     if current_user.rol_id:
         rp = await session.execute(
@@ -51,8 +55,28 @@ async def get_incidencias(
             )
         )
 
-    if estatus:
+    if estatus and estatus != "Todos":
         query = query.where(Incidencia.estatus == estatus)
+
+    if search:
+        query = query.where(
+            or_(Incidencia.titulo.ilike(f"%{search}%"), Incidencia.descripcion.ilike(f"%{search}%"))
+        )
+
+    if fecha_inicio:
+        query = query.where(Incidencia.fecha_incidencia >= fecha_inicio)
+
+    if fecha_fin:
+        query = query.where(Incidencia.fecha_incidencia <= fecha_fin)
+
+    if area_id:
+        # Avoid joining if already joined, but since we haven't joined Empleado yet:
+        query = query.join(Empleado, Incidencia.empleado_reportado_id == Empleado.id).where(
+            Empleado.area_id == area_id
+        )
+
+    if empleado_reportado_id:
+        query = query.where(Incidencia.empleado_reportado_id == empleado_reportado_id)
 
     query = query.order_by(Incidencia.creado_en.desc())
     result = await session.execute(query)

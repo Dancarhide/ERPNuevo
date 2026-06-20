@@ -170,7 +170,7 @@ export default function CalendarioPage() {
       cells.push(
         <div
           key={`empty-${i}`}
-          className="min-h-[120px] bg-transparent border border-slate-100 rounded-lg opacity-50"
+          className="min-h-[60px] md:min-h-[120px] bg-transparent border border-slate-100 rounded-lg opacity-50"
         ></div>
       );
     }
@@ -191,7 +191,7 @@ export default function CalendarioPage() {
         <div
           key={day}
           onClick={() => openModal(dateStr)}
-          className={`min-h-[120px] py-2 border border-slate-100 rounded-lg hover:border-slate-300 transition-colors cursor-pointer flex flex-col gap-1 overflow-hidden ${isToday ? 'bg-blue-50/50' : 'bg-white'}`}
+          className={`min-h-[60px] md:min-h-[120px] py-1 md:py-2 border border-slate-100 rounded-lg hover:border-slate-300 transition-colors cursor-pointer flex flex-col gap-1 overflow-hidden ${isToday ? 'bg-blue-50/50' : 'bg-white'}`}
         >
           <div className="flex justify-between items-center mb-1 px-2">
             <span
@@ -274,22 +274,22 @@ export default function CalendarioPage() {
         </div>
       </div>
 
-      <div className="p-8 max-w-7xl mx-auto w-full">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
         {loading ? (
           <div className="text-center py-20 text-slate-500">Cargando calendario...</div>
         ) : (
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <div className="grid grid-cols-7 gap-4 mb-4">
+          <div className="bg-white p-3 md:p-6 rounded-3xl shadow-sm border border-slate-100">
+            <div className="grid grid-cols-7 gap-1 md:gap-4 mb-2 md:mb-4">
               {dayNames.map((day) => (
                 <div
                   key={day}
-                  className="text-center font-bold text-slate-400 text-sm uppercase tracking-wider"
+                  className="text-center font-bold text-slate-400 text-[10px] md:text-sm uppercase tracking-wider"
                 >
                   {day}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-2">{renderCells()}</div>
+            <div className="grid grid-cols-7 gap-1 md:gap-2">{renderCells()}</div>
           </div>
         )}
       </div>

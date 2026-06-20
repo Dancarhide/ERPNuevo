@@ -132,7 +132,20 @@ export default function NuevoEmpleadoPage() {
 
   const copyToClipboard = () => {
     if (successData) {
-      navigator.clipboard.writeText(successData.password_temporal);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(successData.password_temporal).catch(console.error);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = successData.password_temporal;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback: no se pudo copiar', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

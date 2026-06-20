@@ -20,8 +20,10 @@ async def procesar_faltas(fecha: date):
     """
     print(f"Procesando faltas para la fecha: {fecha}")
     async with SessionLocal() as session:
-        # 1. Obtener todos los empleados activos
-        res_emp = await session.execute(select(Empleado).where(Empleado.estatus == "Activo"))
+        # 1. Obtener todos los empleados activos que no son del sistema
+        res_emp = await session.execute(
+            select(Empleado).where(Empleado.estatus == "Activo", Empleado.es_sistema.is_(False))
+        )
         empleados = res_emp.scalars().all()
 
         faltas_creadas = 0

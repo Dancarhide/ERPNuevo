@@ -17,8 +17,13 @@ const connectWs = async () => {
   isConnecting = true;
   try {
     let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    let backendHost =
-      window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
+    let backendHost = window.location.host;
+
+    if (window.location.port === '3000') {
+      backendHost = `${window.location.hostname}:8000`;
+    } else if (window.location.hostname === 'localhost') {
+      backendHost = 'localhost:8000';
+    }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (apiUrl) {

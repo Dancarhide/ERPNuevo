@@ -131,7 +131,20 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
 
   const copyToClipboard = () => {
     if (newPassword) {
-      navigator.clipboard.writeText(newPassword);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(newPassword).catch(console.error);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = newPassword;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback: no se pudo copiar', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -532,12 +545,12 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-[#F3F4F6]">
+        <div className="flex flex-col-reverse md:flex-row justify-between items-center mt-8 pt-6 border-t border-[#F3F4F6] gap-4 md:gap-0">
           <button
             type="button"
             onClick={handleResetPassword}
             disabled={resettingPassword}
-            className="text-[#A7313A] border border-[#A7313A]/20 bg-[#A7313A]/5 hover:bg-[#A7313A]/10 px-4 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all disabled:opacity-50"
+            className="w-full md:w-auto justify-center text-[#A7313A] border border-[#A7313A]/20 bg-[#A7313A]/5 hover:bg-[#A7313A]/10 px-4 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all disabled:opacity-50"
           >
             {resettingPassword ? (
               <Loader2 size={18} className="animate-spin" />
@@ -547,18 +560,18 @@ export default function EditarEmpleadoPage({ params }: { params: Promise<{ id: s
             Generar Nueva Contraseña
           </button>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-2.5 text-[#44474A] font-semibold hover:bg-transparent rounded-xl transition-colors"
+              className="w-full sm:w-auto px-6 py-2.5 text-[#44474A] font-semibold hover:bg-transparent rounded-xl transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#A7313A] hover:bg-[#8F2930] text-white px-8 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all disabled:opacity-70"
+              className="w-full sm:w-auto justify-center bg-[#A7313A] hover:bg-[#8F2930] text-white px-8 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all disabled:opacity-70"
             >
               {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
               {loading ? 'Guardando...' : 'Actualizar Empleado'}

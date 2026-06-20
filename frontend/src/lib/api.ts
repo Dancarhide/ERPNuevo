@@ -284,9 +284,22 @@ export const nominaApi = {
 };
 
 export const incidenciasApi = {
-  getAll: (estatus?: string) => {
+  getAll: (
+    estatus?: string,
+    search?: string,
+    fecha_inicio?: string,
+    fecha_fin?: string,
+    area_id?: number | '',
+    empleado_reportado_id?: number | ''
+  ) => {
     const q = new URLSearchParams();
     if (estatus) q.append('estatus', estatus);
+    if (search) q.append('search', search);
+    if (fecha_inicio) q.append('fecha_inicio', fecha_inicio);
+    if (fecha_fin) q.append('fecha_fin', fecha_fin);
+    if (area_id !== undefined && area_id !== '') q.append('area_id', String(area_id));
+    if (empleado_reportado_id !== undefined && empleado_reportado_id !== '')
+      q.append('empleado_reportado_id', String(empleado_reportado_id));
     return fetchApi(`/incidencias/?${q.toString()}`);
   },
   create: (data: Record<string, unknown>) =>

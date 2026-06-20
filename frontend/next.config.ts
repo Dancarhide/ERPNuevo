@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`, // Proxy dinámico
       },
+      {
+        source: '/uploads/:path*',
+        destination: `${backendUrl}/uploads/:path*`, // Proxy uploads (imágenes)
+      },
     ];
   },
 };
